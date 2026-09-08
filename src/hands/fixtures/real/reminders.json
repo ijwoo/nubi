@@ -1,0 +1,1991 @@
+{
+  "value": {
+    "customActions": null,
+    "nativeFrame": "{{0, 0}, {402, 874}}",
+    "label": "미리 알림",
+    "rawIdentifier": null,
+    "traits": "",
+    "frame": "{{0, 0}, {402, 874}}",
+    "isVisible": "1",
+    "type": "Application",
+    "value": null,
+    "isEnabled": "1",
+    "children": [
+      {
+        "customActions": null,
+        "nativeFrame": "{{0, 0}, {402, 874}}",
+        "label": null,
+        "rawIdentifier": null,
+        "traits": "",
+        "frame": "{{0, 0}, {402, 874}}",
+        "isVisible": "1",
+        "type": "Window",
+        "value": null,
+        "isEnabled": "1",
+        "children": [
+          {
+            "customActions": null,
+            "nativeFrame": "{{0, 0}, {402, 874}}",
+            "label": null,
+            "rawIdentifier": null,
+            "traits": "",
+            "frame": "{{0, 0}, {402, 874}}",
+            "isVisible": "0",
+            "type": "Other",
+            "value": null,
+            "isEnabled": "1",
+            "children": [
+              {
+                "customActions": null,
+                "nativeFrame": "{{0, 0}, {402, 874}}",
+                "label": null,
+                "rawIdentifier": null,
+                "traits": "",
+                "frame": "{{0, 0}, {402, 874}}",
+                "isVisible": "0",
+                "type": "Other",
+                "value": null,
+                "isEnabled": "1",
+                "children": [
+                  {
+                    "customActions": null,
+                    "nativeFrame": "{{-402, -874}, {1206, 2622}}",
+                    "label": null,
+                    "rawIdentifier": null,
+                    "traits": "",
+                    "frame": "{{-402, -874}, {1206, 2622}}",
+                    "isVisible": "0",
+                    "type": "Other",
+                    "value": null,
+                    "isEnabled": "1",
+                    "isAccessible": "0",
+                    "isNativeAccessibilityElement": "0",
+                    "isFocused": "0",
+                    "name": null,
+                    "rect": { "y": -874, "x": -402, "width": 1206, "height": 2622 }
+                  },
+                  {
+                    "customActions": null,
+                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                    "label": null,
+                    "rawIdentifier": null,
+                    "traits": "",
+                    "frame": "{{0, 0}, {402, 874}}",
+                    "isVisible": "0",
+                    "type": "Other",
+                    "value": null,
+                    "isEnabled": "1",
+                    "children": [
+                      {
+                        "customActions": null,
+                        "nativeFrame": "{{0, 0}, {402, 874}}",
+                        "label": null,
+                        "rawIdentifier": null,
+                        "traits": "",
+                        "frame": "{{0, 0}, {402, 874}}",
+                        "isVisible": "0",
+                        "type": "Other",
+                        "value": null,
+                        "isEnabled": "1",
+                        "children": [
+                          {
+                            "customActions": null,
+                            "nativeFrame": "{{0, 0}, {402, 874}}",
+                            "label": null,
+                            "rawIdentifier": null,
+                            "traits": "",
+                            "frame": "{{0, 0}, {402, 874}}",
+                            "isVisible": "0",
+                            "type": "Other",
+                            "value": null,
+                            "isEnabled": "1",
+                            "children": [
+                              {
+                                "customActions": null,
+                                "nativeFrame": "{{0, 0}, {402, 874}}",
+                                "label": null,
+                                "rawIdentifier": null,
+                                "traits": "",
+                                "frame": "{{0, 0}, {402, 874}}",
+                                "isVisible": "0",
+                                "type": "Other",
+                                "value": null,
+                                "isEnabled": "1",
+                                "children": [
+                                  {
+                                    "customActions": null,
+                                    "nativeFrame": "{{0, 62}, {402, 106}}",
+                                    "label": null,
+                                    "rawIdentifier": "미리 알림",
+                                    "traits": "",
+                                    "frame": "{{0, 62}, {402, 106}}",
+                                    "isVisible": "0",
+                                    "type": "NavigationBar",
+                                    "value": null,
+                                    "isEnabled": "1",
+                                    "children": [
+                                      {
+                                        "customActions": null,
+                                        "nativeFrame": "{{16, 62}, {44, 44}}",
+                                        "label": "뒤로",
+                                        "rawIdentifier": "BackButton",
+                                        "traits": "Button",
+                                        "frame": "{{16, 62}, {44, 44}}",
+                                        "isVisible": "0",
+                                        "type": "Button",
+                                        "value": null,
+                                        "isEnabled": "1",
+                                        "isAccessible": "1",
+                                        "isNativeAccessibilityElement": "1",
+                                        "isFocused": "0",
+                                        "name": "BackButton",
+                                        "rect": { "y": 62, "x": 16, "width": 44, "height": 44 }
+                                      },
+                                      {
+                                        "customActions": null,
+                                        "nativeFrame": "{{346, 66}, {36, 36}}",
+                                        "label": "더 보기",
+                                        "rawIdentifier": null,
+                                        "traits": "Button",
+                                        "frame": "{{346, 66}, {36, 36}}",
+                                        "isVisible": "0",
+                                        "type": "Button",
+                                        "value": null,
+                                        "isEnabled": "1",
+                                        "isAccessible": "1",
+                                        "isNativeAccessibilityElement": "1",
+                                        "isFocused": "0",
+                                        "name": "더 보기",
+                                        "rect": { "y": 66, "x": 346, "width": 36, "height": 36 }
+                                      },
+                                      {
+                                        "customActions": null,
+                                        "nativeFrame": "{{16.000000000000007, 120.66666666666667}, {121.33333333333334, 39.666666666666671}}",
+                                        "label": "미리 알림",
+                                        "rawIdentifier": null,
+                                        "traits": "Header",
+                                        "frame": "{{16, 120}, {122, 41}}",
+                                        "isVisible": "0",
+                                        "type": "StaticText",
+                                        "value": "미리 알림",
+                                        "isEnabled": "1",
+                                        "isAccessible": "1",
+                                        "isNativeAccessibilityElement": "1",
+                                        "isFocused": "0",
+                                        "name": "미리 알림",
+                                        "rect": { "y": 120, "x": 16, "width": 122, "height": 41 }
+                                      }
+                                    ],
+                                    "isAccessible": "0",
+                                    "isNativeAccessibilityElement": "0",
+                                    "isFocused": "0",
+                                    "name": "미리 알림",
+                                    "rect": { "y": 62, "x": 0, "width": 402, "height": 106 }
+                                  },
+                                  {
+                                    "customActions": null,
+                                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                                    "label": null,
+                                    "rawIdentifier": null,
+                                    "traits": "",
+                                    "frame": "{{0, 0}, {402, 874}}",
+                                    "isVisible": "0",
+                                    "type": "Other",
+                                    "value": null,
+                                    "isEnabled": "1",
+                                    "children": [
+                                      {
+                                        "customActions": null,
+                                        "nativeFrame": "{{0, 0}, {402, 874}}",
+                                        "label": null,
+                                        "rawIdentifier": null,
+                                        "traits": "",
+                                        "frame": "{{0, 0}, {402, 874}}",
+                                        "isVisible": "0",
+                                        "type": "Other",
+                                        "value": null,
+                                        "isEnabled": "1",
+                                        "children": [
+                                          {
+                                            "customActions": null,
+                                            "nativeFrame": "{{0, 0}, {402, 874}}",
+                                            "label": null,
+                                            "rawIdentifier": null,
+                                            "traits": "",
+                                            "frame": "{{0, 0}, {402, 874}}",
+                                            "isVisible": "0",
+                                            "type": "Other",
+                                            "value": null,
+                                            "isEnabled": "1",
+                                            "children": [
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                "label": null,
+                                                "rawIdentifier": null,
+                                                "traits": "",
+                                                "frame": "{{0, 0}, {402, 874}}",
+                                                "isVisible": "0",
+                                                "type": "Other",
+                                                "value": null,
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{0, 0}, {402, 874}}",
+                                                    "isVisible": "0",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "children": [
+                                                      {
+                                                        "customActions": null,
+                                                        "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                        "label": null,
+                                                        "rawIdentifier": null,
+                                                        "traits": "",
+                                                        "frame": "{{0, 0}, {402, 874}}",
+                                                        "isVisible": "0",
+                                                        "type": "Other",
+                                                        "value": null,
+                                                        "isEnabled": "1",
+                                                        "children": [
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                            "label": null,
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{0, 0}, {402, 874}}",
+                                                            "isVisible": "0",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "children": [
+                                                              {
+                                                                "customActions": null,
+                                                                "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                                "label": null,
+                                                                "rawIdentifier": "RemindersList.ID.RemindersTable",
+                                                                "traits": "",
+                                                                "frame": "{{0, 0}, {402, 874}}",
+                                                                "isVisible": "0",
+                                                                "type": "CollectionView",
+                                                                "value": null,
+                                                                "isEnabled": "1",
+                                                                "children": [
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{0, 0}, {402, 874}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 0,
+                                                                      "x": 0,
+                                                                      "width": 402,
+                                                                      "height": 874
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{0, 0}, {402, 874}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 0,
+                                                                      "x": 0,
+                                                                      "width": 402,
+                                                                      "height": 874
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{0, 0}, {402, 874}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 0,
+                                                                      "x": 0,
+                                                                      "width": 402,
+                                                                      "height": 874
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{369, 116}, {30, 672}}",
+                                                                    "label": "수직 스크롤 막대, 1페이지",
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "Adjustable",
+                                                                    "frame": "{{369, 116}, {30, 672}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": "0%",
+                                                                    "isEnabled": "1",
+                                                                    "children": [
+                                                                      {
+                                                                        "customActions": null,
+                                                                        "nativeFrame": "{{396, 739}, {3, 46}}",
+                                                                        "label": null,
+                                                                        "rawIdentifier": null,
+                                                                        "traits": "",
+                                                                        "frame": "{{396, 739}, {3, 46}}",
+                                                                        "isVisible": "0",
+                                                                        "type": "Other",
+                                                                        "value": null,
+                                                                        "isEnabled": "1",
+                                                                        "isAccessible": "0",
+                                                                        "isNativeAccessibilityElement": "0",
+                                                                        "isFocused": "0",
+                                                                        "name": null,
+                                                                        "rect": {
+                                                                          "y": 739,
+                                                                          "x": 396,
+                                                                          "width": 3,
+                                                                          "height": 46
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": "수직 스크롤 막대, 1페이지",
+                                                                    "rect": {
+                                                                      "y": 116,
+                                                                      "x": 369,
+                                                                      "width": 30,
+                                                                      "height": 672
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{62, 755}, {278, 30}}",
+                                                                    "label": "수평 스크롤 막대, 1페이지",
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "Adjustable",
+                                                                    "frame": "{{62, 755}, {278, 30}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": "0%",
+                                                                    "isEnabled": "1",
+                                                                    "children": [
+                                                                      {
+                                                                        "customActions": null,
+                                                                        "nativeFrame": "{{330, 782}, {7, 3}}",
+                                                                        "label": null,
+                                                                        "rawIdentifier": null,
+                                                                        "traits": "",
+                                                                        "frame": "{{330, 782}, {7, 3}}",
+                                                                        "isVisible": "0",
+                                                                        "type": "Other",
+                                                                        "value": null,
+                                                                        "isEnabled": "1",
+                                                                        "isAccessible": "0",
+                                                                        "isNativeAccessibilityElement": "0",
+                                                                        "isFocused": "0",
+                                                                        "name": null,
+                                                                        "rect": {
+                                                                          "y": 782,
+                                                                          "x": 330,
+                                                                          "width": 7,
+                                                                          "height": 3
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": "수평 스크롤 막대, 1페이지",
+                                                                    "rect": {
+                                                                      "y": 755,
+                                                                      "x": 62,
+                                                                      "width": 278,
+                                                                      "height": 30
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{369, 116}, {30, 672}}",
+                                                                    "label": "수직 스크롤 막대, 1페이지",
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "Adjustable",
+                                                                    "frame": "{{369, 116}, {30, 672}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": "0%",
+                                                                    "isEnabled": "1",
+                                                                    "children": [
+                                                                      {
+                                                                        "customActions": null,
+                                                                        "nativeFrame": "{{396, 739}, {3, 46}}",
+                                                                        "label": null,
+                                                                        "rawIdentifier": null,
+                                                                        "traits": "",
+                                                                        "frame": "{{396, 739}, {3, 46}}",
+                                                                        "isVisible": "0",
+                                                                        "type": "Other",
+                                                                        "value": null,
+                                                                        "isEnabled": "1",
+                                                                        "isAccessible": "0",
+                                                                        "isNativeAccessibilityElement": "0",
+                                                                        "isFocused": "0",
+                                                                        "name": null,
+                                                                        "rect": {
+                                                                          "y": 739,
+                                                                          "x": 396,
+                                                                          "width": 3,
+                                                                          "height": 46
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": "수직 스크롤 막대, 1페이지",
+                                                                    "rect": {
+                                                                      "y": 116,
+                                                                      "x": 369,
+                                                                      "width": 30,
+                                                                      "height": 672
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{62, 755}, {278, 30}}",
+                                                                    "label": "수평 스크롤 막대, 1페이지",
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "Adjustable",
+                                                                    "frame": "{{62, 755}, {278, 30}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": "0%",
+                                                                    "isEnabled": "1",
+                                                                    "children": [
+                                                                      {
+                                                                        "customActions": null,
+                                                                        "nativeFrame": "{{330, 782}, {7, 3}}",
+                                                                        "label": null,
+                                                                        "rawIdentifier": null,
+                                                                        "traits": "",
+                                                                        "frame": "{{330, 782}, {7, 3}}",
+                                                                        "isVisible": "0",
+                                                                        "type": "Other",
+                                                                        "value": null,
+                                                                        "isEnabled": "1",
+                                                                        "isAccessible": "0",
+                                                                        "isNativeAccessibilityElement": "0",
+                                                                        "isFocused": "0",
+                                                                        "name": null,
+                                                                        "rect": {
+                                                                          "y": 782,
+                                                                          "x": 330,
+                                                                          "width": 7,
+                                                                          "height": 3
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": "수평 스크롤 막대, 1페이지",
+                                                                    "rect": {
+                                                                      "y": 755,
+                                                                      "x": 62,
+                                                                      "width": 278,
+                                                                      "height": 30
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "isAccessible": "0",
+                                                                "isNativeAccessibilityElement": "0",
+                                                                "isFocused": "0",
+                                                                "name": "RemindersList.ID.RemindersTable",
+                                                                "rect": {
+                                                                  "y": 0,
+                                                                  "x": 0,
+                                                                  "width": 402,
+                                                                  "height": 874
+                                                                }
+                                                              }
+                                                            ],
+                                                            "isAccessible": "0",
+                                                            "isNativeAccessibilityElement": "0",
+                                                            "isFocused": "0",
+                                                            "name": null,
+                                                            "rect": {
+                                                              "y": 0,
+                                                              "x": 0,
+                                                              "width": 402,
+                                                              "height": 874
+                                                            }
+                                                          },
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{16, 425.66666666666669}, {370, 23}}",
+                                                            "label": "미리 알림 목록",
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{16, 425}, {370, 24}}",
+                                                            "isVisible": "0",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "children": [
+                                                              {
+                                                                "customActions": null,
+                                                                "nativeFrame": "{{147.33333333333334, 425.66666666666669}, {107.33333333333334, 23}}",
+                                                                "label": "미리 알림 없음",
+                                                                "rawIdentifier": null,
+                                                                "traits": "StaticText",
+                                                                "frame": "{{147, 425}, {108, 24}}",
+                                                                "isVisible": "0",
+                                                                "type": "StaticText",
+                                                                "value": "미리 알림 없음",
+                                                                "isEnabled": "1",
+                                                                "isAccessible": "1",
+                                                                "isNativeAccessibilityElement": "1",
+                                                                "isFocused": "0",
+                                                                "name": "미리 알림 없음",
+                                                                "rect": {
+                                                                  "y": 425,
+                                                                  "x": 147,
+                                                                  "width": 108,
+                                                                  "height": 24
+                                                                }
+                                                              }
+                                                            ],
+                                                            "isAccessible": "0",
+                                                            "isNativeAccessibilityElement": "0",
+                                                            "isFocused": "0",
+                                                            "name": "미리 알림 목록",
+                                                            "rect": {
+                                                              "y": 425,
+                                                              "x": 16,
+                                                              "width": 370,
+                                                              "height": 24
+                                                            }
+                                                          }
+                                                        ],
+                                                        "isAccessible": "0",
+                                                        "isNativeAccessibilityElement": "0",
+                                                        "isFocused": "0",
+                                                        "name": null,
+                                                        "rect": {
+                                                          "y": 0,
+                                                          "x": 0,
+                                                          "width": 402,
+                                                          "height": 874
+                                                        }
+                                                      }
+                                                    ],
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 0,
+                                                      "x": 0,
+                                                      "width": 402,
+                                                      "height": 874
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": null,
+                                                "rect": {
+                                                  "y": 0,
+                                                  "x": 0,
+                                                  "width": 402,
+                                                  "height": 874
+                                                }
+                                              }
+                                            ],
+                                            "isAccessible": "0",
+                                            "isNativeAccessibilityElement": "0",
+                                            "isFocused": "0",
+                                            "name": null,
+                                            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                          }
+                                        ],
+                                        "isAccessible": "0",
+                                        "isNativeAccessibilityElement": "0",
+                                        "isFocused": "0",
+                                        "name": null,
+                                        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                      }
+                                    ],
+                                    "isAccessible": "0",
+                                    "isNativeAccessibilityElement": "0",
+                                    "isFocused": "0",
+                                    "name": null,
+                                    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                  },
+                                  {
+                                    "customActions": null,
+                                    "nativeFrame": "{{0, 0}, {402, 874}}",
+                                    "label": null,
+                                    "rawIdentifier": null,
+                                    "traits": "",
+                                    "frame": "{{0, 0}, {402, 874}}",
+                                    "isVisible": "0",
+                                    "type": "Other",
+                                    "value": null,
+                                    "isEnabled": "1",
+                                    "children": [
+                                      {
+                                        "customActions": null,
+                                        "nativeFrame": "{{0, 0}, {402, 874}}",
+                                        "label": null,
+                                        "rawIdentifier": null,
+                                        "traits": "",
+                                        "frame": "{{0, 0}, {402, 874}}",
+                                        "isVisible": "0",
+                                        "type": "Other",
+                                        "value": null,
+                                        "isEnabled": "1",
+                                        "children": [
+                                          {
+                                            "customActions": null,
+                                            "nativeFrame": "{{0, 788}, {402, 86}}",
+                                            "label": "도구 막대",
+                                            "rawIdentifier": "Toolbar",
+                                            "traits": "",
+                                            "frame": "{{0, 788}, {402, 86}}",
+                                            "isVisible": "0",
+                                            "type": "Toolbar",
+                                            "value": null,
+                                            "isEnabled": "1",
+                                            "children": [
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{28, 798}, {346, 48}}",
+                                                "label": null,
+                                                "rawIdentifier": null,
+                                                "traits": "",
+                                                "frame": "{{28, 798}, {346, 48}}",
+                                                "isVisible": "0",
+                                                "type": "Other",
+                                                "value": null,
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{28, 798}, {346, 48}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{28, 798}, {346, 48}}",
+                                                    "isVisible": "0",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "children": [
+                                                      {
+                                                        "customActions": null,
+                                                        "nativeFrame": "{{28, 798}, {0, 0}}",
+                                                        "label": null,
+                                                        "rawIdentifier": null,
+                                                        "traits": "",
+                                                        "frame": "{{28, 798}, {0, 0}}",
+                                                        "isVisible": "0",
+                                                        "type": "Other",
+                                                        "value": null,
+                                                        "isEnabled": "1",
+                                                        "children": [
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{326, 798}, {48, 48}}",
+                                                            "label": null,
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{326, 798}, {48, 48}}",
+                                                            "isVisible": "0",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "children": [
+                                                              {
+                                                                "customActions": null,
+                                                                "nativeFrame": "{{326, 798}, {48, 48}}",
+                                                                "label": null,
+                                                                "rawIdentifier": null,
+                                                                "traits": "",
+                                                                "frame": "{{326, 798}, {48, 48}}",
+                                                                "isVisible": "0",
+                                                                "type": "Other",
+                                                                "value": null,
+                                                                "isEnabled": "1",
+                                                                "children": [
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{331, 803}, {38, 38}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{331, 803}, {38, 38}}",
+                                                                    "isVisible": "0",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "children": [
+                                                                      {
+                                                                        "customActions": null,
+                                                                        "nativeFrame": "{{331, 803}, {38, 38}}",
+                                                                        "label": null,
+                                                                        "rawIdentifier": null,
+                                                                        "traits": "",
+                                                                        "frame": "{{331, 803}, {38, 38}}",
+                                                                        "isVisible": "0",
+                                                                        "type": "Other",
+                                                                        "value": null,
+                                                                        "isEnabled": "1",
+                                                                        "children": [
+                                                                          {
+                                                                            "customActions": null,
+                                                                            "nativeFrame": "{{331, 803}, {38, 38}}",
+                                                                            "label": "새로운 미리 알림",
+                                                                            "rawIdentifier": null,
+                                                                            "traits": "Button",
+                                                                            "frame": "{{331, 803}, {38, 38}}",
+                                                                            "isVisible": "0",
+                                                                            "type": "Button",
+                                                                            "value": null,
+                                                                            "isEnabled": "1",
+                                                                            "isAccessible": "1",
+                                                                            "isNativeAccessibilityElement": "1",
+                                                                            "isFocused": "0",
+                                                                            "name": "새로운 미리 알림",
+                                                                            "rect": {
+                                                                              "y": 803,
+                                                                              "x": 331,
+                                                                              "width": 38,
+                                                                              "height": 38
+                                                                            }
+                                                                          }
+                                                                        ],
+                                                                        "isAccessible": "0",
+                                                                        "isNativeAccessibilityElement": "0",
+                                                                        "isFocused": "0",
+                                                                        "name": null,
+                                                                        "rect": {
+                                                                          "y": 803,
+                                                                          "x": 331,
+                                                                          "width": 38,
+                                                                          "height": 38
+                                                                        }
+                                                                      }
+                                                                    ],
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 803,
+                                                                      "x": 331,
+                                                                      "width": 38,
+                                                                      "height": 38
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "isAccessible": "0",
+                                                                "isNativeAccessibilityElement": "0",
+                                                                "isFocused": "0",
+                                                                "name": null,
+                                                                "rect": {
+                                                                  "y": 798,
+                                                                  "x": 326,
+                                                                  "width": 48,
+                                                                  "height": 48
+                                                                }
+                                                              }
+                                                            ],
+                                                            "isAccessible": "0",
+                                                            "isNativeAccessibilityElement": "0",
+                                                            "isFocused": "0",
+                                                            "name": null,
+                                                            "rect": {
+                                                              "y": 798,
+                                                              "x": 326,
+                                                              "width": 48,
+                                                              "height": 48
+                                                            }
+                                                          }
+                                                        ],
+                                                        "isAccessible": "0",
+                                                        "isNativeAccessibilityElement": "0",
+                                                        "isFocused": "0",
+                                                        "name": null,
+                                                        "rect": {
+                                                          "y": 798,
+                                                          "x": 28,
+                                                          "width": 0,
+                                                          "height": 0
+                                                        }
+                                                      }
+                                                    ],
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 798,
+                                                      "x": 28,
+                                                      "width": 346,
+                                                      "height": 48
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": null,
+                                                "rect": {
+                                                  "y": 798,
+                                                  "x": 28,
+                                                  "width": 346,
+                                                  "height": 48
+                                                }
+                                              }
+                                            ],
+                                            "isAccessible": "0",
+                                            "isNativeAccessibilityElement": "0",
+                                            "isFocused": "0",
+                                            "name": "Toolbar",
+                                            "rect": { "y": 788, "x": 0, "width": 402, "height": 86 }
+                                          }
+                                        ],
+                                        "isAccessible": "0",
+                                        "isNativeAccessibilityElement": "0",
+                                        "isFocused": "0",
+                                        "name": null,
+                                        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                      }
+                                    ],
+                                    "isAccessible": "0",
+                                    "isNativeAccessibilityElement": "0",
+                                    "isFocused": "0",
+                                    "name": null,
+                                    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                  }
+                                ],
+                                "isAccessible": "0",
+                                "isNativeAccessibilityElement": "0",
+                                "isFocused": "0",
+                                "name": null,
+                                "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                              }
+                            ],
+                            "isAccessible": "0",
+                            "isNativeAccessibilityElement": "0",
+                            "isFocused": "0",
+                            "name": null,
+                            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                          }
+                        ],
+                        "isAccessible": "0",
+                        "isNativeAccessibilityElement": "0",
+                        "isFocused": "0",
+                        "name": null,
+                        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                      },
+                      {
+                        "customActions": null,
+                        "nativeFrame": "{{0, 0}, {402, 874}}",
+                        "label": null,
+                        "rawIdentifier": null,
+                        "traits": "",
+                        "frame": "{{0, 0}, {402, 874}}",
+                        "isVisible": "0",
+                        "type": "Other",
+                        "value": null,
+                        "isEnabled": "1",
+                        "children": [
+                          {
+                            "customActions": null,
+                            "nativeFrame": "{{0, 0}, {402, 874}}",
+                            "label": null,
+                            "rawIdentifier": null,
+                            "traits": "",
+                            "frame": "{{0, 0}, {402, 874}}",
+                            "isVisible": "0",
+                            "type": "Other",
+                            "value": null,
+                            "isEnabled": "1",
+                            "isAccessible": "0",
+                            "isNativeAccessibilityElement": "0",
+                            "isFocused": "0",
+                            "name": null,
+                            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                          }
+                        ],
+                        "isAccessible": "0",
+                        "isNativeAccessibilityElement": "0",
+                        "isFocused": "0",
+                        "name": null,
+                        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                      }
+                    ],
+                    "isAccessible": "0",
+                    "isNativeAccessibilityElement": "0",
+                    "isFocused": "0",
+                    "name": null,
+                    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                  }
+                ],
+                "isAccessible": "0",
+                "isNativeAccessibilityElement": "0",
+                "isFocused": "0",
+                "name": null,
+                "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+              }
+            ],
+            "isAccessible": "0",
+            "isNativeAccessibilityElement": "0",
+            "isFocused": "0",
+            "name": null,
+            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+          },
+          {
+            "customActions": null,
+            "nativeFrame": "{{0, 0}, {402, 874}}",
+            "label": null,
+            "rawIdentifier": null,
+            "traits": "",
+            "frame": "{{0, 0}, {402, 874}}",
+            "isVisible": "1",
+            "type": "Other",
+            "value": null,
+            "isEnabled": "1",
+            "children": [
+              {
+                "customActions": null,
+                "nativeFrame": "{{-402, -874}, {1206, 2622}}",
+                "label": null,
+                "rawIdentifier": null,
+                "traits": "",
+                "frame": "{{-402, -874}, {1206, 2622}}",
+                "isVisible": "0",
+                "type": "Other",
+                "value": null,
+                "isEnabled": "1",
+                "isAccessible": "0",
+                "isNativeAccessibilityElement": "0",
+                "isFocused": "0",
+                "name": null,
+                "rect": { "y": -874, "x": -402, "width": 1206, "height": 2622 }
+              },
+              {
+                "customActions": null,
+                "nativeFrame": "{{0, 62}, {402, 812}}",
+                "label": null,
+                "rawIdentifier": null,
+                "traits": "",
+                "frame": "{{0, 62}, {402, 812}}",
+                "isVisible": "1",
+                "type": "Other",
+                "value": null,
+                "isEnabled": "1",
+                "children": [
+                  {
+                    "customActions": null,
+                    "nativeFrame": "{{0, 62}, {402, 812}}",
+                    "label": null,
+                    "rawIdentifier": null,
+                    "traits": "",
+                    "frame": "{{0, 62}, {402, 812}}",
+                    "isVisible": "1",
+                    "type": "Other",
+                    "value": null,
+                    "isEnabled": "1",
+                    "children": [
+                      {
+                        "customActions": null,
+                        "nativeFrame": "{{0, 62}, {402, 812}}",
+                        "label": null,
+                        "rawIdentifier": null,
+                        "traits": "",
+                        "frame": "{{0, 62}, {402, 812}}",
+                        "isVisible": "1",
+                        "type": "Other",
+                        "value": null,
+                        "isEnabled": "1",
+                        "children": [
+                          {
+                            "customActions": null,
+                            "nativeFrame": "{{0, 62}, {402, 812}}",
+                            "label": null,
+                            "rawIdentifier": null,
+                            "traits": "",
+                            "frame": "{{0, 62}, {402, 812}}",
+                            "isVisible": "1",
+                            "type": "Other",
+                            "value": null,
+                            "isEnabled": "1",
+                            "children": [
+                              {
+                                "customActions": null,
+                                "nativeFrame": "{{0, 62}, {402, 812}}",
+                                "label": null,
+                                "rawIdentifier": null,
+                                "traits": "",
+                                "frame": "{{0, 62}, {402, 812}}",
+                                "isVisible": "1",
+                                "type": "Other",
+                                "value": null,
+                                "isEnabled": "1",
+                                "children": [
+                                  {
+                                    "customActions": null,
+                                    "nativeFrame": "{{0, 62}, {402, 812}}",
+                                    "label": null,
+                                    "rawIdentifier": null,
+                                    "traits": "",
+                                    "frame": "{{0, 62}, {402, 812}}",
+                                    "isVisible": "1",
+                                    "type": "Other",
+                                    "value": null,
+                                    "isEnabled": "1",
+                                    "children": [
+                                      {
+                                        "customActions": null,
+                                        "nativeFrame": "{{0, 62}, {402, 812}}",
+                                        "label": null,
+                                        "rawIdentifier": null,
+                                        "traits": "",
+                                        "frame": "{{0, 62}, {402, 812}}",
+                                        "isVisible": "1",
+                                        "type": "Other",
+                                        "value": null,
+                                        "isEnabled": "1",
+                                        "children": [
+                                          {
+                                            "customActions": null,
+                                            "nativeFrame": "{{0, 62}, {402, 812}}",
+                                            "label": null,
+                                            "rawIdentifier": null,
+                                            "traits": "",
+                                            "frame": "{{0, 62}, {402, 812}}",
+                                            "isVisible": "1",
+                                            "type": "ScrollView",
+                                            "value": null,
+                                            "isEnabled": "1",
+                                            "children": [
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{0, 62}, {402, 508.66666666666674}}",
+                                                "label": null,
+                                                "rawIdentifier": null,
+                                                "traits": "",
+                                                "frame": "{{0, 62}, {402, 509}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": null,
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{38, 140.66666666666669}, {326, 25.333333333333343}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{38, 140}, {326, 27}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "children": [
+                                                      {
+                                                        "customActions": null,
+                                                        "nativeFrame": "{{38, 140.66666666666669}, {326, 25.333333333333343}}",
+                                                        "label": "미리 알림 시작하기",
+                                                        "rawIdentifier": null,
+                                                        "traits": "Header, StaticText",
+                                                        "frame": "{{38, 140}, {326, 27}}",
+                                                        "isVisible": "1",
+                                                        "type": "StaticText",
+                                                        "value": "미리 알림 시작하기",
+                                                        "isEnabled": "1",
+                                                        "isAccessible": "1",
+                                                        "isNativeAccessibilityElement": "1",
+                                                        "isFocused": "0",
+                                                        "name": "미리 알림 시작하기",
+                                                        "rect": {
+                                                          "y": 140,
+                                                          "x": 38,
+                                                          "width": 326,
+                                                          "height": 27
+                                                        }
+                                                      }
+                                                    ],
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 140,
+                                                      "x": 38,
+                                                      "width": 326,
+                                                      "height": 27
+                                                    }
+                                                  },
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{38, 192.00000000000003}, {326, 378.66666666666674}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{38, 192}, {326, 379}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "children": [
+                                                      {
+                                                        "customActions": null,
+                                                        "nativeFrame": "{{38, 192.00000000000003}, {326, 378.66666666666674}}",
+                                                        "label": null,
+                                                        "rawIdentifier": null,
+                                                        "traits": "",
+                                                        "frame": "{{38, 192}, {326, 379}}",
+                                                        "isVisible": "1",
+                                                        "type": "Other",
+                                                        "value": null,
+                                                        "isEnabled": "1",
+                                                        "children": [
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{38, 192.00000000000003}, {326, 82.666666666666657}}",
+                                                            "label": "빠르게 생성하기, 목록에 직접 입력하거나, Siri에게 요청하거나, 캘린더 앱에서 미리 알림을 추가할 수 있습니다.",
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{38, 192}, {326, 83}}",
+                                                            "isVisible": "1",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "isAccessible": "1",
+                                                            "isNativeAccessibilityElement": "1",
+                                                            "isFocused": "0",
+                                                            "name": "빠르게 생성하기, 목록에 직접 입력하거나, Siri에게 요청하거나, 캘린더 앱에서 미리 알림을 추가할 수 있습니다.",
+                                                            "rect": {
+                                                              "y": 192,
+                                                              "x": 38,
+                                                              "width": 326,
+                                                              "height": 83
+                                                            }
+                                                          },
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{38, 290.66666666666669}, {326, 82.666666666666686}}",
+                                                            "label": "식료품 쇼핑, 사용자가 추가한 항목을 자동으로 카테고리별로 분류하는 식료품 목록을 생성할 수 있습니다.",
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{38, 290}, {326, 84}}",
+                                                            "isVisible": "1",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "isAccessible": "1",
+                                                            "isNativeAccessibilityElement": "1",
+                                                            "isFocused": "0",
+                                                            "name": "식료품 쇼핑, 사용자가 추가한 항목을 자동으로 카테고리별로 분류하는 식료품 목록을 생성할 수 있습니다.",
+                                                            "rect": {
+                                                              "y": 290,
+                                                              "x": 38,
+                                                              "width": 326,
+                                                              "height": 84
+                                                            }
+                                                          },
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{38, 389.33333333333337}, {326, 61.666666666666686}}",
+                                                            "label": "간편한 공유, 목록에서 공동 작업하고, 개별 작업을 할당합니다.",
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{38, 389}, {326, 63}}",
+                                                            "isVisible": "1",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "isAccessible": "1",
+                                                            "isNativeAccessibilityElement": "1",
+                                                            "isFocused": "0",
+                                                            "name": "간편한 공유, 목록에서 공동 작업하고, 개별 작업을 할당합니다.",
+                                                            "rect": {
+                                                              "y": 389,
+                                                              "x": 38,
+                                                              "width": 326,
+                                                              "height": 63
+                                                            }
+                                                          },
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{38, 467}, {326, 103.66666666666663}}",
+                                                            "label": "강력한 정리 기능, 필요에 맞게 목록을 생성하고, 태그를 통해 미리 알림을 카테고리로 분류하고, 스마트 목록을 통해 사용자의 작업 흐름에 맞게 미리 알림을 관리할 수 있습니다.",
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{38, 467}, {326, 104}}",
+                                                            "isVisible": "1",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "isAccessible": "1",
+                                                            "isNativeAccessibilityElement": "1",
+                                                            "isFocused": "0",
+                                                            "name": "강력한 정리 기능, 필요에 맞게 목록을 생성하고, 태그를 통해 미리 알림을 카테고리로 분류하고, 스마트 목록을 통해 사용자의 작업 흐름에 맞게 미리 알림을 관리할 수 있습니다.",
+                                                            "rect": {
+                                                              "y": 467,
+                                                              "x": 38,
+                                                              "width": 326,
+                                                              "height": 104
+                                                            }
+                                                          }
+                                                        ],
+                                                        "isAccessible": "0",
+                                                        "isNativeAccessibilityElement": "0",
+                                                        "isFocused": "0",
+                                                        "name": null,
+                                                        "rect": {
+                                                          "y": 192,
+                                                          "x": 38,
+                                                          "width": 326,
+                                                          "height": 379
+                                                        }
+                                                      }
+                                                    ],
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 192,
+                                                      "x": 38,
+                                                      "width": 326,
+                                                      "height": 379
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": null,
+                                                "rect": {
+                                                  "y": 62,
+                                                  "x": 0,
+                                                  "width": 402,
+                                                  "height": 509
+                                                }
+                                              },
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{369, 100}, {30, 660}}",
+                                                "label": "수직 스크롤 막대, 1페이지",
+                                                "rawIdentifier": null,
+                                                "traits": "Adjustable",
+                                                "frame": "{{369, 100}, {30, 660}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": "0%",
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{396, 292.33333333333337}, {3, 464.66666666666663}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{396, 292}, {3, 465}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 292,
+                                                      "x": 396,
+                                                      "width": 3,
+                                                      "height": 465
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": "수직 스크롤 막대, 1페이지",
+                                                "rect": {
+                                                  "y": 100,
+                                                  "x": 369,
+                                                  "width": 30,
+                                                  "height": 660
+                                                }
+                                              },
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{62, 727}, {278, 30}}",
+                                                "label": "수평 스크롤 막대, 1페이지",
+                                                "rawIdentifier": null,
+                                                "traits": "Adjustable",
+                                                "frame": "{{62, 727}, {278, 30}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": "0%",
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{65, 754}, {272, 3}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{65, 754}, {272, 3}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 754,
+                                                      "x": 65,
+                                                      "width": 272,
+                                                      "height": 3
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": "수평 스크롤 막대, 1페이지",
+                                                "rect": {
+                                                  "y": 727,
+                                                  "x": 62,
+                                                  "width": 278,
+                                                  "height": 30
+                                                }
+                                              },
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{369, 100}, {30, 660}}",
+                                                "label": "수직 스크롤 막대, 1페이지",
+                                                "rawIdentifier": null,
+                                                "traits": "Adjustable",
+                                                "frame": "{{369, 100}, {30, 660}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": "0%",
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{396, 292.33333333333337}, {3, 464.66666666666663}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{396, 292}, {3, 465}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 292,
+                                                      "x": 396,
+                                                      "width": 3,
+                                                      "height": 465
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": "수직 스크롤 막대, 1페이지",
+                                                "rect": {
+                                                  "y": 100,
+                                                  "x": 369,
+                                                  "width": 30,
+                                                  "height": 660
+                                                }
+                                              },
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{62, 727}, {278, 30}}",
+                                                "label": "수평 스크롤 막대, 1페이지",
+                                                "rawIdentifier": null,
+                                                "traits": "Adjustable",
+                                                "frame": "{{62, 727}, {278, 30}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": "0%",
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{65, 754}, {272, 3}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{65, 754}, {272, 3}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 754,
+                                                      "x": 65,
+                                                      "width": 272,
+                                                      "height": 3
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": "수평 스크롤 막대, 1페이지",
+                                                "rect": {
+                                                  "y": 727,
+                                                  "x": 62,
+                                                  "width": 278,
+                                                  "height": 30
+                                                }
+                                              }
+                                            ],
+                                            "isAccessible": "0",
+                                            "isNativeAccessibilityElement": "0",
+                                            "isFocused": "0",
+                                            "name": null,
+                                            "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                                          },
+                                          {
+                                            "customActions": null,
+                                            "nativeFrame": "{{0, 760}, {402, 114}}",
+                                            "label": null,
+                                            "rawIdentifier": null,
+                                            "traits": "",
+                                            "frame": "{{0, 760}, {402, 114}}",
+                                            "isVisible": "1",
+                                            "type": "Other",
+                                            "value": null,
+                                            "isEnabled": "1",
+                                            "children": [
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{0, 760}, {402, 114}}",
+                                                "label": null,
+                                                "rawIdentifier": null,
+                                                "traits": "",
+                                                "frame": "{{0, 760}, {402, 114}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": null,
+                                                "isEnabled": "1",
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": null,
+                                                "rect": {
+                                                  "y": 760,
+                                                  "x": 0,
+                                                  "width": 402,
+                                                  "height": 114
+                                                }
+                                              },
+                                              {
+                                                "customActions": null,
+                                                "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                "label": null,
+                                                "rawIdentifier": null,
+                                                "traits": "",
+                                                "frame": "{{38, 784}, {326, 52}}",
+                                                "isVisible": "1",
+                                                "type": "Other",
+                                                "value": null,
+                                                "isEnabled": "1",
+                                                "children": [
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                    "label": "계속",
+                                                    "rawIdentifier": null,
+                                                    "traits": "Button",
+                                                    "frame": "{{38, 784}, {326, 52}}",
+                                                    "isVisible": "1",
+                                                    "type": "Button",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "children": [
+                                                      {
+                                                        "customActions": null,
+                                                        "nativeFrame": "{{187, 800.33333333333337}, {28, 19.333333333333371}}",
+                                                        "label": "계속",
+                                                        "rawIdentifier": null,
+                                                        "traits": "StaticText",
+                                                        "frame": "{{187, 800}, {28, 20}}",
+                                                        "isVisible": "1",
+                                                        "type": "StaticText",
+                                                        "value": "계속",
+                                                        "isEnabled": "1",
+                                                        "isAccessible": "0",
+                                                        "isNativeAccessibilityElement": "1",
+                                                        "isFocused": "0",
+                                                        "name": "계속",
+                                                        "rect": {
+                                                          "y": 800,
+                                                          "x": 187,
+                                                          "width": 28,
+                                                          "height": 20
+                                                        }
+                                                      }
+                                                    ],
+                                                    "isAccessible": "1",
+                                                    "isNativeAccessibilityElement": "1",
+                                                    "isFocused": "0",
+                                                    "name": "계속",
+                                                    "rect": {
+                                                      "y": 784,
+                                                      "x": 38,
+                                                      "width": 326,
+                                                      "height": 52
+                                                    }
+                                                  },
+                                                  {
+                                                    "customActions": null,
+                                                    "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                    "label": null,
+                                                    "rawIdentifier": null,
+                                                    "traits": "",
+                                                    "frame": "{{38, 784}, {326, 52}}",
+                                                    "isVisible": "1",
+                                                    "type": "Other",
+                                                    "value": null,
+                                                    "isEnabled": "1",
+                                                    "children": [
+                                                      {
+                                                        "customActions": null,
+                                                        "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                        "label": null,
+                                                        "rawIdentifier": null,
+                                                        "traits": "",
+                                                        "frame": "{{38, 784}, {326, 52}}",
+                                                        "isVisible": "1",
+                                                        "type": "Other",
+                                                        "value": null,
+                                                        "isEnabled": "1",
+                                                        "children": [
+                                                          {
+                                                            "customActions": null,
+                                                            "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                            "label": null,
+                                                            "rawIdentifier": null,
+                                                            "traits": "",
+                                                            "frame": "{{38, 784}, {326, 52}}",
+                                                            "isVisible": "1",
+                                                            "type": "Other",
+                                                            "value": null,
+                                                            "isEnabled": "1",
+                                                            "children": [
+                                                              {
+                                                                "customActions": null,
+                                                                "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                                "label": null,
+                                                                "rawIdentifier": null,
+                                                                "traits": "",
+                                                                "frame": "{{38, 784}, {326, 52}}",
+                                                                "isVisible": "1",
+                                                                "type": "Other",
+                                                                "value": null,
+                                                                "isEnabled": "1",
+                                                                "children": [
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{38, 784}, {326, 52}}",
+                                                                    "isVisible": "1",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 784,
+                                                                      "x": 38,
+                                                                      "width": 326,
+                                                                      "height": 52
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "isAccessible": "0",
+                                                                "isNativeAccessibilityElement": "0",
+                                                                "isFocused": "0",
+                                                                "name": null,
+                                                                "rect": {
+                                                                  "y": 784,
+                                                                  "x": 38,
+                                                                  "width": 326,
+                                                                  "height": 52
+                                                                }
+                                                              },
+                                                              {
+                                                                "customActions": null,
+                                                                "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                                "label": null,
+                                                                "rawIdentifier": null,
+                                                                "traits": "",
+                                                                "frame": "{{38, 784}, {326, 52}}",
+                                                                "isVisible": "1",
+                                                                "type": "Other",
+                                                                "value": null,
+                                                                "isEnabled": "1",
+                                                                "children": [
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{38, 784}, {326, 52}}",
+                                                                    "isVisible": "1",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 784,
+                                                                      "x": 38,
+                                                                      "width": 326,
+                                                                      "height": 52
+                                                                    }
+                                                                  },
+                                                                  {
+                                                                    "customActions": null,
+                                                                    "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                                    "label": null,
+                                                                    "rawIdentifier": null,
+                                                                    "traits": "",
+                                                                    "frame": "{{38, 784}, {326, 52}}",
+                                                                    "isVisible": "1",
+                                                                    "type": "Other",
+                                                                    "value": null,
+                                                                    "isEnabled": "1",
+                                                                    "isAccessible": "0",
+                                                                    "isNativeAccessibilityElement": "0",
+                                                                    "isFocused": "0",
+                                                                    "name": null,
+                                                                    "rect": {
+                                                                      "y": 784,
+                                                                      "x": 38,
+                                                                      "width": 326,
+                                                                      "height": 52
+                                                                    }
+                                                                  }
+                                                                ],
+                                                                "isAccessible": "0",
+                                                                "isNativeAccessibilityElement": "0",
+                                                                "isFocused": "0",
+                                                                "name": null,
+                                                                "rect": {
+                                                                  "y": 784,
+                                                                  "x": 38,
+                                                                  "width": 326,
+                                                                  "height": 52
+                                                                }
+                                                              },
+                                                              {
+                                                                "customActions": null,
+                                                                "nativeFrame": "{{38, 784}, {326, 52}}",
+                                                                "label": null,
+                                                                "rawIdentifier": null,
+                                                                "traits": "",
+                                                                "frame": "{{38, 784}, {326, 52}}",
+                                                                "isVisible": "1",
+                                                                "type": "Other",
+                                                                "value": null,
+                                                                "isEnabled": "1",
+                                                                "isAccessible": "0",
+                                                                "isNativeAccessibilityElement": "0",
+                                                                "isFocused": "0",
+                                                                "name": null,
+                                                                "rect": {
+                                                                  "y": 784,
+                                                                  "x": 38,
+                                                                  "width": 326,
+                                                                  "height": 52
+                                                                }
+                                                              }
+                                                            ],
+                                                            "isAccessible": "0",
+                                                            "isNativeAccessibilityElement": "0",
+                                                            "isFocused": "0",
+                                                            "name": null,
+                                                            "rect": {
+                                                              "y": 784,
+                                                              "x": 38,
+                                                              "width": 326,
+                                                              "height": 52
+                                                            }
+                                                          }
+                                                        ],
+                                                        "isAccessible": "0",
+                                                        "isNativeAccessibilityElement": "0",
+                                                        "isFocused": "0",
+                                                        "name": null,
+                                                        "rect": {
+                                                          "y": 784,
+                                                          "x": 38,
+                                                          "width": 326,
+                                                          "height": 52
+                                                        }
+                                                      }
+                                                    ],
+                                                    "isAccessible": "0",
+                                                    "isNativeAccessibilityElement": "0",
+                                                    "isFocused": "0",
+                                                    "name": null,
+                                                    "rect": {
+                                                      "y": 784,
+                                                      "x": 38,
+                                                      "width": 326,
+                                                      "height": 52
+                                                    }
+                                                  }
+                                                ],
+                                                "isAccessible": "0",
+                                                "isNativeAccessibilityElement": "0",
+                                                "isFocused": "0",
+                                                "name": null,
+                                                "rect": {
+                                                  "y": 784,
+                                                  "x": 38,
+                                                  "width": 326,
+                                                  "height": 52
+                                                }
+                                              }
+                                            ],
+                                            "isAccessible": "0",
+                                            "isNativeAccessibilityElement": "0",
+                                            "isFocused": "0",
+                                            "name": null,
+                                            "rect": {
+                                              "y": 760,
+                                              "x": 0,
+                                              "width": 402,
+                                              "height": 114
+                                            }
+                                          }
+                                        ],
+                                        "isAccessible": "0",
+                                        "isNativeAccessibilityElement": "0",
+                                        "isFocused": "0",
+                                        "name": null,
+                                        "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                                      }
+                                    ],
+                                    "isAccessible": "0",
+                                    "isNativeAccessibilityElement": "0",
+                                    "isFocused": "0",
+                                    "name": null,
+                                    "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                                  }
+                                ],
+                                "isAccessible": "0",
+                                "isNativeAccessibilityElement": "0",
+                                "isFocused": "0",
+                                "name": null,
+                                "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                              },
+                              {
+                                "customActions": null,
+                                "nativeFrame": "{{0, 62}, {402, 812}}",
+                                "label": null,
+                                "rawIdentifier": null,
+                                "traits": "",
+                                "frame": "{{0, 62}, {402, 812}}",
+                                "isVisible": "0",
+                                "type": "Other",
+                                "value": null,
+                                "isEnabled": "1",
+                                "children": [
+                                  {
+                                    "customActions": null,
+                                    "nativeFrame": "{{0, 62}, {402, 812}}",
+                                    "label": null,
+                                    "rawIdentifier": null,
+                                    "traits": "",
+                                    "frame": "{{0, 62}, {402, 812}}",
+                                    "isVisible": "0",
+                                    "type": "Other",
+                                    "value": null,
+                                    "isEnabled": "1",
+                                    "isAccessible": "0",
+                                    "isNativeAccessibilityElement": "0",
+                                    "isFocused": "0",
+                                    "name": null,
+                                    "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                                  }
+                                ],
+                                "isAccessible": "0",
+                                "isNativeAccessibilityElement": "0",
+                                "isFocused": "0",
+                                "name": null,
+                                "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                              }
+                            ],
+                            "isAccessible": "0",
+                            "isNativeAccessibilityElement": "0",
+                            "isFocused": "0",
+                            "name": null,
+                            "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                          }
+                        ],
+                        "isAccessible": "0",
+                        "isNativeAccessibilityElement": "0",
+                        "isFocused": "0",
+                        "name": null,
+                        "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                      }
+                    ],
+                    "isAccessible": "0",
+                    "isNativeAccessibilityElement": "0",
+                    "isFocused": "0",
+                    "name": null,
+                    "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+                  }
+                ],
+                "isAccessible": "0",
+                "isNativeAccessibilityElement": "0",
+                "isFocused": "0",
+                "name": null,
+                "rect": { "y": 62, "x": 0, "width": 402, "height": 812 }
+              }
+            ],
+            "isAccessible": "0",
+            "isNativeAccessibilityElement": "0",
+            "isFocused": "0",
+            "name": null,
+            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+          }
+        ],
+        "isAccessible": "0",
+        "isNativeAccessibilityElement": "0",
+        "isFocused": "0",
+        "name": null,
+        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+      },
+      {
+        "customActions": null,
+        "nativeFrame": "{{0, 0}, {402, 874}}",
+        "label": null,
+        "rawIdentifier": null,
+        "traits": "",
+        "frame": "{{0, 0}, {402, 874}}",
+        "isVisible": "0",
+        "type": "Window",
+        "value": null,
+        "isEnabled": "1",
+        "children": [
+          {
+            "customActions": null,
+            "nativeFrame": "{{0, 0}, {402, 874}}",
+            "label": null,
+            "rawIdentifier": null,
+            "traits": "",
+            "frame": "{{0, 0}, {402, 874}}",
+            "isVisible": "0",
+            "type": "Other",
+            "value": null,
+            "isEnabled": "1",
+            "children": [
+              {
+                "customActions": null,
+                "nativeFrame": "{{0, 0}, {402, 874}}",
+                "label": null,
+                "rawIdentifier": null,
+                "traits": "",
+                "frame": "{{0, 0}, {402, 874}}",
+                "isVisible": "0",
+                "type": "Other",
+                "value": null,
+                "isEnabled": "1",
+                "isAccessible": "0",
+                "isNativeAccessibilityElement": "0",
+                "isFocused": "0",
+                "name": null,
+                "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+              }
+            ],
+            "isAccessible": "0",
+            "isNativeAccessibilityElement": "0",
+            "isFocused": "0",
+            "name": null,
+            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+          }
+        ],
+        "isAccessible": "0",
+        "isNativeAccessibilityElement": "0",
+        "isFocused": "0",
+        "name": null,
+        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+      }
+    ],
+    "isAccessible": "0",
+    "isNativeAccessibilityElement": "0",
+    "isFocused": "0",
+    "name": "미리 알림",
+    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+  },
+  "sessionId": "0489E9EF-19A4-4446-A320-1FF1D72212C2"
+}

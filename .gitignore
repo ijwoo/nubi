@@ -15,3 +15,6 @@ eval-results/
 # Xcode (Orb, added in phase 05)
 *.xcuserdatad/
 DerivedData/
+
+# WebDriverAgent checkout and build output — cloned by scripts/wda.sh
+.wda/

@@ -14,12 +14,23 @@ export interface WdaRect {
 }
 
 export interface WdaNode {
-  /** e.g. "XCUIElementTypeButton". Prefix is stripped during compaction. */
+  /**
+   * Element type. Recent WDA sends the short form ("Button"); older builds send
+   * "XCUIElementTypeButton". `shortType` normalizes both.
+   */
   type: string;
   /**
+   * The real `accessibilityIdentifier`, or null when the app set none.
+   *
+   * Verified against WDA 16.12.5: this field is authoritative, so there is no
+   * need to infer an identifier from `name`. Older builds omit it entirely,
+   * which is the only case where `identifierOf` falls back to guessing.
+   */
+  rawIdentifier?: string | null;
+  /**
    * WDA reports `accessibilityIdentifier` here when the app sets one, and
-   * silently falls back to the label when it does not. That fallback is why
-   * `name === label` cannot be treated as an identifier — see `identifierOf`.
+   * silently falls back to the label when it does not — which is why `name` is
+   * only consulted when `rawIdentifier` is absent.
    */
   name?: string | null;
   label?: string | null;
@@ -49,16 +60,23 @@ export function shortType(type: string): string {
 }
 
 /**
- * Recover the real accessibilityIdentifier, or undefined when the app never
- * set one.
+ * The element's accessibilityIdentifier, or undefined when it has none.
  *
- * This is the single most load-bearing assumption in the parser: an identifier
- * is a selector that survives redesigns, a label is not (ADR 0004). Getting it
- * wrong in the permissive direction files fragile selectors under the most
- * stable rung, so the check errs strict — if `name` is indistinguishable from
- * the label, we report no identifier.
+ * An identifier is a selector that survives redesigns; a label is not
+ * (ADR 0004). Filing a label under the most stable rung would put the most
+ * fragile value in the place the replay engine trusts most, so this reads the
+ * authoritative field rather than inferring one.
+ *
+ * `rawIdentifier` is that field. When it is present — even as null — it is
+ * believed outright. Only a build that omits the key entirely falls back to
+ * the older `name !== label` heuristic, and that fallback errs strict: a `name`
+ * indistinguishable from the label is reported as no identifier at all.
  */
 export function identifierOf(node: WdaNode): string | undefined {
+  if ('rawIdentifier' in node) {
+    const raw = node.rawIdentifier?.trim();
+    return raw ? raw : undefined;
+  }
   const name = node.name?.trim();
   if (!name) return undefined;
   const label = node.label?.trim();
