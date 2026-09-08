@@ -1,0 +1,71 @@
+{
+  "value": {
+    "type": "XCUIElementTypeApplication",
+    "name": "Music",
+    "label": "Music",
+    "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+    "isEnabled": "true",
+    "isVisible": "1",
+    "children": [
+      {
+        "type": "XCUIElementTypeOther",
+        "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+        "isEnabled": "true",
+        "isVisible": "1",
+        "isAccessible": "0",
+        "children": [
+          {
+            "type": "XCUIElementTypeStaticText",
+            "name": "지금 듣기",
+            "label": "지금 듣기",
+            "rect": { "x": 20, "y": 70, "width": 120, "height": 34 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "1",
+            "children": []
+          },
+          {
+            "type": "XCUIElementTypeCell",
+            "name": "recent_0",
+            "label": "최근 재생: Attention",
+            "rect": { "x": 0, "y": 130, "width": 393, "height": 64 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "1",
+            "children": []
+          },
+          {
+            "type": "XCUIElementTypeTabBar",
+            "rect": { "x": 0, "y": 780, "width": 393, "height": 72 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "0",
+            "children": [
+              {
+                "type": "XCUIElementTypeButton",
+                "name": "홈",
+                "label": "홈",
+                "rect": { "x": 20, "y": 790, "width": 60, "height": 50 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeButton",
+                "name": "tab_search",
+                "label": "검색",
+                "rect": { "x": 100, "y": 790, "width": 60, "height": 50 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sessionId": "fixture-music-home"
+}

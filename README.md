@@ -68,6 +68,24 @@ selector is patched back into the macro file.
 success the trajectory is distilled into a macro candidate. **This is what feeds the
 replay path** — the whole design is a loop from Explore back into Replay.
 
+## Try it without a phone
+
+Screens recorded from a real device are replayed by a fake backend, so a fresh
+clone can walk a route with no device, no API key, and no network.
+
+```bash
+npm install
+npm run nubi -- demo
+```
+
+```
+✓ launch             home -> home
+✓ tap 검색 탭           home -> search-empty
+✓ type "뉴진스"         search-empty -> search-results
+✓ tap Hype Boy       search-results -> playing
+✓ assert 재생 중        playing -> playing
+```
+
 ## Architecture
 
 ```

@@ -1,0 +1,71 @@
+{
+  "value": {
+    "type": "XCUIElementTypeApplication",
+    "name": "Music",
+    "label": "Music",
+    "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+    "isEnabled": "true",
+    "isVisible": "1",
+    "children": [
+      {
+        "type": "XCUIElementTypeOther",
+        "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+        "isEnabled": "true",
+        "isVisible": "1",
+        "isAccessible": "0",
+        "children": [
+          {
+            "type": "XCUIElementTypeSearchField",
+            "name": "search_field",
+            "label": "아티스트, 곡, 가사",
+            "rect": { "x": 16, "y": 111, "width": 361, "height": 36 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "1",
+            "children": []
+          },
+          {
+            "type": "XCUIElementTypeStaticText",
+            "name": "최근 검색",
+            "label": "최근 검색",
+            "rect": { "x": 20, "y": 170, "width": 100, "height": 22 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "1",
+            "children": []
+          },
+          {
+            "type": "XCUIElementTypeTabBar",
+            "rect": { "x": 0, "y": 780, "width": 393, "height": 72 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "0",
+            "children": [
+              {
+                "type": "XCUIElementTypeButton",
+                "name": "홈",
+                "label": "홈",
+                "rect": { "x": 20, "y": 790, "width": 60, "height": 50 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeButton",
+                "name": "tab_search",
+                "label": "검색",
+                "rect": { "x": 100, "y": 790, "width": 60, "height": 50 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sessionId": "fixture-music-search-empty"
+}
