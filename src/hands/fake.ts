@@ -188,9 +188,9 @@ export class FakeHands implements Hands {
     return { ok: true, screen: this.snapshot() };
   }
 
-  async launch(target: { url?: string; bundleId?: string }): Promise<ActResult> {
+  async launch(target: { url?: string; bundleId?: string; restart?: boolean }): Promise<ActResult> {
     const key = target.url ?? target.bundleId ?? '';
-    const named = this.scenario.launch[key];
+    const named = target.restart ? undefined : this.scenario.launch[key];
     const before = this.current;
     this.current = named ?? this.scenario.start;
     this.log('launch', before, { target, matched: named !== undefined });

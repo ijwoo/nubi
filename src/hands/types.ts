@@ -24,7 +24,14 @@ export interface Hands {
   type(text: string, opts?: { submit?: boolean }): Promise<ActResult>;
   swipe(from: Point, to: Point, durationMs?: number): Promise<ActResult>;
   back(): Promise<ActResult>;
-  launch(target: { url?: string; bundleId?: string }): Promise<ActResult>;
+  /**
+   * Bring an app to the foreground.
+   *
+   * `restart: true` kills it first. Without that, launching an app that is
+   * already running just reveals whatever screen it was left on — fine for
+   * resuming, useless for starting from a known place.
+   */
+  launch(target: { url?: string; bundleId?: string; restart?: boolean }): Promise<ActResult>;
 
   /** Wait until a selector resolves, or the timeout elapses. */
   assert(sel: Selector, timeoutMs?: number): Promise<AssertResult>;

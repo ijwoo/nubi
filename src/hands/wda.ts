@@ -285,8 +285,15 @@ export class WdaHands implements Hands {
    * there. Falling back to a plain launch only reaches the app's own start
    * screen.
    */
-  async launch(target: { url?: string; bundleId?: string }): Promise<ActResult> {
+  async launch(target: { url?: string; bundleId?: string; restart?: boolean }): Promise<ActResult> {
     try {
+      if (target.restart && target.bundleId) {
+        // Terminating first is what makes "start from the app's home screen"
+        // mean anything; a plain launch reveals the screen it was left on.
+        await this.withSession((id) =>
+          this.request('POST', `/session/${id}/wda/apps/terminate`, { bundleId: target.bundleId }),
+        ).catch(() => undefined); // not running is not a failure
+      }
       if (target.url) {
         await this.withSession((id) =>
           this.request('POST', `/session/${id}/url`, { url: target.url }),
