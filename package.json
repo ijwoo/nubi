@@ -5,7 +5,9 @@
   "type": "module",
   "description": "A voice-driven iPhone agent that learns a path once, then replays it without the model.",
   "license": "MIT",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "tsx watch bin/nubi.ts",
     "nubi": "tsx bin/nubi.ts",
@@ -15,7 +17,9 @@
     "test:watch": "vitest",
     "lint": "biome check .",
     "fix": "biome check --write .",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test",
+    "live": "tsx scripts/live-check.ts",
+    "wda": "./scripts/wda.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
