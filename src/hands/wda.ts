@@ -169,6 +169,19 @@ export class WdaHands implements Hands {
     });
   }
 
+  /**
+   * The raw source tree, uncompacted.
+   *
+   * For recording fixtures. Everything else works from `screen()` — saving a
+   * compacted tree would bake today's compaction rules into the fixture and
+   * stop it from catching tomorrow's mistakes.
+   */
+  async rawSource(): Promise<WdaNode> {
+    return this.withSession((id) =>
+      this.request<WdaNode>('GET', `/session/${id}/source?format=json`),
+    );
+  }
+
   async find(sel: Selector, alt?: Selector): Promise<FindResult> {
     const screen = await this.screen();
     const r = resolveWithFallback(sel, alt, screen);
