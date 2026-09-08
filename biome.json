@@ -1,6 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "files": { "ignore": ["node_modules", "traces", "dist", "coverage"] },
+  "files": { "ignore": ["node_modules", ".wda", "traces", "eval-results", "dist", "coverage"] },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "linter": {
     "enabled": true,
