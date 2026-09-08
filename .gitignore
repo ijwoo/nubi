@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+
+# Local config and secrets
+.env
+.env.local
+
+# Run artifacts — traces and eval reports are generated, not committed.
+# Curated benchmark snapshots live in docs/ instead.
+traces/
+eval-results/
+
+# Xcode (Orb, added in phase 05)
+*.xcuserdatad/
+DerivedData/
