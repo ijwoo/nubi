@@ -1,0 +1,22 @@
+{
+  "app": "com.apple.Music",
+  "start": "home",
+  "launch": {
+    "musicapp://": "home",
+    "musicapp://search": "search-empty"
+  },
+  "screens": {
+    "home": "./music-home.json",
+    "search-empty": "./music-search-empty.json",
+    "search-results": "./music-search.json",
+    "playing": "./music-playing.json"
+  },
+  "transitions": [
+    { "from": "home", "tap": "tab_search", "to": "search-empty" },
+    { "from": "search-empty", "type": true, "to": "search-results" },
+    { "from": "search-results", "tap": "Hype Boy", "to": "playing" },
+    { "from": "search-results", "tap": "tab_search", "to": "search-empty" },
+    { "from": "playing", "tap": "close_player", "to": "search-results" },
+    { "from": "*", "back": true, "to": "home" }
+  ]
+}
