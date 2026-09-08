@@ -1,0 +1,201 @@
+{
+  "value": {
+    "type": "XCUIElementTypeApplication",
+    "name": "Music",
+    "label": "Music",
+    "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+    "isEnabled": "true",
+    "isVisible": "1",
+    "isAccessible": "0",
+    "children": [
+      {
+        "type": "XCUIElementTypeWindow",
+        "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+        "isEnabled": "true",
+        "isVisible": "1",
+        "children": [
+          {
+            "type": "XCUIElementTypeOther",
+            "rect": { "x": 0, "y": 0, "width": 393, "height": 852 },
+            "isEnabled": "true",
+            "isVisible": "1",
+            "isAccessible": "0",
+            "children": [
+              {
+                "type": "XCUIElementTypeNavigationBar",
+                "name": "검색",
+                "label": "검색",
+                "rect": { "x": 0, "y": 59, "width": 393, "height": 44 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "0",
+                "children": [
+                  {
+                    "type": "XCUIElementTypeButton",
+                    "name": "nav_back",
+                    "label": "뒤로",
+                    "rect": { "x": 8, "y": 63, "width": 40, "height": 36 },
+                    "isEnabled": "true",
+                    "isVisible": "1",
+                    "isAccessible": "1",
+                    "children": []
+                  },
+                  {
+                    "type": "XCUIElementTypeStaticText",
+                    "name": "검색",
+                    "label": "검색",
+                    "rect": { "x": 168, "y": 70, "width": 57, "height": 22 },
+                    "isEnabled": "true",
+                    "isVisible": "1",
+                    "isAccessible": "1",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "XCUIElementTypeSearchField",
+                "name": "search_field",
+                "label": "아티스트, 곡, 가사",
+                "value": "뉴진스",
+                "rect": { "x": 16, "y": 111, "width": 361, "height": 36 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeButton",
+                "name": "취소",
+                "label": "취소",
+                "rect": { "x": 0, "y": 0, "width": 0, "height": 0 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeTable",
+                "rect": { "x": 0, "y": 155, "width": 393, "height": 600 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "0",
+                "children": [
+                  {
+                    "type": "XCUIElementTypeCell",
+                    "name": "Hype Boy",
+                    "label": "Hype Boy",
+                    "rect": { "x": 0, "y": 155, "width": 393, "height": 64 },
+                    "isEnabled": "true",
+                    "isVisible": "1",
+                    "isAccessible": "0",
+                    "children": [
+                      {
+                        "type": "XCUIElementTypeStaticText",
+                        "name": "Hype Boy",
+                        "label": "Hype Boy",
+                        "rect": { "x": 76, "y": 168, "width": 120, "height": 20 },
+                        "isEnabled": "true",
+                        "isVisible": "1",
+                        "isAccessible": "1",
+                        "children": []
+                      },
+                      {
+                        "type": "XCUIElementTypeStaticText",
+                        "name": "NewJeans",
+                        "label": "NewJeans",
+                        "rect": { "x": 76, "y": 190, "width": 100, "height": 18 },
+                        "isEnabled": "true",
+                        "isVisible": "1",
+                        "isAccessible": "1",
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "XCUIElementTypeCell",
+                    "name": "Ditto",
+                    "label": "Ditto",
+                    "rect": { "x": 0, "y": 219, "width": 393, "height": 64 },
+                    "isEnabled": "true",
+                    "isVisible": "1",
+                    "isAccessible": "0",
+                    "children": []
+                  },
+                  {
+                    "type": "XCUIElementTypeCell",
+                    "name": "OMG",
+                    "label": "OMG",
+                    "rect": { "x": 0, "y": 900, "width": 393, "height": 64 },
+                    "isEnabled": "true",
+                    "isVisible": "0",
+                    "isAccessible": "0",
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "XCUIElementTypeOther",
+                "name": "shuffle_all",
+                "label": "전체 셔플",
+                "rect": { "x": 16, "y": 760, "width": 120, "height": 40 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeOther",
+                "label": "decorative gradient",
+                "rect": { "x": 0, "y": 0, "width": 393, "height": 200 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "0",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeButton",
+                "name": "download_btn",
+                "label": "다운로드",
+                "rect": { "x": 300, "y": 760, "width": 80, "height": 40 },
+                "isEnabled": "false",
+                "isVisible": "1",
+                "isAccessible": "1",
+                "children": []
+              },
+              {
+                "type": "XCUIElementTypeTabBar",
+                "rect": { "x": 0, "y": 780, "width": 393, "height": 72 },
+                "isEnabled": "true",
+                "isVisible": "1",
+                "isAccessible": "0",
+                "children": [
+                  {
+                    "type": "XCUIElementTypeButton",
+                    "name": "홈",
+                    "label": "홈",
+                    "rect": { "x": 20, "y": 790, "width": 60, "height": 50 },
+                    "isEnabled": "true",
+                    "isVisible": "1",
+                    "isAccessible": "1",
+                    "children": []
+                  },
+                  {
+                    "type": "XCUIElementTypeButton",
+                    "name": "tab_search",
+                    "label": "검색",
+                    "rect": { "x": 100, "y": 790, "width": 60, "height": 50 },
+                    "isEnabled": "true",
+                    "isVisible": "1",
+                    "isAccessible": "1",
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sessionId": "fixture-music-search"
+}

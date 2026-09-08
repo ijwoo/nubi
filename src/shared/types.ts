@@ -15,8 +15,10 @@ export const ElementSchema = z.object({
   i: z.number().int(),
   /** XCUIElementType, e.g. "Button", "Cell", "TextField". */
   t: z.string(),
-  /** Visible label. */
+  /** Visible label. For an input this is the placeholder, not the content. */
   l: z.string().optional(),
+  /** Current content: text typed into a field, a switch's on/off state. */
+  v: z.string().optional(),
   /** accessibilityIdentifier, when the app sets one. */
   id: z.string().optional(),
   /** [x, y, width, height] in points. */
@@ -35,6 +37,8 @@ export interface Screen {
   /** Stable hash of the element set — cheap change detection without a model. */
   hash: string;
   capturedAt: string;
+  /** True when the element cap was hit and the tail was dropped. */
+  truncated?: boolean;
 }
 
 /* ------------------------------------------------------------------ *
