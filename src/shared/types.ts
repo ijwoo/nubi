@@ -39,6 +39,20 @@ export interface Screen {
   capturedAt: string;
   /** True when the element cap was hit and the tail was dropped. */
   truncated?: boolean;
+  /**
+   * A system alert sitting above the app, when one is present.
+   *
+   * It does not appear in the accessibility tree the app returns, so without
+   * this an agent sees a perfectly ordinary screen while every tap is absorbed
+   * by a modal it cannot perceive.
+   */
+  alert?: SystemAlert;
+}
+
+export interface SystemAlert {
+  text: string;
+  /** Button labels, in the order iOS presents them. */
+  buttons: string[];
 }
 
 /* ------------------------------------------------------------------ *

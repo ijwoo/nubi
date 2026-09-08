@@ -144,3 +144,50 @@ describe('FakeHands — call log', () => {
     });
   });
 });
+
+describe('FakeHands — system alerts', () => {
+  it('reports a modal on the screen, since the tree never shows one', async () => {
+    hands.showAlert('위치를 사용하도록 허용하겠습니까?', ['허용', '허용 안 함']);
+    const s = await hands.screen();
+    expect(s.alert?.buttons).toEqual(['허용', '허용 안 함']);
+  });
+
+  it('blocks a tap rather than reporting a selector miss', async () => {
+    // The control is there and the selector finds it — a modal is eating the
+    // touch. Calling that a selector problem would send repair after the wrong
+    // thing.
+    hands.showAlert('허용하겠습니까?', ['허용']);
+    const r = await hands.tap({ id: 'tab_search' });
+    expect(r.ok).toBe(false);
+    if (r.ok) throw new Error('unreachable');
+    expect(r.reason).toBe('blocked-by-alert');
+    expect(hands.screenName).toBe('home');
+  });
+
+  it('never answers an alert on its own', async () => {
+    hands.showAlert('삭제하시겠습니까?', ['삭제', '취소']);
+    await hands.tap({ id: 'tab_search' });
+    await hands.screen();
+    // Granting permission or confirming a delete is exactly the kind of
+    // irreversible choice the approval gate exists for (ADR 0007).
+    expect((await hands.screen()).alert).toBeDefined();
+  });
+
+  it('answers only a button the alert actually offers', async () => {
+    hands.showAlert('허용하겠습니까?', ['허용', '허용 안 함']);
+    const wrong = await hands.answerAlert('확인');
+    expect(wrong.ok).toBe(false);
+
+    const right = await hands.answerAlert('허용 안 함');
+    expect(right.ok).toBe(true);
+    expect((await hands.screen()).alert).toBeUndefined();
+  });
+
+  it('resumes normally once the alert is answered', async () => {
+    hands.showAlert('허용하겠습니까?', ['허용']);
+    await hands.answerAlert('허용');
+    const r = await hands.tap({ id: 'tab_search' });
+    expect(r.ok).toBe(true);
+    expect(hands.screenName).toBe('search-empty');
+  });
+});

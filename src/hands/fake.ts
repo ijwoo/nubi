@@ -72,6 +72,7 @@ export class FakeHands implements Hands {
 
   private current: string;
   private pendingFailure: MissReason | 'session-lost' | undefined;
+  private alert: { text: string; buttons: string[] } | undefined;
   private recoveries = 0;
 
   constructor(
@@ -135,6 +136,11 @@ export class FakeHands implements Hands {
     if (injected) return this.fail(injected, 'tap', { sel });
 
     const screen = this.snapshot();
+    if (this.alert) {
+      this.log('tap', this.current, { sel, ok: false, reason: 'blocked-by-alert' });
+      return { ok: false, reason: 'blocked-by-alert', screen, detail: this.alert.text };
+    }
+
     const r = resolveWithFallback(sel, alt, screen);
     if (!r.ok) {
       this.log('tap', this.current, { sel, ok: false, reason: r.reason });
@@ -202,6 +208,33 @@ export class FakeHands implements Hands {
     return { ok: true, screen, element: r.element, waitedMs: 0 };
   }
 
+  /**
+   * Answer a system alert. The fake raises one only when a test sets it, via
+   * `showAlert`, which is how the alert-handling paths get covered in CI.
+   */
+  async answerAlert(button: string): Promise<ActResult> {
+    const screen = this.snapshot();
+    if (!this.alert) {
+      return { ok: false, reason: 'no-match', screen, detail: 'no alert is showing' };
+    }
+    if (!this.alert.buttons.includes(button)) {
+      return {
+        ok: false,
+        reason: 'no-match',
+        screen,
+        detail: `alert has no button "${button}"`,
+      };
+    }
+    this.alert = undefined;
+    this.log('assert', this.current, { answeredAlert: button });
+    return { ok: true, screen: this.snapshot() };
+  }
+
+  /** Put a system alert over the current screen. */
+  showAlert(text: string, buttons: string[]): void {
+    this.alert = { text, buttons };
+  }
+
   async health(): Promise<Health> {
     return { ready: true, recoveries: this.recoveries, detail: `fake @ ${this.current}` };
   }
@@ -215,7 +248,8 @@ export class FakeHands implements Hands {
   private snapshot(): Screen {
     const tree = this.trees[this.current];
     if (!tree) throw new Error(`fake: no tree for screen "${this.current}"`);
-    return compact(tree, { app: this.scenario.app });
+    const screen = compact(tree, { app: this.scenario.app });
+    return this.alert ? { ...screen, alert: this.alert } : screen;
   }
 
   private applyTap(el: Element): void {
