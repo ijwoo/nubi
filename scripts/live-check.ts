@@ -35,6 +35,7 @@ if (!health.ready) {
 
 const screen = await hands.screen();
 const tokens = estimateTokens(screen.elements);
+check('no system alert is blocking input', screen.alert === undefined, screen.alert?.text.slice(0, 40) ?? '');
 check('reports the foreground app', screen.app === BUNDLE, screen.app);
 check('returns elements', screen.elements.length > 0, `${screen.elements.length}`);
 check(
@@ -65,6 +66,45 @@ check(
   `${before?.slice(0, 8)} → ${hands.activeSessionId?.slice(0, 8)}`,
 );
 check('counts the recovery', recovered.recoveries === 1, `recoveries=${recovered.recoveries}`);
+
+// ---- actions -------------------------------------------------------
+// Driven against Settings, whose rows carry stable reverse-DNS identifiers.
+console.log('\nactions');
+
+const launched = await hands.launch({ bundleId: BUNDLE });
+check('launch', launched.ok, launched.ok ? '' : launched.detail ?? launched.reason);
+
+const root = await hands.screen();
+const tapped = await hands.tap({ id: 'com.apple.settings.general' });
+check('tap resolves and acts', tapped.ok, tapped.ok ? String(tapped.element?.l) : tapped.reason);
+check('tap changed the screen', tapped.ok && tapped.screen.hash !== root.hash, tapped.ok ? `${root.hash} → ${tapped.screen.hash}` : '');
+
+const arrived = await hands.assert({ label: '일반', type: 'StaticText' }, 5000);
+check('assert waits for the new screen', arrived.ok, `waited ${arrived.waitedMs}ms`);
+
+const back = await hands.back();
+check('back returns', back.ok);
+const returned = await hands.assert({ id: 'com.apple.settings.general' }, 5000);
+check('back landed on the list again', returned.ok, `waited ${returned.waitedMs}ms`);
+
+// Typing goes to whatever holds focus, so the field is tapped first — the same
+// two steps a person performs.
+const search = await hands.find({ label: '검색', type: 'SearchField' });
+if (search.ok) {
+  await hands.tap({ label: '검색', type: 'SearchField' });
+  const typed = await hands.type('소리');
+  check('type into the focused field', typed.ok, typed.ok ? '' : typed.detail ?? typed.reason);
+  const echoed = typed.ok && typed.screen.elements.some((e) => e.v === '소리' || e.l === '소리');
+  check('typed text appears on screen', echoed);
+} else {
+  console.log('  … no search field on this screen, skipping type');
+}
+
+const failedTap = await hands.tap({ id: 'definitely-not-here' });
+check('a missing selector reports no-match with the screen', !failedTap.ok && failedTap.reason === 'no-match' && failedTap.screen.elements.length > 0);
+
+const timedOut = await hands.assert({ id: 'definitely-not-here' }, 600);
+check('assert times out rather than hanging', !timedOut.ok && timedOut.reason === 'timeout', `waited ${timedOut.waitedMs}ms`);
 
 await hands.close();
 check('releases the session', hands.activeSessionId === undefined);

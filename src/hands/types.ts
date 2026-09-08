@@ -29,6 +29,17 @@ export interface Hands {
   /** Wait until a selector resolves, or the timeout elapses. */
   assert(sel: Selector, timeoutMs?: number): Promise<AssertResult>;
 
+  /**
+   * Answer a system alert by button label.
+   *
+   * Deliberately explicit rather than automatic. Alerts ask consequential,
+   * often irreversible questions — grant location, allow notifications, delete
+   * — and silently accepting one is exactly what the approval gate exists to
+   * prevent (ADR 0007). Making it a named action also puts the decision in the
+   * trace, where it can be reviewed.
+   */
+  answerAlert(button: string): Promise<ActResult>;
+
   health(): Promise<Health>;
   close(): Promise<void>;
 }
@@ -48,8 +59,13 @@ export interface Health {
  *
  * `point-outside` is kept distinct from `no-match` because they call for
  * different repairs: the control is not gone, the layout moved.
+ *
+ * `blocked-by-alert` is not a selector problem at all — the control is there
+ * and the selector found it, but a modal is absorbing the touch. Reported
+ * separately because repairing the selector would be repairing the wrong
+ * thing.
  */
-export type MissReason = 'no-match' | 'point-outside';
+export type MissReason = 'no-match' | 'point-outside' | 'blocked-by-alert';
 
 export type FindResult =
   | { ok: true; element: Element; rung: Rung; via: 'sel' | 'alt'; matched: number }

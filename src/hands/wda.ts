@@ -163,7 +163,9 @@ export class WdaHands implements Hands {
     return this.withSession(async (id) => {
       const root = await this.request<WdaNode>('GET', `/session/${id}/source?format=json`);
       const app = await this.activeApp(id);
-      return compact(root, { app });
+      const screen = compact(root, { app });
+      const alert = await this.readAlert(id);
+      return alert ? { ...screen, alert } : screen;
     });
   }
 
@@ -200,28 +202,228 @@ export class WdaHands implements Hands {
     await this.request('DELETE', `/session/${id}`).catch(() => undefined);
   }
 
-  /* ---- not yet implemented ---------------------------------------- */
+  /* ---- actions ---------------------------------------------------- */
 
-  async tap(): Promise<ActResult> {
-    throw new Error('WdaHands.tap: not implemented yet');
+  async tap(sel: Selector, alt?: Selector): Promise<ActResult> {
+    const screen = await this.screen();
+    if (screen.alert)
+      return { ok: false, reason: 'blocked-by-alert', screen, detail: screen.alert.text };
+
+    const r = resolveWithFallback(sel, alt, screen);
+    if (!r.ok) return { ok: false, reason: r.reason, screen };
+
+    const [x, y, w, h] = r.element.r;
+    await this.withSession((id) => this.pointer(id, [{ x: x + w / 2, y: y + h / 2 }], 60));
+
+    return {
+      ok: true,
+      screen: await this.screen(),
+      element: r.element,
+      rung: r.rung,
+      via: r.via,
+      matched: r.matched,
+    };
   }
-  async type(): Promise<ActResult> {
-    throw new Error('WdaHands.type: not implemented yet');
+
+  /**
+   * Type into whatever currently has focus.
+   *
+   * WDA sends keys to the focused element, so a macro taps the field first —
+   * the same two steps a person performs. Typing without focus is a caller
+   * error, and it surfaces as one rather than being silently swallowed.
+   */
+  async type(text: string, opts: { submit?: boolean } = {}): Promise<ActResult> {
+    const blocking = await this.screen();
+    if (blocking.alert) {
+      return {
+        ok: false,
+        reason: 'blocked-by-alert',
+        screen: blocking,
+        detail: blocking.alert.text,
+      };
+    }
+    const value = opts.submit ? [...text, '\n'] : [...text];
+    try {
+      await this.withSession((id) => this.request('POST', `/session/${id}/wda/keys`, { value }));
+    } catch (err) {
+      return {
+        ok: false,
+        reason: 'unsupported',
+        screen: await this.screen(),
+        detail: err instanceof Error ? err.message : String(err),
+      };
+    }
+    return { ok: true, screen: await this.screen() };
   }
-  async swipe(_from: Point, _to: Point): Promise<ActResult> {
-    throw new Error('WdaHands.swipe: not implemented yet');
+
+  async swipe(from: Point, to: Point, durationMs = 300): Promise<ActResult> {
+    const screen = await this.screen();
+    if (screen.alert)
+      return { ok: false, reason: 'blocked-by-alert', screen, detail: screen.alert.text };
+    const abs = (p: Point) => ({ x: p[0] * screen.size.w, y: p[1] * screen.size.h });
+    await this.withSession((id) => this.pointer(id, [abs(from), abs(to)], durationMs));
+    return { ok: true, screen: await this.screen() };
   }
+
+  /**
+   * Go back.
+   *
+   * iOS has no back button, so this is the system edge-swipe — the gesture a
+   * person uses. Tapping a navigation bar's back button would be more precise
+   * where one exists, but its label and position differ per app, and a macro
+   * that wants that specific control can name it as an ordinary tap step.
+   */
   async back(): Promise<ActResult> {
-    throw new Error('WdaHands.back: not implemented yet');
+    return this.swipe([0.01, 0.5], [0.6, 0.5], 250);
   }
-  async launch(): Promise<ActResult> {
-    throw new Error('WdaHands.launch: not implemented yet');
+
+  /**
+   * Bring an app to the foreground.
+   *
+   * A URL scheme is preferred when the macro carries one: it lands on a
+   * specific screen and skips the taps that would otherwise be needed to get
+   * there. Falling back to a plain launch only reaches the app's own start
+   * screen.
+   */
+  async launch(target: { url?: string; bundleId?: string }): Promise<ActResult> {
+    try {
+      if (target.url) {
+        await this.withSession((id) =>
+          this.request('POST', `/session/${id}/url`, { url: target.url }),
+        );
+      } else if (target.bundleId) {
+        await this.withSession((id) =>
+          this.request('POST', `/session/${id}/wda/apps/launch`, { bundleId: target.bundleId }),
+        );
+      } else {
+        return {
+          ok: false,
+          reason: 'unsupported',
+          screen: await this.screen(),
+          detail: 'launch needs a url or bundleId',
+        };
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        reason: 'unsupported',
+        screen: await this.screen(),
+        detail: err instanceof Error ? err.message : String(err),
+      };
+    }
+    return { ok: true, screen: await this.screen() };
   }
-  async assert(): Promise<AssertResult> {
-    throw new Error('WdaHands.assert: not implemented yet');
+
+  /**
+   * Wait for a selector to resolve.
+   *
+   * Polls rather than sleeping a fixed time: a fixed wait is wrong on both
+   * ends, too short on a loaded device and wasted on a fast one. This is why
+   * macros are written with `assert` instead of `wait`.
+   */
+  async assert(sel: Selector, timeoutMs = 8000): Promise<AssertResult> {
+    const started = Date.now();
+    let screen = await this.screen();
+
+    for (;;) {
+      const r = resolveWithFallback(sel, undefined, screen);
+      const waitedMs = Date.now() - started;
+      if (r.ok) return { ok: true, screen, element: r.element, waitedMs };
+      if (waitedMs >= timeoutMs) return { ok: false, screen, waitedMs, reason: 'timeout' };
+      await new Promise((done) => setTimeout(done, WdaHands.POLL_MS));
+      screen = await this.screen();
+    }
+  }
+
+  /**
+   * Answer a system alert by its button label.
+   *
+   * Never called automatically. Alerts ask consequential questions, and a
+   * caller that wants one answered has to say which button (ADR 0007).
+   */
+  async answerAlert(button: string): Promise<ActResult> {
+    const screen = await this.screen();
+    if (!screen.alert) {
+      return { ok: false, reason: 'no-match', screen, detail: 'no alert is showing' };
+    }
+    if (!screen.alert.buttons.includes(button)) {
+      return {
+        ok: false,
+        reason: 'no-match',
+        screen,
+        detail: `alert has no button "${button}" (has: ${screen.alert.buttons.join(', ')})`,
+      };
+    }
+    await this.withSession((id) =>
+      this.request('POST', `/session/${id}/alert/accept`, { name: button }),
+    );
+    return { ok: true, screen: await this.screen() };
   }
 
   /* ---- internals -------------------------------------------------- */
+
+  /**
+   * Read a system alert, if one is up.
+   *
+   * Costs an extra request per observation. Worth it: the tree gives no hint
+   * that a modal is present, so without this an agent taps into a void and
+   * blames its selectors. That failure is not hypothetical — it is how this
+   * function came to exist.
+   */
+  private async readAlert(
+    sessionId: string,
+  ): Promise<{ text: string; buttons: string[] } | undefined> {
+    let text: string;
+    try {
+      text = await this.request<string>('GET', `/session/${sessionId}/alert/text`);
+    } catch {
+      return undefined; // WDA errors when nothing is showing
+    }
+    if (!text) return undefined;
+    const buttons = await this.request<string[]>(
+      'GET',
+      `/session/${sessionId}/wda/alert/buttons`,
+    ).catch(() => [] as string[]);
+    return { text, buttons };
+  }
+
+  /** How often `assert` re-observes while waiting. */
+  private static readonly POLL_MS = 250;
+
+  /**
+   * One finger, moved through the given absolute points.
+   *
+   * W3C actions rather than WDA's older `/wda/tap` and `/wda/dragfromtoforduration`:
+   * one request shape covers taps and swipes, and it is the surface WDA is
+   * least likely to change under us.
+   */
+  private async pointer(
+    sessionId: string,
+    points: { x: number; y: number }[],
+    durationMs: number,
+  ): Promise<void> {
+    const [first, ...rest] = points;
+    if (!first) throw new Error('pointer: no points');
+
+    const actions: Record<string, unknown>[] = [
+      { type: 'pointerMove', duration: 0, x: Math.round(first.x), y: Math.round(first.y) },
+      { type: 'pointerDown', button: 0 },
+      { type: 'pause', duration: rest.length === 0 ? durationMs : 0 },
+    ];
+    for (const p of rest) {
+      actions.push({
+        type: 'pointerMove',
+        duration: durationMs,
+        x: Math.round(p.x),
+        y: Math.round(p.y),
+      });
+    }
+    actions.push({ type: 'pointerUp', button: 0 });
+
+    await this.request('POST', `/session/${sessionId}/actions`, {
+      actions: [{ type: 'pointer', id: 'finger1', parameters: { pointerType: 'touch' }, actions }],
+    });
+  }
 
   /** Bundle id of the foreground app; the tree does not carry it reliably. */
   private async activeApp(sessionId: string): Promise<string> {
