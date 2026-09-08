@@ -92,8 +92,15 @@ export class FakeHands implements Hands {
     const base = dirname(abs);
     const trees: Record<string, WdaNode> = {};
     for (const [name, rel] of Object.entries(scenario.screens)) {
-      const dump = JSON.parse(readFileSync(resolvePath(base, rel), 'utf8'));
-      trees[name] = dump.value as WdaNode;
+      // Accept a WDA response envelope or a bare tree: dumps taken with curl
+      // carry `value`, and a tree pasted in by hand usually does not.
+      const dump: unknown = JSON.parse(readFileSync(resolvePath(base, rel), 'utf8'));
+      const inner = (dump as { value?: unknown }).value;
+      const tree = (inner ?? dump) as WdaNode;
+      if (typeof tree?.type !== 'string') {
+        throw new Error(`fake: "${rel}" is not a WDA source tree`);
+      }
+      trees[name] = tree;
     }
     return new FakeHands(scenario, trees, options);
   }

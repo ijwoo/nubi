@@ -1,0 +1,30 @@
+{
+  "app": "com.apple.Preferences",
+  "start": "root",
+  "launch": {
+    "com.apple.Preferences": "root"
+  },
+  "screens": {
+    "root": "./root.json",
+    "general": "./general.json",
+    "root-again": "./root-again.json",
+    "accessibility": "./accessibility.json"
+  },
+  "transitions": [
+    {
+      "from": "root",
+      "tap": "com.apple.settings.general",
+      "to": "general"
+    },
+    {
+      "from": "general",
+      "back": true,
+      "to": "root-again"
+    },
+    {
+      "from": "root-again",
+      "tap": "com.apple.settings.accessibility",
+      "to": "accessibility"
+    }
+  ]
+}

@@ -19,7 +19,8 @@
     "fix": "biome check --write .",
     "check": "npm run typecheck && npm run lint && npm test",
     "live": "tsx scripts/live-check.ts",
-    "wda": "./scripts/wda.sh"
+    "wda": "./scripts/wda.sh",
+    "record": "tsx scripts/record.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

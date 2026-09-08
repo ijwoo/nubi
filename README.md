@@ -108,6 +108,11 @@ Mac                                    iPhone
 Hands is a library, not a service — Brain imports it in-process. It is also exposed as an
 MCP server so Claude Code can drive the phone directly during development.
 
+Two implementations satisfy that interface: one driving WebDriverAgent, one replaying
+screens recorded off a device. A shared contract suite runs against both — `npm test`
+against the fake, `npm run live` against a real agent — because implementing the same
+interface proves nothing about behaving the same way.
+
 Risky actions (payment, deletion, sending) never auto-execute. They pause and ask for
 approval **on the phone**, through the existing
 [pip-any](https://github.com/imjaewoo/pip-any) relay and Live Activity.
@@ -118,7 +123,7 @@ Built in five phases, each ending in something measurable.
 
 | | Phase | Delivers | State |
 | --- | --- | --- | --- |
-| 01 | Hands | tap/type/assert against the simulator; session auto-recovery | in progress |
+| 01 | Hands | tap/type/assert against the simulator; session auto-recovery | done |
 | 02 | Trace + Eval | the baseline numbers — the "first run" column above | |
 | 03 | Brain · Explore | cold success rate and real token cost | |
 | 04 | Macro · Replay + Repair | the before/after table | |
