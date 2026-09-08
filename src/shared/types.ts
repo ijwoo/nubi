@@ -175,13 +175,47 @@ export interface RunResult {
  * Trace
  * ------------------------------------------------------------------ */
 
-/** One line of the JSONL trace. See docs/eval-design.md. */
+/**
+ * What a run did, one line of JSONL per event.
+ *
+ * The point is answering "why did that fail" after the fact, so every event
+ * carries what it cost as well as what it was. See docs/eval-design.md.
+ */
 export interface TraceEvent {
   runId: string;
+  /** Monotonic within a run; JSONL lines can arrive out of order in a viewer. */
   seq: number;
   at: string;
   path: Path;
-  kind: 'observe' | 'act' | 'model' | 'assert' | 'recover' | 'approve' | 'error';
+  kind: TraceKind;
   durationMs: number;
+  /** True when this event is the failure, not merely a step that preceded it. */
+  failed?: boolean;
   detail: Record<string, unknown>;
+}
+
+export type TraceKind =
+  /** Read the screen. */
+  | 'observe'
+  /** Touch the device: tap, type, swipe, back, launch. */
+  | 'act'
+  /** A model call. Carries token counts and the model id. */
+  | 'model'
+  /** Wait for a condition. */
+  | 'assert'
+  /** Infrastructure repaired itself — a rebuilt session (ADR 0005). */
+  | 'recover'
+  /** A decision handed to a person: an approval gate or a system alert. */
+  | 'approve'
+  /** The run ended, successfully or not. */
+  | 'end'
+  | 'error';
+
+/** Token and cost accounting for one model call. */
+export interface ModelUsage {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
 }
