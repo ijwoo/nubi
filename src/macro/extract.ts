@@ -1,5 +1,6 @@
 import type { RouteStep } from '../brain/index.js';
 import type { Task } from '../eval/task.js';
+import { isIrreversible } from '../shared/risk.js';
 import { type Macro, MacroSchema, type Risk, type Step } from '../shared/types.js';
 
 /**
@@ -19,42 +20,6 @@ export interface ExtractOptions {
   /** What the person asked for, which becomes the trigger. */
   goal: string;
 }
-
-/**
- * Words that mean an action cannot be taken back.
- *
- * A heuristic, and one deliberately biased toward caution: a false positive
- * costs a confirmation the person taps through, a false negative spends their
- * money or deletes their data. Kept narrow enough to avoid flagging every
- * screen — "확인" alone is too common to mean anything.
- */
-const IRREVERSIBLE = [
-  '결제',
-  '구매',
-  '주문',
-  '결재',
-  '송금',
-  '이체',
-  '삭제',
-  '지우기',
-  '제거',
-  '탈퇴',
-  '전송',
-  '보내기',
-  '발송',
-  '게시',
-  'pay',
-  'buy',
-  'purchase',
-  'checkout',
-  'subscribe',
-  'delete',
-  'remove',
-  'erase',
-  'send',
-  'post',
-  'publish',
-];
 
 export function extractMacro(route: readonly RouteStep[], opts: ExtractOptions): Macro {
   const { params, steps } = buildSteps(route, opts.goal);
@@ -164,16 +129,12 @@ function riskOf(route: readonly RouteStep[]): Risk {
   for (const entry of route) {
     const sel = entry.selector;
     if (!sel) continue;
-    const named = [
+    const named = isIrreversible(
       'label' in sel ? sel.label : undefined,
       'labelContains' in sel ? sel.labelContains : undefined,
       'id' in sel ? sel.id : undefined,
-    ]
-      .filter((s): s is string => s !== undefined)
-      .join(' ')
-      .toLowerCase();
-
-    if (IRREVERSIBLE.some((word) => named.includes(word))) return 'confirm';
+    );
+    if (named) return 'confirm';
   }
   return 'safe';
 }

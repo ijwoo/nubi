@@ -4,7 +4,7 @@ import type { Task } from '../eval/task.js';
 import type { Hands } from '../hands/types.js';
 import type { Macro } from '../shared/types.js';
 import type { Trace } from '../trace/index.js';
-import { type Repairer, isWorthKeeping, repairedStep } from './repair.js';
+import { type Repairer, escalatesRisk, isWorthKeeping, repairedStep } from './repair.js';
 import type { MacroStore } from './store.js';
 
 /**
@@ -73,7 +73,7 @@ export class ReplayExecutor implements Executor {
 
     const screen = await hands.screen();
     const started = Date.now();
-    const suggestion = await this.repairer.suggest({
+    const result = await this.repairer.suggest({
       macro: this.macro,
       stepIndex,
       broken: step.sel,
@@ -81,6 +81,13 @@ export class ReplayExecutor implements Executor {
       screen,
     });
 
+    // Recorded before the answer is judged: a refusal costs the same call as a
+    // fix, and a repair that spends money and declines still spent it.
+    if (result.usage) {
+      trace.model('repair', result.usage, Date.now() - started, { step: stepIndex });
+    }
+
+    const suggestion = result.suggestion;
     if (!suggestion) {
       trace.event(
         'error',
@@ -112,6 +119,25 @@ export class ReplayExecutor implements Executor {
         'error',
         'repair',
         { step: stepIndex, reason: 'replacement would be a coordinate', why: suggestion.why },
+        Date.now() - started,
+        true,
+      );
+      return false;
+    }
+
+    if (escalatesRisk(step.sel, element)) {
+      // The nearest match to a control that vanished can be one that deletes
+      // or pays. Refusing costs a failed run; accepting writes the wrong
+      // target into a macro that runs unattended from then on.
+      trace.event(
+        'error',
+        'repair',
+        {
+          step: stepIndex,
+          reason: 'replacement is irreversible and the step was not',
+          candidate: element.l ?? element.id,
+          why: suggestion.why,
+        },
         Date.now() - started,
         true,
       );
