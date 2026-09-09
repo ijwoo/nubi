@@ -58,8 +58,13 @@ export interface Screen {
    * Without it, tapping a search field changes nothing an agent can perceive —
    * same elements, same hash — so it taps again, having no way to know the
    * first one worked.
+   *
+   * `top` is where the keyboard begins, in points. Not everything it draws is
+   * typed as a key — shift, emoji, dictation and the globe come through as
+   * ordinary Buttons and survive compaction — and their names are localised,
+   * so a list of them would be a list per language. Where they sit is not.
    */
-  keyboard?: boolean;
+  keyboard?: { top: number };
 }
 
 export interface SystemAlert {
