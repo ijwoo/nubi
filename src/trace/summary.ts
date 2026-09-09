@@ -21,6 +21,16 @@ export interface RunSummary {
   outputTokens: number;
   /** Sessions rebuilt underneath the caller. Should be invisible; is not free. */
   recoveries: number;
+  /**
+   * Selectors mended and written back into the macro.
+   *
+   * Distinct from `recoveries`, which counts WDA sessions rebuilt underneath
+   * the run — infrastructure papering over itself, invisible by design (ADR
+   * 0005). A repair changes the saved route, so it is the opposite of
+   * invisible: it is the thing self-healing claims to do, and until it had its
+   * own number the claim was measured by reading the macro file afterwards.
+   */
+  repairs: number;
   /** Decisions handed to a person. */
   approvals: number;
   failures: number;
@@ -61,8 +71,11 @@ export function summarize(events: readonly TraceEvent[]): RunSummary {
     outputTokens: sum(events, 'model', 'outputTokens'),
     recoveries: Math.max(
       0,
-      ...events.filter((e) => e.kind === 'recover').map((e) => num(e.detail.recoveries)),
+      ...events
+        .filter((e) => e.kind === 'recover' && e.path !== 'repair')
+        .map((e) => num(e.detail.recoveries)),
     ),
+    repairs: events.filter((e) => e.kind === 'recover' && e.path === 'repair').length,
     approvals: count(events, 'approve'),
     failures: failures.length,
     ...(fatal ? { failedAt: { seq: fatal.seq, kind: fatal.kind, detail: fatal.detail } } : {}),

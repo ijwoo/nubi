@@ -123,6 +123,8 @@ export interface Aggregate {
   /** Total across every attempt, which is what a run of the set actually cost. */
   totalUsd: number;
   recoveries: number;
+  /** Selectors mended and written back into a macro across the attempts. */
+  repairs: number;
   /** Attempts where the executor claimed success but the assertion disagreed. */
   falseClaims: number;
   /**
@@ -157,6 +159,7 @@ export function aggregate(result: TaskResult): Aggregate {
     avgUsd: runs.length === 0 ? 0 : runs.reduce((a, r) => a + r.usd, 0) / runs.length,
     totalUsd: runs.reduce((a, r) => a + r.usd, 0),
     recoveries: runs.reduce((a, r) => a + r.recoveries, 0),
+    repairs: runs.reduce((a, r) => a + r.repairs, 0),
     falseClaims: runs.filter((r) => r.claimed && !r.asserted).length,
     unclaimed: runs.filter((r) => !r.claimed && r.asserted).length,
   };
