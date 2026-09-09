@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FakeHands } from '../hands/fake.js';
+import { costOf } from './cost.js';
 import { readTrace, summarize } from './summary.js';
 import { Trace } from './trace.js';
 import { traced } from './traced-hands.js';
@@ -195,5 +196,52 @@ describe('Trace.beginAttempt', () => {
     t.beginAttempt();
     t.end(true);
     expect(t.events.map((e) => e.detail.op)).toContain('setup');
+  });
+});
+
+describe('costOf', () => {
+  it('bills cached tokens at their own rates, not as ordinary input', () => {
+    // The first estimate this project made ignored cache tokens entirely,
+    // which understated a run by more than the part it did count.
+    const t = Trace.start();
+    t.model(
+      'explore',
+      {
+        model: 'claude-opus-5',
+        inputTokens: 1000,
+        outputTokens: 100,
+        cacheWriteTokens: 2000,
+        cacheReadTokens: 4000,
+      },
+      0,
+    );
+
+    const c = costOf(t.events);
+    // 1000 @ $5 + 2000 @ $6.25 + 4000 @ $0.50 + 100 @ $25 per million
+    expect(c.usd).toBeCloseTo((1000 * 5 + 2000 * 6.25 + 4000 * 0.5 + 100 * 25) / 1e6, 8);
+    expect(c.cacheReadTokens).toBe(4000);
+  });
+
+  it('costs nothing when no model was called', () => {
+    // The replay path's zero is structural, not a rounding result (ADR 0003).
+    const t = Trace.start();
+    t.event('act', 'replay', { op: 'tap' });
+    t.end(true);
+    expect(costOf(t.events).usd).toBe(0);
+  });
+
+  it('flags an unpriced model instead of counting it as free', () => {
+    const t = Trace.start();
+    t.model('explore', { model: 'claude-something-new', inputTokens: 1000, outputTokens: 100 }, 0);
+    const c = costOf(t.events);
+    expect(c.incomplete).toBe(true);
+    expect(c.usd).toBe(0);
+    expect(c.models).toEqual(['claude-something-new']);
+  });
+
+  it('prices a dated model id the same as its alias', () => {
+    const t = Trace.start();
+    t.model('explore', { model: 'claude-opus-5-20260101', inputTokens: 1000, outputTokens: 0 }, 0);
+    expect(costOf(t.events).usd).toBeCloseTo(0.005, 8);
   });
 });

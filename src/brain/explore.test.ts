@@ -226,3 +226,34 @@ describe('selectorFor', () => {
     expect(selectorFor(b, [a, b])).toEqual({ index: { type: 'Cell', n: 1 } });
   });
 });
+
+describe('explore — what the trace records', () => {
+  it('records one model event per call, with its usage', async () => {
+    // Timing the call with `span` and recording usage separately produced two
+    // events per call, and every reported model-call count was double.
+    const planner = {
+      name: 'usage-reporting',
+      next: async () => ({
+        action: { kind: 'done', why } as PlannedAction,
+        usage: { model: 'test-model', inputTokens: 100, outputTokens: 20 },
+      }),
+    };
+    await new ExploreExecutor({ planner }).run(hands, task, trace);
+
+    const models = trace.events.filter((e) => e.kind === 'model');
+    expect(models).toHaveLength(1);
+    expect(models[0]?.detail).toMatchObject({ inputTokens: 100, outputTokens: 20 });
+    expect(models[0]?.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('still records a call that threw', async () => {
+    const planner = {
+      name: 'broken',
+      next: async () => {
+        throw new Error('rate limited');
+      },
+    };
+    await expect(new ExploreExecutor({ planner }).run(hands, task, trace)).rejects.toThrow();
+    expect(trace.events.find((e) => e.kind === 'model')?.failed).toBe(true);
+  });
+});

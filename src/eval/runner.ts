@@ -1,5 +1,5 @@
 import type { Hands } from '../hands/types.js';
-import { type RunSummary, Trace, summarize, traced } from '../trace/index.js';
+import { type RunSummary, Trace, costOf, summarize, traced } from '../trace/index.js';
 import type { Executor } from './executor.js';
 import type { Task } from './task.js';
 
@@ -33,6 +33,10 @@ export interface AttemptResult extends RunSummary {
   asserted: boolean;
   /** What the executor claimed. Disagreement with `asserted` is worth seeing. */
   claimed: boolean;
+  /** Dollars, from reported usage rather than an estimate. */
+  usd: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
 }
 
 export async function runTask(opts: RunOptions): Promise<TaskResult> {
@@ -85,7 +89,15 @@ export async function runTask(opts: RunOptions): Promise<TaskResult> {
     );
     trace.end(check.ok, { task: task.id, executor: executor.name, claimed });
 
-    runs.push({ ...summarize(trace.events), asserted: check.ok, claimed });
+    const cost = costOf(trace.events);
+    runs.push({
+      ...summarize(trace.events),
+      asserted: check.ok,
+      claimed,
+      usd: cost.usd,
+      cacheReadTokens: cost.cacheReadTokens,
+      cacheWriteTokens: cost.cacheWriteTokens,
+    });
   }
 
   return { taskId: task.id, executor: executor.name, runs };
@@ -106,6 +118,10 @@ export interface Aggregate {
   avgModelCalls: number;
   avgInputTokens: number;
   avgOutputTokens: number;
+  /** Average dollars per attempt. Zero for a path that calls no model. */
+  avgUsd: number;
+  /** Total across every attempt, which is what a run of the set actually cost. */
+  totalUsd: number;
   recoveries: number;
   /** Attempts where the executor claimed success but the assertion disagreed. */
   falseClaims: number;
@@ -129,6 +145,8 @@ export function aggregate(result: TaskResult): Aggregate {
     avgModelCalls: mean(runs.map((r) => r.modelCalls)),
     avgInputTokens: mean(runs.map((r) => r.inputTokens)),
     avgOutputTokens: mean(runs.map((r) => r.outputTokens)),
+    avgUsd: runs.length === 0 ? 0 : runs.reduce((a, r) => a + r.usd, 0) / runs.length,
+    totalUsd: runs.reduce((a, r) => a + r.usd, 0),
     recoveries: runs.reduce((a, r) => a + r.recoveries, 0),
     falseClaims: runs.filter((r) => r.claimed && !r.asserted).length,
   };

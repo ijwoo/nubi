@@ -3,7 +3,7 @@ import type { Task } from '../eval/task.js';
 import type { Hands, Point } from '../hands/types.js';
 import type { Element, Selector } from '../shared/types.js';
 import type { Trace } from '../trace/index.js';
-import type { PlannedAction, Planner } from './planner.js';
+import type { PlanResult, PlannedAction, Planner } from './planner.js';
 
 /**
  * Find a way to do something in an app nobody has written a route for.
@@ -82,18 +82,35 @@ export class ExploreExecutor implements Executor {
         return false;
       }
 
-      const plan = await trace.span('model', 'explore', { step, goal: task.prompt }, () =>
-        this.planner.next({
+      // One event per model call, carrying both its duration and its usage.
+      // Timing it with `span` and recording usage separately produced two
+      // `model` events per call, which doubled every reported call count.
+      const started = Date.now();
+      let plan: PlanResult;
+      try {
+        plan = await this.planner.next({
           goal: task.prompt,
           screen,
           history,
           stepsRemaining: this.maxSteps - step,
           ...(lastFailure === undefined ? {} : { lastFailure }),
-        }),
-      );
-      if (plan.usage) {
-        trace.model('explore', plan.usage, 0, { step });
+        });
+      } catch (err) {
+        trace.event(
+          'model',
+          'explore',
+          { step, error: err instanceof Error ? err.message : String(err) },
+          Date.now() - started,
+          true,
+        );
+        throw err;
       }
+      trace.model(
+        'explore',
+        plan.usage ?? { model: this.planner.name, inputTokens: 0, outputTokens: 0 },
+        Date.now() - started,
+        { step },
+      );
 
       const action = plan.action;
       history.push(action);
