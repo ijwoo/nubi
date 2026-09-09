@@ -40,6 +40,7 @@ const RECIPES: Record<string, Recipe> = {
       { screen: 'general', tap: { id: 'com.apple.settings.general' } },
       { screen: 'root-again', back: true },
       { screen: 'accessibility', tap: { id: 'com.apple.settings.accessibility' } },
+      { screen: 'root-third', back: true },
     ],
   },
 };

@@ -17,7 +17,7 @@ export class Trace {
   private seq = 0;
   private readonly path: string | undefined;
   private readonly buffer: TraceEvent[] = [];
-  private readonly startedAt = Date.now();
+  private startedAt = Date.now();
 
   private constructor(runId: string, path: string | undefined) {
     this.runId = runId;
@@ -96,6 +96,18 @@ export class Trace {
     detail: Record<string, unknown> = {},
   ): void {
     this.event('model', path, { ...detail, ...usage }, durationMs);
+  }
+
+  /**
+   * Start the clock, discarding whatever came before.
+   *
+   * Setup belongs in the trace — a run that failed while being prepared is
+   * still a run worth reading — but it must not be in the measurement. Without
+   * this the reported duration includes relaunching the app to a known state,
+   * which is work every approach pays equally and none of them chose.
+   */
+  beginAttempt(): void {
+    this.startedAt = Date.now();
   }
 
   /** Close the run. `ok` is the outcome, not whether anything went wrong on the way. */

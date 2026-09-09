@@ -1,0 +1,23 @@
+id: settings-open-accessibility
+prompt: "설정에서 손쉬운 사용 열어줘"
+
+# The shape most macros have: launch, one navigation, one assertion. Settings
+# rows carry reverse-DNS identifiers, so a failure here is a failure of the
+# harness rather than of selector resolution.
+note: "list-to-detail navigation with a stable identifier"
+
+setup:
+  bundleId: com.apple.Preferences
+  restart: true
+  settleMs: 1200
+
+# Checked by the runner against the device, not by whatever tried the task.
+# ACCESSIBILITY_PLACARD only exists on the destination screen.
+assert:
+  selector: { id: ACCESSIBILITY_PLACARD }
+  withinMs: 10000
+
+runs: 5
+
+scripted:
+  macro: settings-open-accessibility

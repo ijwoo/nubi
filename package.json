@@ -20,10 +20,12 @@
     "check": "npm run typecheck && npm run lint && npm test",
     "live": "tsx scripts/live-check.ts",
     "wda": "./scripts/wda.sh",
-    "record": "tsx scripts/record.ts"
+    "record": "tsx scripts/record.ts",
+    "eval": "tsx scripts/eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
+    "yaml": "^2.9.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
