@@ -31,30 +31,38 @@ describe('WdaError.isSessionLost', () => {
     expect(new WdaError('unknown error', 'app crashed', 500).isSessionLost).toBe(false);
   });
 
+  /**
+   * Run with NUBI_WDA_URL set, then put the environment back.
+   *
+   * Restored by removing the key rather than assigning undefined: in Node that
+   * assignment stores the string "undefined", which is a valid-looking address
+   * that every later test in the process would then try to use.
+   */
+  function withAgentUrl<T>(url: string, body: () => T): T {
+    const before = process.env.NUBI_WDA_URL;
+    process.env.NUBI_WDA_URL = url;
+    try {
+      return body();
+    } finally {
+      if (before === undefined) Reflect.deleteProperty(process.env, 'NUBI_WDA_URL');
+      else process.env.NUBI_WDA_URL = before;
+    }
+  }
+
   it('takes the agent address from the environment, for a phone on Wi-Fi', () => {
     // Over the cable the device's 8100 arrives on 127.0.0.1 through iproxy;
     // over Wi-Fi it is the phone's own address. Nothing above Hands should
     // care which, and rebuilding to change a hostname is not a workflow.
-    const before = process.env.NUBI_WDA_URL;
-    process.env.NUBI_WDA_URL = 'http://192.168.0.42:8100/';
-    try {
+    withAgentUrl('http://192.168.0.42:8100/', () => {
       expect(new WdaHands().agentUrl).toBe('http://192.168.0.42:8100');
-    } finally {
-      if (before === undefined) delete process.env.NUBI_WDA_URL;
-      else process.env.NUBI_WDA_URL = before;
-    }
+    });
   });
 
   it('prefers an explicit address over the environment', () => {
-    const before = process.env.NUBI_WDA_URL;
-    process.env.NUBI_WDA_URL = 'http://192.168.0.42:8100';
-    try {
+    withAgentUrl('http://192.168.0.42:8100', () => {
       expect(new WdaHands({ baseUrl: 'http://127.0.0.1:8100' }).agentUrl).toBe(
         'http://127.0.0.1:8100',
       );
-    } finally {
-      if (before === undefined) delete process.env.NUBI_WDA_URL;
-      else process.env.NUBI_WDA_URL = before;
-    }
+    });
   });
 });

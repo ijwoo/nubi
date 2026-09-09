@@ -121,6 +121,64 @@ describe('run — the loop', () => {
   });
 });
 
+describe('run — what replay leaves behind', () => {
+  it('records the run, so a route that keeps failing can be demoted', async () => {
+    // The counters demotion reads were never written to. isDemoted needs five
+    // runs, so no macro could reach the threshold and the library showed every
+    // route as untried forever.
+    const explore = FakeHands.fromScenario(SCENARIO);
+    const idx = await accessibilityIndex(explore);
+    const first = await run('손쉬운 사용 열어줘', opts(explore, idx));
+    if (first.kind !== 'explored' || !first.saved) throw new Error('unreachable');
+
+    const before = store.get(first.saved);
+    expect(before.stats.runs).toBe(0);
+
+    await run('손쉬운 사용 열어줘', opts(FakeHands.fromScenario(SCENARIO), idx));
+    const after = store.get(first.saved);
+    expect(after.stats.runs).toBe(1);
+    expect(after.stats.fails).toBe(0);
+    expect(after.stats.avgMs).toBeGreaterThanOrEqual(0);
+    expect(after.stats.lastRun).toBeDefined();
+  });
+
+  it('counts a failed replay as a failure', async () => {
+    const explore = FakeHands.fromScenario(SCENARIO);
+    const idx = await accessibilityIndex(explore);
+    const first = await run('손쉬운 사용 열어줘', opts(explore, idx));
+    if (first.kind !== 'explored' || !first.saved) throw new Error('unreachable');
+
+    // A route pointing at a control that is not there, and a repairer with
+    // nothing to offer — the shape of an app that moved on.
+    const broken = store.get(first.saved);
+    broken.steps[1] = { op: 'tap', sel: { id: 'gone_in_the_update' } };
+    store.save(broken);
+
+    const out = await run('손쉬운 사용 열어줘', opts(FakeHands.fromScenario(SCENARIO), idx));
+    expect(out.ok).toBe(false);
+    expect(store.get(first.saved).stats.fails).toBe(1);
+  });
+});
+
+describe('run — when an alert is in the way', () => {
+  it('says which alert blocked it, rather than blaming the route', async () => {
+    // The failure mode that cost three debugging sessions on the simulator and
+    // will be routine on a phone: a permission prompt absorbs every touch
+    // while the tree underneath looks completely normal.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    hands.showAlert('“설정”이 위치 정보에 접근하려고 합니다', ['허용 안 함', '허용']);
+
+    const out = await run('손쉬운 사용 열어줘', opts(hands, 0));
+    expect(out.kind).toBe('explored');
+    if (out.kind !== 'explored') throw new Error('unreachable');
+    expect(out.ok).toBe(false);
+    expect(out.why).toContain('시스템 알림');
+    expect(out.why).toContain('위치 정보');
+    // Never answered on our own — the buttons grant, delete, or pay (ADR 0008).
+    expect(out.why).toContain('허용');
+  });
+});
+
 describe('idFor', () => {
   it('produces a filename-safe id from a Korean request', () => {
     // Macro ids are [a-z0-9-] because they are filenames, which leaves nothing
