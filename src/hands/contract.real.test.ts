@@ -49,10 +49,37 @@ describe('recorded Settings — navigation', () => {
     expect(hands.screenName).toBe('accessibility');
 
     await hands.back();
-    expect(hands.screenName).toBe('root-again');
+    expect(hands.screenName).toBe('root-back');
 
     await hands.tap({ id: 'com.apple.settings.general' });
     expect(hands.screenName).toBe('general');
+  });
+
+  it('reaches every screen a macro in macros/ asks for', async () => {
+    // The recording used to stop at `general`, so two of the three macros had
+    // no route and read 0/5 offline — a number indistinguishable from a macro
+    // that had actually broken. The live run passed 5/5 and hid it for a week.
+    const about = open();
+    await about.tap({ id: 'com.apple.settings.general' });
+    await about.tap({ id: 'About', type: 'Button' });
+    expect(about.screenName).toBe('about');
+    expect((await about.find({ id: 'SW_VERSION_SPECIFIER' })).ok).toBe(true);
+
+    const search = open();
+    await search.tap({ type: 'SearchField', label: '검색' });
+    expect(search.screenName).toBe('search-focused');
+    await search.type('손쉬운');
+    expect(search.screenName).toBe('search-results');
+    expect((await search.find({ label: '텍스트 지우기' })).ok).toBe(true);
+  });
+
+  it('carries the keyboard through from the recording', async () => {
+    // Recorded raw and compacted on read, so the bit is not something the
+    // scenario file asserts — it survives only if the keys are really there.
+    const hands = open();
+    expect((await hands.screen()).keyboard).toBeUndefined();
+    await hands.tap({ type: 'SearchField', label: '검색' });
+    expect((await hands.screen()).keyboard).toBe(true);
   });
 
   it('kept the first view of the list apart from a return to it', async () => {
@@ -71,7 +98,8 @@ describe('recorded Settings — navigation', () => {
   });
 
   it('settles: a second return matches the first', async () => {
-    // root-again and root-third hash identically, so the difference is
+    // The two returns hash identically — the recorder now folds the second one
+    // into the first rather than writing it twice — so the difference is
     // first-view versus any-later-view rather than drift that keeps growing.
     // Replay can rely on a returned-to screen being stable.
     const hands = open();

@@ -7,30 +7,52 @@
   "screens": {
     "root": "./root.json",
     "accessibility": "./accessibility.json",
-    "root-again": "./root-again.json",
+    "root-back": "./root-back.json",
     "general": "./general.json",
-    "root-third": "./root-third.json"
+    "about": "./about.json",
+    "search-focused": "./search-focused.json",
+    "search-results": "./search-results.json"
   },
   "transitions": [
     {
-      "from": "root",
+      "from": "*",
       "tap": "com.apple.settings.accessibility",
       "to": "accessibility"
     },
     {
       "from": "accessibility",
       "back": true,
-      "to": "root-again"
+      "to": "root-back"
     },
     {
-      "from": "root-again",
+      "from": "*",
       "tap": "com.apple.settings.general",
+      "to": "general"
+    },
+    {
+      "from": "*",
+      "tap": "About",
+      "to": "about"
+    },
+    {
+      "from": "about",
+      "back": true,
       "to": "general"
     },
     {
       "from": "general",
       "back": true,
-      "to": "root-third"
+      "to": "root-back"
+    },
+    {
+      "from": "*",
+      "tap": "검색",
+      "to": "search-focused"
+    },
+    {
+      "from": "search-focused",
+      "type": true,
+      "to": "search-results"
     }
   ]
 }
