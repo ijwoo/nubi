@@ -11,5 +11,7 @@
 | [0005](0005-session-recovery-in-infra.md) | 세션 복구를 인프라에 두고 모델에게 숨김 | accepted |
 | [0006](0006-model-tiering.md) | 역할별 모델 분리 (Haiku 라우팅 / Opus 계획) | accepted |
 | [0007](0007-approval-gate-off-device.md) | 승인 게이트를 조작 대상 기기 바깥에 | accepted |
+| [0008](0008-detect-alerts-never-answer-them.md) | 시스템 알림은 감지하되 자동으로 답하지 않는다 | accepted |
+| [0009](0009-runner-judges-not-executor.md) | 성공 판정은 러너가 하고 실행기는 하지 않는다 | accepted |
 
 새로 쓸 때는 [template.md](template.md)를 복사하세요.

@@ -45,24 +45,44 @@ describe('recorded Settings — navigation', () => {
     const hands = open();
     expect(hands.screenName).toBe('root');
 
-    await hands.tap({ id: 'com.apple.settings.general' });
-    expect(hands.screenName).toBe('general');
+    await hands.tap({ id: 'com.apple.settings.accessibility' });
+    expect(hands.screenName).toBe('accessibility');
 
     await hands.back();
     expect(hands.screenName).toBe('root-again');
+
+    await hands.tap({ id: 'com.apple.settings.general' });
+    expect(hands.screenName).toBe('general');
   });
 
-  it('kept the two root screens apart', async () => {
-    // Returning to the list does not reproduce the screen byte for byte — 16
-    // elements on arrival, 17 after coming back. A hand-written fixture would
-    // have made them identical and hidden the fact that a macro cannot assume
-    // going back lands somewhere it has seen before.
+  it('kept the first view of the list apart from a return to it', async () => {
+    // Coming back does not reproduce the screen byte for byte: 16 elements on
+    // arrival, 17 after returning. A hand-written fixture would have made them
+    // identical and taught replay that going back lands somewhere it has
+    // already seen.
     const hands = open();
     const first = await hands.screen();
-    await hands.tap({ id: 'com.apple.settings.general' });
+    await hands.tap({ id: 'com.apple.settings.accessibility' });
+    await hands.back();
+    const returned = await hands.screen();
+
+    expect(returned.hash).not.toBe(first.hash);
+    expect(returned.elements.some((e) => e.id === 'com.apple.settings.general')).toBe(true);
+  });
+
+  it('settles: a second return matches the first', async () => {
+    // root-again and root-third hash identically, so the difference is
+    // first-view versus any-later-view rather than drift that keeps growing.
+    // Replay can rely on a returned-to screen being stable.
+    const hands = open();
+    await hands.tap({ id: 'com.apple.settings.accessibility' });
     await hands.back();
     const second = await hands.screen();
-    expect(second.hash).not.toBe(first.hash);
-    expect(second.elements.some((e) => e.id === 'com.apple.settings.general')).toBe(true);
+
+    await hands.tap({ id: 'com.apple.settings.general' });
+    await hands.back();
+    const third = await hands.screen();
+
+    expect(third.hash).toBe(second.hash);
   });
 });

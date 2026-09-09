@@ -46,8 +46,19 @@ Find once. Replay forever. Repair on contact.
 | Success rate | measuring | measuring |
 
 Zero model calls, tokens, and cost on replay are **structural** — the replay path never
-opens a socket to the API. Wall clock and success rate are measured by the eval harness
-(see [`docs/eval-design.md`](docs/eval-design.md)) and published here once phase 04 lands.
+opens a socket to the API. Wall clock and success rate need Explore to exist before there
+is a first-run column to compare against; they land with phase 04.
+
+The harness itself works and has a floor to measure against. Replaying a hand-written
+route on a simulator, five runs:
+
+| Task | Executor | Success | p50 | p95 | Model calls |
+| --- | --- | --- | ---: | ---: | ---: |
+| settings-open-accessibility | scripted | 5/5 | 8787ms | 8942ms | 0 |
+
+Conditions and how to read that in
+[`docs/benchmarks/`](docs/benchmarks/2026-09-09-scripted-baseline.md). A number without
+its conditions is not reproducible, and one that is not reproducible is worse than none.
 
 ## How it works
 
@@ -85,6 +96,21 @@ npm run nubi -- demo
 ✓ tap Hype Boy       search-results -> playing
 ✓ assert 재생 중        playing -> playing
 ```
+
+## Commands
+
+| | Needs a device | |
+| --- | --- | --- |
+| `npm test` | no | Pure logic and the fake backend |
+| `npm run nubi -- demo` | no | Replay a recorded route |
+| `npm run eval -- --fake` | no | Run the task set over recorded screens |
+| `npm run wda` | simulator | Build and start WebDriverAgent |
+| `npm run live` | yes | Contract and action checks against a real agent |
+| `npm run record -- settings` | yes | Walk an app and record a scenario |
+| `npm run eval` | yes | Run the task set and measure it |
+
+A simulator is enough for all of these. WebDriverAgent needs no code signing there, so
+`npm run wda` works over SSH with no cable and no GUI.
 
 ## Architecture
 
@@ -124,7 +150,7 @@ Built in five phases, each ending in something measurable.
 | | Phase | Delivers | State |
 | --- | --- | --- | --- |
 | 01 | Hands | tap/type/assert against the simulator; session auto-recovery | done |
-| 02 | Trace + Eval | the baseline numbers — the "first run" column above | |
+| 02 | Trace + Eval | the harness, and a floor to measure against | done |
 | 03 | Brain · Explore | cold success rate and real token cost | |
 | 04 | Macro · Replay + Repair | the before/after table | |
 | 05 | Orb + approval gate | the demo | |
