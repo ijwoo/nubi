@@ -32,8 +32,14 @@ export class ExploreExecutor implements Executor {
   private readonly timeoutMs: number;
   private readonly maxConsecutiveFailures: number;
 
-  /** The route taken, if it worked. Phase 04 turns this into a macro. */
-  private trail: { selector: Selector; action: PlannedAction }[] = [];
+  /**
+   * Every action that worked, in order.
+   *
+   * Recorded for all action kinds, not only taps: a route that typed
+   * something and then dropped the typing would replay as a different task.
+   * A selector rides along only where one was resolved.
+   */
+  private trail: RouteStep[] = [];
 
   constructor(options: ExploreOptions) {
     this.planner = options.planner;
@@ -42,7 +48,7 @@ export class ExploreExecutor implements Executor {
     this.maxConsecutiveFailures = options.maxConsecutiveFailures ?? 3;
   }
 
-  get route(): readonly { selector: Selector; action: PlannedAction }[] {
+  get route(): readonly RouteStep[] {
     return this.trail;
   }
 
@@ -103,7 +109,7 @@ export class ExploreExecutor implements Executor {
       if (outcome.ok) {
         failures = 0;
         lastFailure = undefined;
-        if (outcome.selector) this.trail.push({ selector: outcome.selector, action });
+        this.trail.push(outcome.selector ? { action, selector: outcome.selector } : { action });
         continue;
       }
 
@@ -162,6 +168,12 @@ export class ExploreExecutor implements Executor {
         return { ok: false, why: `unhandled action ${action.kind}` };
     }
   }
+}
+
+/** One action that worked, with the selector it resolved to if it had one. */
+export interface RouteStep {
+  action: PlannedAction;
+  selector?: Selector;
 }
 
 /**

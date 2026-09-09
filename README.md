@@ -71,6 +71,7 @@ npm run nubi -- demo
 | --- | --- | --- |
 | `npm test` | 불필요 | 순수 로직 + 가짜 백엔드 |
 | `npm run nubi -- demo` | 불필요 | 녹화된 경로 재생 |
+| `npm run nubi -- macros` | 불필요 | 매크로 라이브러리와 통계 |
 | `npm run eval -- --fake` | 불필요 | 녹화 화면으로 태스크 실행 |
 | `npm run check` | 불필요 | 타입 + 린트 + 테스트 + 문서 검사 |
 | `npm run wda` | 시뮬레이터 | WebDriverAgent 빌드·실행 |
@@ -115,7 +116,7 @@ Hands는 서비스가 아니라 라이브러리입니다. Brain이 in-process로
 | 01 | Hands | 시뮬레이터에서 tap/type/assert, 세션 자동 복구 | 완료 |
 | 02 | Trace + Eval | 측정 장치와 비교의 바닥 | 완료 |
 | 03 | Brain · Explore | cold 성공률과 실제 토큰 비용 | |
-| 04 | Macro · Replay + Repair | before/after 비교표 | |
+| 04 | Macro · Replay + Repair | before/after 비교표 | 진행 중 |
 | 05 | Orb + 승인 게이트 | 데모 | |
 
 **eval을 매크로보다 먼저** 한 것은 의도적입니다. 빨라졌다는 걸 증명하려면 측정된 바닥이 필요하고, 그걸 기록할 기회는 한 번뿐입니다.
