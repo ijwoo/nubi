@@ -180,7 +180,12 @@
                                             "isNativeAccessibilityElement": "0",
                                             "isFocused": "0",
                                             "name": "일반",
-                                            "rect": { "y": 62, "x": 0, "width": 402, "height": 54 }
+                                            "rect": {
+                                              "y": 62,
+                                              "x": 0,
+                                              "width": 402,
+                                              "height": 54
+                                            }
                                           },
                                           {
                                             "customActions": null,
@@ -2677,7 +2682,12 @@
                                             "isNativeAccessibilityElement": "0",
                                             "isFocused": "0",
                                             "name": null,
-                                            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                            "rect": {
+                                              "y": 0,
+                                              "x": 0,
+                                              "width": 402,
+                                              "height": 874
+                                            }
                                           },
                                           {
                                             "customActions": null,
@@ -2718,28 +2728,48 @@
                                             "isNativeAccessibilityElement": "0",
                                             "isFocused": "0",
                                             "name": null,
-                                            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                            "rect": {
+                                              "y": 0,
+                                              "x": 0,
+                                              "width": 402,
+                                              "height": 874
+                                            }
                                           }
                                         ],
                                         "isAccessible": "0",
                                         "isNativeAccessibilityElement": "0",
                                         "isFocused": "0",
                                         "name": null,
-                                        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                        "rect": {
+                                          "y": 0,
+                                          "x": 0,
+                                          "width": 402,
+                                          "height": 874
+                                        }
                                       }
                                     ],
                                     "isAccessible": "0",
                                     "isNativeAccessibilityElement": "0",
                                     "isFocused": "0",
                                     "name": null,
-                                    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                    "rect": {
+                                      "y": 0,
+                                      "x": 0,
+                                      "width": 402,
+                                      "height": 874
+                                    }
                                   }
                                 ],
                                 "isAccessible": "0",
                                 "isNativeAccessibilityElement": "0",
                                 "isFocused": "0",
                                 "name": null,
-                                "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                "rect": {
+                                  "y": 0,
+                                  "x": 0,
+                                  "width": 402,
+                                  "height": 874
+                                }
                               },
                               {
                                 "customActions": null,
@@ -2768,62 +2798,107 @@
                                     "isNativeAccessibilityElement": "0",
                                     "isFocused": "0",
                                     "name": null,
-                                    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                    "rect": {
+                                      "y": 0,
+                                      "x": 0,
+                                      "width": 402,
+                                      "height": 874
+                                    }
                                   }
                                 ],
                                 "isAccessible": "0",
                                 "isNativeAccessibilityElement": "0",
                                 "isFocused": "0",
                                 "name": null,
-                                "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                                "rect": {
+                                  "y": 0,
+                                  "x": 0,
+                                  "width": 402,
+                                  "height": 874
+                                }
                               }
                             ],
                             "isAccessible": "0",
                             "isNativeAccessibilityElement": "0",
                             "isFocused": "0",
                             "name": null,
-                            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                            "rect": {
+                              "y": 0,
+                              "x": 0,
+                              "width": 402,
+                              "height": 874
+                            }
                           }
                         ],
                         "isAccessible": "0",
                         "isNativeAccessibilityElement": "0",
                         "isFocused": "0",
                         "name": null,
-                        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                        "rect": {
+                          "y": 0,
+                          "x": 0,
+                          "width": 402,
+                          "height": 874
+                        }
                       }
                     ],
                     "isAccessible": "0",
                     "isNativeAccessibilityElement": "0",
                     "isFocused": "0",
                     "name": null,
-                    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                    "rect": {
+                      "y": 0,
+                      "x": 0,
+                      "width": 402,
+                      "height": 874
+                    }
                   }
                 ],
                 "isAccessible": "0",
                 "isNativeAccessibilityElement": "0",
                 "isFocused": "0",
                 "name": null,
-                "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+                "rect": {
+                  "y": 0,
+                  "x": 0,
+                  "width": 402,
+                  "height": 874
+                }
               }
             ],
             "isAccessible": "0",
             "isNativeAccessibilityElement": "0",
             "isFocused": "0",
             "name": null,
-            "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+            "rect": {
+              "y": 0,
+              "x": 0,
+              "width": 402,
+              "height": 874
+            }
           }
         ],
         "isAccessible": "0",
         "isNativeAccessibilityElement": "0",
         "isFocused": "0",
         "name": null,
-        "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+        "rect": {
+          "y": 0,
+          "x": 0,
+          "width": 402,
+          "height": 874
+        }
       }
     ],
     "isAccessible": "0",
     "isNativeAccessibilityElement": "0",
     "isFocused": "0",
     "name": "설정",
-    "rect": { "y": 0, "x": 0, "width": 402, "height": 874 }
+    "rect": {
+      "y": 0,
+      "x": 0,
+      "width": 402,
+      "height": 874
+    }
   }
 }
