@@ -9,23 +9,68 @@
  *
  *   scripts/wda.sh &
  *   npm run report -- settings-open-accessibility
+ *
+ * With `--break`, one selector is pointed at an identifier that does not exist
+ * before the run starts, and the repairer is given the chance to find it
+ * again. That is the report worth reading: a page of screenshots where one
+ * step misses, a model is asked one question, and the next shot is the screen
+ * the route was trying to reach all along.
  */
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { selectorFor } from '../src/brain/explore.js';
 import { WdaHands } from '../src/hands/wda.js';
+import { ClaudeRepairer, escalatesRisk, isWorthKeeping, repairedStep } from '../src/macro/index.js';
+import { hasApiKey, loadEnv } from '../src/shared/env.js';
 import { type Macro, MacroSchema } from '../src/shared/types.js';
+import { costOf } from '../src/trace/cost.js';
 import { Trace, summarize, traced } from '../src/trace/index.js';
 
 const MACRO_DIR = fileURLToPath(new URL('../macros/', import.meta.url));
 const OUT = fileURLToPath(new URL('../report.html', import.meta.url));
 
-const name = process.argv[2] ?? 'settings-open-accessibility';
-const macro: Macro = MacroSchema.parse(
+loadEnv();
+
+const argv = process.argv.slice(2);
+const name = argv.find((a) => !a.startsWith('--')) ?? 'settings-open-accessibility';
+const breaking = argv.includes('--break');
+
+const original: Macro = MacroSchema.parse(
   JSON.parse(readFileSync(`${MACRO_DIR}${name}.json`, 'utf8')),
 );
+
+/**
+ * The same route with one step pointing nowhere.
+ *
+ * A redesign is not something you can schedule, and waiting for one is not a
+ * test plan. Renaming an identifier leaves what a redesign leaves: one step
+ * finds nothing while everything around it still works.
+ */
+function withBreak(m: Macro): Macro {
+  const i = m.steps.findIndex((step) => step.op === 'tap');
+  const step = m.steps[i];
+  if (i === -1 || step?.op !== 'tap') return m;
+  const sel = step.sel;
+  const wrecked =
+    'id' in sel
+      ? { id: `${sel.id}.RENAMED` }
+      : 'label' in sel
+        ? { ...sel, label: `${sel.label} (사라짐)` }
+        : sel;
+  const steps = [...m.steps];
+  steps[i] = { ...step, sel: wrecked };
+  return { ...m, steps };
+}
+
+const macro: Macro = breaking ? withBreak(original) : original;
+const repairer = breaking ? new ClaudeRepairer() : undefined;
+if (breaking && !hasApiKey()) {
+  console.error('--break 는 복구에 모델이 필요합니다 — ANTHROPIC_API_KEY 를 넣으세요');
+  process.exit(1);
+}
 
 /**
  * Shrink a device-resolution PNG before it goes in the page.
@@ -48,12 +93,21 @@ function thumbnail(base64: string, width = 340): string {
   }
 }
 
+/** Row labels for the three things that can happen to a broken step. */
+const NOTE_LABEL: Record<'broke' | 'repaired' | 'refused', string> = {
+  broke: '<b>깨짐</b>',
+  repaired: '<b>복구됨</b>',
+  refused: '<b>복구 거절</b>',
+};
+
 interface Shot {
   label: string;
   png: string | undefined;
   screenHash: string;
   elements: number;
   alert?: string;
+  /** Set on the shot where a step missed and on the one where it was mended. */
+  note?: { kind: 'broke' | 'repaired' | 'refused'; text: string };
 }
 
 const hands = new WdaHands({ bundleId: macro.app });
@@ -67,7 +121,7 @@ const trace = Trace.start();
 const watched = traced(hands, trace, () => 'replay');
 const shots: Shot[] = [];
 
-async function capture(label: string): Promise<void> {
+async function capture(label: string, note?: Shot['note']): Promise<void> {
   const [screen, png] = await Promise.all([hands.screen(), hands.screenshot()]);
   const shot: Shot = {
     label,
@@ -76,6 +130,7 @@ async function capture(label: string): Promise<void> {
     elements: screen.elements.length,
   };
   if (screen.alert) shot.alert = screen.alert.text;
+  if (note) shot.note = note;
   shots.push(shot);
   console.log(`  ${label.padEnd(34)} ${screen.elements.length} elements  ${screen.hash}`);
 }
@@ -87,9 +142,32 @@ trace.beginAttempt();
 await capture('start');
 
 let ok = true;
-for (const step of macro.steps) {
+const steps = [...macro.steps];
+for (let i = 0; i < steps.length; i++) {
+  const step = steps[i];
+  if (!step) break;
   const label = describe(step);
-  const result = await runStep(step);
+  let result = await runStep(step);
+
+  if (!result && repairer && step.op === 'tap') {
+    await capture(`${label}  ✗`, { kind: 'broke', text: '이 셀렉터로는 아무것도 못 찾음' });
+    const mended = await tryRepair(step, i);
+    if (mended) {
+      steps[i] = mended.step;
+      result = await runStep(mended.step);
+      await capture(describe(mended.step), {
+        kind: 'repaired',
+        text: `${mended.why}  —  $${mended.usd.toFixed(4)}`,
+      });
+      ok = ok && result;
+      if (!result) break;
+      continue;
+    }
+    await capture(label, { kind: 'refused', text: mended === undefined ? '복구 거절됨' : '' });
+    ok = false;
+    break;
+  }
+
   ok = ok && result;
   await capture(label + (result ? '' : '  ✗'));
   if (!result) break;
@@ -101,6 +179,53 @@ writeFileSync(OUT, render());
 console.log(`\n${ok ? 'completed' : 'failed'} — wrote ${OUT}`);
 
 /* ---------------------------------------------------------------- */
+
+/**
+ * Ask the repairer, and apply the same refusals replay applies.
+ *
+ * The guards are imported rather than restated: a report that mended a step
+ * replay would have refused would be showing something the product does not
+ * do.
+ */
+async function tryRepair(
+  step: Extract<Macro['steps'][number], { op: 'tap' }>,
+  stepIndex: number,
+): Promise<{ step: Macro['steps'][number]; why: string; usd: number } | undefined> {
+  if (!repairer) return undefined;
+  const screen = await hands.screen();
+  const started = Date.now();
+  const result = await repairer.suggest({
+    macro,
+    stepIndex,
+    broken: step.sel,
+    reason: 'no-match',
+    screen,
+  });
+  if (result.usage) {
+    trace.model('repair', result.usage, Date.now() - started, { step: stepIndex });
+  }
+
+  const suggestion = result.suggestion;
+  if (!suggestion) return undefined;
+  const element = screen.elements[suggestion.element];
+  if (!element) return undefined;
+
+  const replacement = selectorFor(element, screen.elements);
+  if (!isWorthKeeping(replacement, element)) return undefined;
+  if (escalatesRisk(step.sel, element)) return undefined;
+
+  trace.event(
+    'recover',
+    'repair',
+    { step: stepIndex, was: step.sel, now: replacement, why: suggestion.why },
+    Date.now() - started,
+  );
+  return {
+    step: repairedStep(step, replacement),
+    why: suggestion.why,
+    usd: costOf(trace.events).usd,
+  };
+}
 
 async function runStep(step: Macro['steps'][number]): Promise<boolean> {
   switch (step.op) {
@@ -169,7 +294,8 @@ function render(): string {
     ['observations', String(s.observations)],
     ['model calls', String(s.modelCalls)],
     ['input tokens', String(s.inputTokens)],
-    ['session recoveries', String(s.recoveries)],
+    ['repairs', String(s.repairs)],
+    ['cost', `$${costOf(trace.events).usd.toFixed(4)}`],
   ];
 
   return `<title>Nubi run — ${esc(macro.id)}</title>
@@ -178,6 +304,13 @@ function render(): string {
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1414;--card:#161E1F;--ink:#EDF3F3;--body:#C8D3D4;--muted:#93A2A3;--line:#263233;--accent:#4FC5CE;--bad:#E5877E}}
 :root[data-theme="dark"]{--bg:#0E1414;--card:#161E1F;--ink:#EDF3F3;--body:#C8D3D4;--muted:#93A2A3;--line:#263233;--accent:#4FC5CE;--bad:#E5877E}
 *{box-sizing:border-box}
+.note{margin-top:10px;font-family:var(--mono);font-size:11px;line-height:1.5;border-left:2px solid var(--line);padding-left:9px}
+.note b{display:block;letter-spacing:.06em;text-transform:uppercase;font-size:10px;margin-bottom:2px}
+.note span{color:var(--muted)}
+.note.broke{border-color:var(--bad)}.note.broke b{color:var(--bad)}
+.note.repaired{border-color:var(--accent)}.note.repaired b{color:var(--accent)}
+.note.refused{border-color:var(--muted)}.note.refused b{color:var(--muted)}
+.step.healed{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 60%)}
 body{margin:0;background:var(--bg);color:var(--body);font:16px/1.6 "Iowan Old Style",Charter,Georgia,serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:900px;margin:0 auto;padding:40px 20px 80px}
 h1{font-family:"Avenir Next",Avenir,system-ui,sans-serif;font-weight:600;font-size:30px;letter-spacing:-.02em;color:var(--ink);margin:0 0 4px}
@@ -215,7 +348,9 @@ ${stats.map(([k, v]) => `<div><dt>${esc(k ?? '')}</dt><dd>${esc(v ?? '')}</dd></
 <div class="steps">
 ${shots
   .map(
-    (sh) => `<div class="step${sh.label.includes('✗') ? ' bad' : ''}">
+    (sh) => `<div class="step${sh.label.includes('✗') ? ' bad' : ''}${
+      sh.note?.kind === 'repaired' ? ' healed' : ''
+    }">
   <div>
     <h2>${esc(sh.label)}</h2>
     <div class="meta">
@@ -223,6 +358,7 @@ ${shots
       ${sh.elements} addressable elements
       ${sh.alert ? `<br>alert: ${esc(sh.alert.slice(0, 60))}` : ''}
     </div>
+    ${sh.note ? `<div class="note ${sh.note.kind}">${NOTE_LABEL[sh.note.kind]}<span>${esc(sh.note.text)}</span></div>` : ''}
   </div>
   <div class="shotwrap">${
     sh.png
