@@ -14,6 +14,7 @@
 | [macro-format.md](macro-format.md) | 매크로 스키마와 수명주기 |
 | [selector-strategy.md](selector-strategy.md) | 요소를 찾는 방법과 우선순위 |
 | [eval-design.md](eval-design.md) | 무엇을 어떻게 측정하는가 |
+| [real-device.md](real-device.md) | 시뮬레이터가 아닌 진짜 아이폰에서 돌리기 |
 
 ## 기록
 
