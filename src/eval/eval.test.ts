@@ -111,6 +111,9 @@ describe('aggregate', () => {
       failures: 0,
       asserted: true,
       claimed: true,
+      usd: 0,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
     })),
   });
 

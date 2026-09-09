@@ -2,4 +2,5 @@
 
 export { Trace } from './trace.js';
 export { traced } from './traced-hands.js';
+export { costOf, type CostBreakdown } from './cost.js';
 export { readTrace, summarize, type RunSummary } from './summary.js';

@@ -9,6 +9,8 @@
  *   npm run eval -- --runs 3
  *   npm run eval -- --executor explore    let the model find the route
  *   npm run eval -- --executor both       run both and report them together
+ *   npm run eval -- --model claude-sonnet-5
+ *   npm run eval -- --effort low
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +26,7 @@ import {
 import { FakeHands } from '../src/hands/fake.js';
 import type { Hands } from '../src/hands/types.js';
 import { WdaHands } from '../src/hands/wda.js';
+import { hasApiKey, loadEnv } from '../src/shared/env.js';
 import { MacroSchema } from '../src/shared/types.js';
 
 const TASK_DIR = fileURLToPath(new URL('../src/eval/tasks/', import.meta.url));
@@ -32,6 +35,8 @@ const TRACE_DIR = fileURLToPath(new URL('../traces/', import.meta.url));
 const SCENARIO = fileURLToPath(
   new URL('../src/hands/fixtures/settings/settings.scenario.json', import.meta.url),
 );
+
+loadEnv();
 
 const argv = process.argv.slice(2);
 const flag = (name: string): string | undefined => {
@@ -44,6 +49,8 @@ if (!['scripted', 'explore', 'both'].includes(which)) {
   console.error(`unknown executor "${which}" — scripted | explore | both`);
   process.exit(1);
 }
+const model = flag('model');
+const effort = flag('effort');
 const only = flag('task');
 const runsOverride = flag('runs');
 
@@ -91,7 +98,18 @@ function executorsFor(task: ReturnType<typeof loadTask>): Executor[] {
   if (which !== 'scripted') {
     // Explore is the only executor that needs credentials, so it fails here
     // rather than partway through a run that has already cost time.
-    chosen.push(new ExploreExecutor({ planner: new ClaudePlanner() }));
+    if (!hasApiKey()) {
+      console.error('ANTHROPIC_API_KEY 가 없습니다. .env 에 넣거나 export 하세요.');
+      process.exit(1);
+    }
+    chosen.push(
+      new ExploreExecutor({
+        planner: new ClaudePlanner({
+          ...(model ? { model } : {}),
+          ...(effort ? { effort: effort as 'low' | 'medium' | 'high' | 'xhigh' | 'max' } : {}),
+        }),
+      }),
+    );
   }
 
   return chosen;
@@ -118,7 +136,7 @@ await hands.close();
 report(results);
 
 function report(rows: Aggregate[]): void {
-  const head = ['task', 'executor', 'ok', 'p50', 'p95', 'acts', 'obs', 'model', 'in tok'];
+  const head = ['task', 'executor', 'ok', 'p50', 'p95', 'acts', 'model', 'tok', '$/run'];
   const body = rows.map((r) => [
     r.taskId,
     r.executor,
@@ -126,9 +144,9 @@ function report(rows: Aggregate[]): void {
     `${r.p50Ms}ms`,
     `${r.p95Ms}ms`,
     String(r.avgActions),
-    String(r.avgObservations),
     String(r.avgModelCalls),
     String(r.avgInputTokens),
+    r.avgUsd === 0 ? '—' : `$${r.avgUsd.toFixed(4)}`,
   ]);
   const widths = head.map((h, i) =>
     Math.max(h.length, ...body.map((row) => (row[i] ?? '').length)),
@@ -138,6 +156,9 @@ function report(rows: Aggregate[]): void {
   console.log(line(head));
   console.log(widths.map((w) => '─'.repeat(w)).join('  '));
   for (const row of body) console.log(line(row));
+
+  const total = rows.reduce((a, r) => a + r.totalUsd, 0);
+  if (total > 0) console.log(`\n합계 $${total.toFixed(3)}`);
 
   const falseClaims = rows.reduce((a, r) => a + r.falseClaims, 0);
   const recoveries = rows.reduce((a, r) => a + r.recoveries, 0);
