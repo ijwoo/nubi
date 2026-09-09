@@ -171,3 +171,29 @@ describe('summarize', () => {
     expect(s.outputTokens).toBe(140);
   });
 });
+
+describe('Trace.beginAttempt', () => {
+  it('measures from the mark, not from when the trace opened', async () => {
+    // Setup is worth recording and must not be measured — it is work every
+    // approach pays equally and none of them chose.
+    const t = Trace.start();
+    t.event('act', 'route', { op: 'setup' });
+    await new Promise((r) => setTimeout(r, 60));
+
+    t.beginAttempt();
+    await new Promise((r) => setTimeout(r, 20));
+    t.end(true);
+
+    const total = t.events[t.events.length - 1]?.durationMs ?? 0;
+    expect(total).toBeLessThan(55);
+    expect(total).toBeGreaterThanOrEqual(15);
+  });
+
+  it('keeps the setup events in the trace', () => {
+    const t = Trace.start();
+    t.event('act', 'route', { op: 'setup' });
+    t.beginAttempt();
+    t.end(true);
+    expect(t.events.map((e) => e.detail.op)).toContain('setup');
+  });
+});

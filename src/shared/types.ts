@@ -83,6 +83,8 @@ export const StepSchema = z.discriminatedUnion('op', [
     op: z.literal('launch'),
     url: z.string().optional(),
     bundleId: z.string().optional(),
+    /** Terminate first, so the app opens on its own home screen. */
+    restart: z.boolean().optional(),
   }),
   z.object({
     op: z.literal('tap'),

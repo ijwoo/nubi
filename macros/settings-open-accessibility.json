@@ -1,0 +1,14 @@
+{
+  "id": "settings-open-accessibility",
+  "version": 1,
+  "triggers": ["설정에서 손쉬운 사용 열어줘", "손쉬운 사용 설정"],
+  "app": "com.apple.Preferences",
+  "risk": "safe",
+  "params": {},
+  "steps": [
+    { "op": "launch", "bundleId": "com.apple.Preferences", "restart": true },
+    { "op": "tap", "sel": { "id": "com.apple.settings.accessibility" } },
+    { "op": "assert", "sel": { "id": "ACCESSIBILITY_PLACARD" }, "timeout": 8000 }
+  ],
+  "stats": { "runs": 0, "fails": 0, "avgMs": 0 }
+}
