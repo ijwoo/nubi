@@ -167,9 +167,10 @@ describe('replay — refusing a bad repair', () => {
     macro.steps.push({ op: 'tap', sel: { id: 'gone_too' } });
     const idx = await accessibilityIndex();
 
+    store.save(macro);
     const executor = new ReplayExecutor({
       macro,
-      store: (store.save(macro), store),
+      store,
       repairer: new ScriptedRepairer([
         { element: idx, why: '' },
         { element: idx, why: '' },
