@@ -1,0 +1,22 @@
+id: settings-open-about
+prompt: "설정에서 이 아이폰 정보 화면 열어줘"
+
+# Two levels deep rather than one. Explore has to keep going after the first
+# screen change instead of stopping at the first thing that looks like progress.
+note: "nested navigation — 설정 > 일반 > 정보"
+
+setup:
+  bundleId: com.apple.Preferences
+  restart: true
+  settleMs: 1200
+
+# The iOS version row only exists on the About screen, so arriving anywhere
+# else fails the check.
+assert:
+  selector: { id: SW_VERSION_SPECIFIER }
+  withinMs: 10000
+
+runs: 5
+
+scripted:
+  macro: settings-open-about

@@ -40,9 +40,11 @@ Nubi는 **길을 찾는 것**과 **길을 따라가는 것**을 분리합니다.
 
 측정 장치는 이미 동작하고, 비교의 바닥이 되는 숫자가 있습니다. 시뮬레이터에서 손으로 쓴 경로를 5회 재생한 결과:
 
-| 태스크 | 실행기 | 성공 | p50 | p95 | 모델 호출 |
+| 태스크 | 모양 | 성공 | p50 | p95 | 모델 호출 |
 | --- | --- | --- | ---: | ---: | ---: |
-| settings-open-accessibility | scripted | 5/5 | 8787ms | 8942ms | 0 |
+| settings-open-accessibility | 목록 → 상세 | 5/5 | 8959ms | 9030ms | 0 |
+| settings-open-about | 2단계 중첩 | 5/5 | 10541ms | 10960ms | 0 |
+| settings-search-open | 포커스 → 입력 | 5/5 | 15337ms | 15552ms | 0 |
 
 측정 조건과 읽는 법은 [`docs/benchmarks/`](docs/benchmarks/2026-09-09-scripted-baseline.md)에 있습니다. **조건 없는 숫자는 재현할 수 없고, 재현할 수 없는 숫자는 없느니만 못합니다.**
 

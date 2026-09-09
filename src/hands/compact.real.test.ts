@@ -102,6 +102,27 @@ describe('real trees — Settings list', () => {
   });
 });
 
+describe('real trees — the on-screen keyboard', () => {
+  const screen = screenOf('settings-keyboard');
+
+  it('drops the letter keys', () => {
+    // Twenty-six of them, none actionable: text is entered with a `type`
+    // action that goes to whatever holds focus, never by tapping letters.
+    expect(screen.elements.some((e) => e.t === 'Key')).toBe(false);
+  });
+
+  it('keeps the screen inside the budget a keyboard would otherwise blow', () => {
+    // Measured at 828 tokens before this rule, against a 600 target.
+    expect(estimateTokens(screen.elements)).toBeLessThan(500);
+  });
+
+  it('still shows the controls that matter on that screen', () => {
+    const labels = screen.elements.map((e) => e.l);
+    expect(labels).toContain('손쉬운 사용');
+    expect(screen.elements.some((e) => e.t === 'SearchField')).toBe(true);
+  });
+});
+
 describe('real trees — selectors resolve', () => {
   it('finds a Settings row by its identifier', () => {
     const r = resolve({ id: 'com.apple.settings.accessibility' }, screenOf('settings'));

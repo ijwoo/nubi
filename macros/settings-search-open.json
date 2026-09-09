@@ -1,0 +1,15 @@
+{
+  "id": "settings-search-open",
+  "version": 1,
+  "triggers": ["설정 검색 열어줘", "설정에서 검색"],
+  "app": "com.apple.Preferences",
+  "risk": "safe",
+  "params": {},
+  "steps": [
+    { "op": "launch", "bundleId": "com.apple.Preferences", "restart": true },
+    { "op": "tap", "sel": { "type": "SearchField", "label": "검색" } },
+    { "op": "type", "text": "손쉬운", "submit": false },
+    { "op": "assert", "sel": { "label": "텍스트 지우기" }, "timeout": 8000 }
+  ],
+  "stats": { "runs": 0, "fails": 0, "avgMs": 0 }
+}
