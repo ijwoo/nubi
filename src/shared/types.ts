@@ -47,6 +47,19 @@ export interface Screen {
    * by a modal it cannot perceive.
    */
   alert?: SystemAlert;
+  /**
+   * The system keyboard is on screen, so some text field has focus.
+   *
+   * The keys themselves are dropped in compaction — they are not addressable
+   * and 30-odd of them crowd out the screen. But the fact that they are up is
+   * the only focus signal available: WDA's `isFocused` reads 0 on every node
+   * even for a field actively taking input.
+   *
+   * Without it, tapping a search field changes nothing an agent can perceive —
+   * same elements, same hash — so it taps again, having no way to know the
+   * first one worked.
+   */
+  keyboard?: boolean;
 }
 
 export interface SystemAlert {

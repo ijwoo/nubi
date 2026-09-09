@@ -24,6 +24,12 @@ function screenOf(name: string) {
   return compact(load(name), { app: name });
 }
 
+/** The same tree with the keyboard taken away, to isolate what it contributes. */
+function stripKeys(node: WdaNode): WdaNode {
+  const children = (node.children ?? []).filter((c) => c.type !== 'Key').map(stripKeys);
+  return { ...node, children };
+}
+
 const APPS = readdirSync(DIR)
   .filter((f) => f.endsWith('.json'))
   .map((f) => f.replace('.json', ''))
@@ -114,6 +120,28 @@ describe('real trees — the on-screen keyboard', () => {
   it('keeps the screen inside the budget a keyboard would otherwise blow', () => {
     // Measured at 828 tokens before this rule, against a 600 target.
     expect(estimateTokens(screen.elements)).toBeLessThan(500);
+  });
+
+  it('reports that the keyboard is up, having dropped the keys', () => {
+    // The keys go, the one bit they carry stays. It is the only focus signal
+    // there is: `isFocused` reads 0 on every node in these trees, including a
+    // search field actively taking input.
+    expect(screen.keyboard).toBe(true);
+    expect(screenOf('settings').keyboard).toBeUndefined();
+  });
+
+  it('hashes differently once the keyboard opens', () => {
+    // Tapping a search field adds no element and changes no label — the only
+    // difference between the two trees is the keys. Leave them out of the hash
+    // and a successful tap is indistinguishable from one that did nothing, so
+    // an agent taps a second time waiting for a change that already happened.
+    const plain = screenOf('settings-keyboard');
+    const noKeys = compact(stripKeys(load('settings-keyboard')), {
+      app: 'settings-keyboard',
+    });
+    expect(noKeys.keyboard).toBeUndefined();
+    expect(noKeys.elements).toEqual(plain.elements);
+    expect(noKeys.hash).not.toBe(plain.hash);
   });
 
   it('still shows the controls that matter on that screen', () => {
