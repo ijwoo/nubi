@@ -1,7 +1,7 @@
 import type { Executor } from '../eval/executor.js';
 import type { Task } from '../eval/task.js';
 import type { Hands, Point } from '../hands/types.js';
-import type { Element, Selector } from '../shared/types.js';
+import type { Element, Screen, Selector } from '../shared/types.js';
 import type { Trace } from '../trace/index.js';
 import type { PlanResult, PlannedAction, Planner } from './planner.js';
 
@@ -40,6 +40,9 @@ export class ExploreExecutor implements Executor {
    * A selector rides along only where one was resolved.
    */
   private trail: RouteStep[] = [];
+  private first: Screen | undefined;
+  private last: Screen | undefined;
+  private beforeLast: Screen | undefined;
 
   constructor(options: ExploreOptions) {
     this.planner = options.planner;
@@ -52,10 +55,40 @@ export class ExploreExecutor implements Executor {
     return this.trail;
   }
 
+  /**
+   * The screen the run started on and the one it finished on.
+   *
+   * Kept because a route alone cannot say what it achieved. Turning one into a
+   * macro needs a check the replay can make afterwards, and the only evidence
+   * available is what the last screen has that the first one did not.
+   */
+  get firstScreen(): Screen | undefined {
+    return this.first;
+  }
+  get finalScreen(): Screen | undefined {
+    return this.last;
+  }
+
+  /**
+   * The screen as it was just before the last action that worked.
+   *
+   * The difference between this and the final screen is what that action
+   * produced, which is a sharper question than what the whole run produced.
+   * Typing into a search field that was already open changes little; measured
+   * from the start of the run, the search field's own furniture looks like an
+   * achievement.
+   */
+  get screenBeforeLastAction(): Screen | undefined {
+    return this.beforeLast;
+  }
+
   async run(hands: Hands, task: Task, trace: Trace): Promise<boolean> {
     const deadline = Date.now() + this.timeoutMs;
     const history: PlannedAction[] = [];
     this.trail = [];
+    this.first = undefined;
+    this.last = undefined;
+    this.beforeLast = undefined;
 
     let failures = 0;
     let lastFailure: string | undefined;
@@ -67,6 +100,11 @@ export class ExploreExecutor implements Executor {
       }
 
       const screen = await hands.screen();
+      // Both ends of the walk, kept for extraction: the first is the baseline
+      // an assertion is judged against, the last is where the run claims to
+      // have arrived.
+      this.first ??= screen;
+      this.last = screen;
 
       // A modal absorbs every touch while the tree underneath looks perfectly
       // ordinary (ADR 0008). Deciding an action here would produce one that
@@ -124,6 +162,8 @@ export class ExploreExecutor implements Executor {
 
       const outcome = await this.act(hands, action, screen.elements);
       if (outcome.ok) {
+        // Observed this iteration, so it is the screen this action acted on.
+        this.beforeLast = screen;
         failures = 0;
         lastFailure = undefined;
         this.trail.push(outcome.selector ? { action, selector: outcome.selector } : { action });
