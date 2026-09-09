@@ -10,9 +10,9 @@
  *
  *   npm run compare -- traces-claude-opus-5 traces-claude-sonnet-5
  */
-import { readFileSync, readdirSync } from 'node:fs';
-import type { TraceEvent } from '../src/shared/types.js';
+import { readdirSync } from 'node:fs';
 import { costOf } from '../src/trace/cost.js';
+import { readTrace } from '../src/trace/summary.js';
 
 interface Run {
   task: string;
@@ -29,10 +29,10 @@ interface Run {
 function loadDir(dir: string): Run[] {
   const runs: Run[] = [];
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.jsonl'))) {
-    const events = readFileSync(`${dir}/${file}`, 'utf8')
-      .split('\n')
-      .filter(Boolean)
-      .map((l) => JSON.parse(l) as TraceEvent);
+    // Through the reader that tolerates a torn last line: a run killed
+    // mid-write is exactly the run worth comparing, and parsing it naively
+    // throws on the one file that has something to say.
+    const events = readTrace(`${dir}/${file}`);
     const setup = events.find((e) => e.detail.op === 'setup');
     if (setup?.detail.executor !== 'explore') continue;
 
