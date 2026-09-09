@@ -97,6 +97,18 @@ npm run heal -- settings-open-accessibility
 
 고치는 것만큼 **안 고치는 것**도 정해뒀습니다. 좌표로 교체하려 할 때, 화면에 비슷한 게 없을 때, 그리고 **안전했던 스텝을 되돌릴 수 없는 컨트롤로 고치려 할 때** 거절합니다 — 사라진 `저장` 옆의 `삭제`는 화면상 가장 가까운 후보이고, 복구는 매크로에 영구히 써집니다. 자세한 건 [실측](docs/benchmarks/2026-09-09-self-healing-live.md)에.
 
+## 진짜 아이폰에서
+
+지금까지의 숫자는 전부 시뮬레이터에서 나왔습니다. 기기는 코드 서명과 포트 포워딩이 더 필요합니다.
+
+```bash
+scripts/preflight.sh      # Xcode · 서명 팀 · iproxy · 기기 · 키를 한 번에 확인
+scripts/wda.sh --device   # 에이전트
+npm run live              # 스모크 테스트
+```
+
+준비물과 처음 해볼 것들은 [`docs/real-device.md`](docs/real-device.md)에 있습니다.
+
 ## 기기 없이 돌려보기
 
 실기기에서 캡처한 화면을 가짜 백엔드가 재생하므로, 클론하면 **기기·API 키·네트워크 없이** 경로를 걸어볼 수 있습니다.
