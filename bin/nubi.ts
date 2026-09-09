@@ -5,8 +5,12 @@
  * See docs/architecture.md.
  */
 import { fileURLToPath } from 'node:url';
+import { ClaudePlanner } from '../src/brain/index.js';
 import { FakeHands, estimateTokens } from '../src/hands/index.js';
-import { MacroStore } from '../src/macro/index.js';
+import { WdaHands } from '../src/hands/wda.js';
+import { ClaudeRepairer, MacroStore, matchMacro } from '../src/macro/index.js';
+import { run as runRequest } from '../src/run.js';
+import { hasApiKey, loadEnv } from '../src/shared/env.js';
 
 const SCENARIO = fileURLToPath(
   new URL('../src/hands/fixtures/music.scenario.json', import.meta.url),
@@ -117,17 +121,92 @@ function macros(sub: string | undefined): void {
   }
 }
 
+/**
+ * One request against a real device.
+ *
+ * Saved route → replay. No saved route → explore, and keep what it found.
+ */
+async function request(args: string[]): Promise<void> {
+  loadEnv();
+  const utterance = args.find((a) => !a.startsWith('--'));
+  const appAt = args.indexOf('--app');
+  const app = appAt === -1 ? undefined : args[appAt + 1];
+
+  if (!utterance) {
+    console.log('사용법: nubi run "<시킬 일>" --app <bundleId>');
+    console.log('  --app 은 저장된 경로가 없을 때 탐색할 앱입니다.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const store = new MacroStore(MACRO_DIR);
+  // Only exploration needs a model, and only exploration needs to be told
+  // which app: a saved route carries its own. Asked through the same matcher
+  // the run uses — comparing against the trigger as a string misses every
+  // macro with a parameter, since `{arg1}` never equals what anyone said.
+  const known = matchMacro(utterance, store.all()) !== undefined;
+  if (!known && !app) {
+    console.log('저장된 경로가 없습니다. 탐색할 앱을 --app 으로 알려주세요.');
+    process.exitCode = 1;
+    return;
+  }
+  if (!known && !hasApiKey()) {
+    console.log('저장된 경로가 없어 탐색이 필요한데 ANTHROPIC_API_KEY 가 없습니다.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const hands = new WdaHands({ bundleId: app ?? 'com.apple.Preferences' });
+  const health = await hands.health();
+  if (!health.ready) {
+    console.log(`에이전트 준비 안 됨: ${health.detail ?? ''}`);
+    console.log('  npm run wda 로 띄우세요.');
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log(`\n> ${utterance}\n`);
+  const outcome = await runRequest(utterance, {
+    hands,
+    store,
+    planner: new ClaudePlanner(),
+    repairer: new ClaudeRepairer(),
+    app: app ?? 'com.apple.Preferences',
+  });
+  await hands.close();
+
+  const cost = `$${outcome.usd.toFixed(4)}`;
+  if (outcome.kind === 'replayed') {
+    console.log(`${outcome.ok ? '✓' : '✗'} 재생  ${outcome.macroId}`);
+    console.log(
+      `  ${outcome.ms}ms  ${cost}${outcome.repairs ? `  복구 ${outcome.repairs}회` : ''}`,
+    );
+  } else {
+    console.log(`${outcome.ok ? '✓' : '✗'} 탐색  ${outcome.ms}ms  ${cost}`);
+    if (outcome.saved) {
+      console.log(`  경로를 "${outcome.saved}" 로 저장했습니다 — 다음부터는 모델 없이 재생합니다.`);
+    } else if (outcome.why) {
+      console.log(`  저장 안 함: ${outcome.why}`);
+    }
+  }
+  if (!outcome.ok) process.exitCode = 1;
+}
+
 async function main(): Promise<void> {
   const [, , command, sub] = process.argv;
   switch (command) {
     case 'demo':
       await demo();
       return;
+    case 'run':
+      await request(process.argv.slice(3));
+      return;
     case 'macros':
       macros(sub);
       return;
     case undefined:
       console.log('nubi');
+      console.log('  nubi run "<시킬 일>"  경로가 있으면 재생, 없으면 탐색하고 저장');
       console.log('  nubi demo          기기 없이 녹화된 경로를 재생합니다');
       console.log('  nubi macros        매크로 라이브러리와 통계');
       console.log('  nubi macros <id>   매크로 하나를 그대로 출력');
