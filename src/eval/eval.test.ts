@@ -128,6 +128,7 @@ describe('aggregate', () => {
       inputTokens: 0,
       outputTokens: 0,
       recoveries: 0,
+      repairs: 0,
       approvals: 0,
       failures: 0,
       asserted: true,
