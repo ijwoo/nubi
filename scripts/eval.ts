@@ -7,11 +7,15 @@
  *   npm run eval -- --fake             against recorded screens, no device
  *   npm run eval -- --task settings-open-accessibility
  *   npm run eval -- --runs 3
+ *   npm run eval -- --executor explore    let the model find the route
+ *   npm run eval -- --executor both       run both and report them together
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { ClaudePlanner, ExploreExecutor } from '../src/brain/index.js';
 import {
   type Aggregate,
+  type Executor,
   ScriptedExecutor,
   aggregate,
   loadTask,
@@ -35,6 +39,11 @@ const flag = (name: string): string | undefined => {
   return i === -1 ? undefined : argv[i + 1];
 };
 const useFake = argv.includes('--fake');
+const which = flag('executor') ?? 'scripted';
+if (!['scripted', 'explore', 'both'].includes(which)) {
+  console.error(`unknown executor "${which}" — scripted | explore | both`);
+  process.exit(1);
+}
 const only = flag('task');
 const runsOverride = flag('runs');
 
@@ -63,26 +72,46 @@ if (!useFake) {
 console.log(`\nnubi eval — ${useFake ? 'recorded screens' : 'live agent'}\n`);
 
 const results: Aggregate[] = [];
-for (const task of tasks) {
-  if (!task.scripted) {
-    console.log(`${task.id}: no executor available yet, skipping`);
-    continue;
+
+/** Executors this task can be attempted with, in the order they are reported. */
+function executorsFor(task: ReturnType<typeof loadTask>): Executor[] {
+  const chosen: Executor[] = [];
+
+  if (which !== 'explore') {
+    if (!task.scripted) {
+      console.log(`${task.id}: no macro for the scripted executor, skipping it`);
+    } else {
+      const macro = MacroSchema.parse(
+        JSON.parse(readFileSync(`${MACRO_DIR}${task.scripted.macro}.json`, 'utf8')),
+      );
+      chosen.push(new ScriptedExecutor(macro));
+    }
   }
-  const macro = MacroSchema.parse(
-    JSON.parse(readFileSync(`${MACRO_DIR}${task.scripted.macro}.json`, 'utf8')),
-  );
+
+  if (which !== 'scripted') {
+    // Explore is the only executor that needs credentials, so it fails here
+    // rather than partway through a run that has already cost time.
+    chosen.push(new ExploreExecutor({ planner: new ClaudePlanner() }));
+  }
+
+  return chosen;
+}
+
+for (const task of tasks) {
   // Nothing animates in a recording, so the settling time a device needs is
   // pure wall clock here — and it would dominate every fake measurement.
   const shaped = useFake ? { ...task, setup: { ...task.setup, settleMs: 0 } } : task;
 
-  const result = await runTask({
-    hands,
-    task: shaped,
-    executor: new ScriptedExecutor(macro),
-    ...(runsOverride ? { runs: Number(runsOverride) } : {}),
-    ...(useFake ? {} : { traceDir: TRACE_DIR }),
-  });
-  results.push(aggregate(result));
+  for (const executor of executorsFor(task)) {
+    const result = await runTask({
+      hands,
+      task: shaped,
+      executor,
+      ...(runsOverride ? { runs: Number(runsOverride) } : {}),
+      ...(useFake ? {} : { traceDir: TRACE_DIR }),
+    });
+    results.push(aggregate(result));
+  }
 }
 
 await hands.close();
