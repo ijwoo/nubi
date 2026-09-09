@@ -19,12 +19,13 @@ const SCENARIO = fileURLToPath(
 async function demo(): Promise<void> {
   const hands = FakeHands.fromScenario(SCENARIO);
 
+  // Labels describe the action, not the content it happens to carry.
   const route = [
-    { label: 'launch', run: () => hands.launch({ url: 'musicapp://' }) },
-    { label: 'tap 검색 탭', run: () => hands.tap({ id: 'tab_search' }) },
-    { label: 'type "뉴진스"', run: () => hands.type('뉴진스', { submit: true }) },
-    { label: 'tap Hype Boy', run: () => hands.tap({ label: 'Hype Boy' }) },
-    { label: 'assert 재생 중', run: () => hands.assert({ label: '일시정지' }) },
+    { label: '앱 실행', run: () => hands.launch({ url: 'music://' }) },
+    { label: '검색 탭', run: () => hands.tap({ id: 'tab_search' }) },
+    { label: '검색어 입력', run: () => hands.type('음악', { submit: true }) },
+    { label: '첫 결과 선택', run: () => hands.tap({ label: '트랙 1' }) },
+    { label: '재생 확인', run: () => hands.assert({ label: '일시정지' }) },
   ];
 
   for (const step of route) {

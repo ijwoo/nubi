@@ -32,8 +32,8 @@ describe('resolve — label', () => {
   });
 
   it('also matches a field by its current content', () => {
-    // "뉴진스" is the search field's value, not its label.
-    expect(hit(resolve({ label: '뉴진스' }, screen)).element.t).toBe('SearchField');
+    // "음악" is the search field's value, not its label.
+    expect(hit(resolve({ label: '음악' }, screen)).element.t).toBe('SearchField');
   });
 
   it('prefers a tappable control when a label is ambiguous', () => {
@@ -72,7 +72,7 @@ describe('resolve — labelContains', () => {
 
 describe('resolve — index', () => {
   it('takes the nth element of a type in document order', () => {
-    expect(hit(resolve({ index: { type: 'Cell', n: 0 } }, screen)).element.l).toBe('Hype Boy');
+    expect(hit(resolve({ index: { type: 'Cell', n: 0 } }, screen)).element.l).toBe('트랙 1');
     expect(hit(resolve({ index: { type: 'Cell', n: 1 } }, screen)).element.l).toBe('Ditto');
   });
 

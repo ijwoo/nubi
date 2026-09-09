@@ -44,7 +44,7 @@ interface Hands {
 대신 상태마다 화면을 따로 녹화한다.
 
 ```
-home  →(tap tab_search)→  search-empty  →(type)→  search-results  →(tap Hype Boy)→  playing
+home  →(tap tab_search)→  search-empty  →(type)→  search-results  →(tap 트랙 1)→  playing
 ```
 
 타이핑 전후가 다른 녹화 파일이다. 픽스처는 늘어나지만 전부 진짜 화면이다.
@@ -74,14 +74,14 @@ home  →(tap tab_search)→  search-empty  →(type)→  search-results  →(ta
 ```
 ✓ launch             home -> home
 ✓ tap 검색 탭           home -> search-empty
-✓ type "뉴진스"         search-empty -> search-results
-✓ tap Hype Boy       search-results -> playing
+✓ type "음악"         search-empty -> search-results
+✓ tap 트랙 1       search-results -> playing
 ✓ assert 재생 중        playing -> playing
 
 4 elements, ~99 tokens, hash f0209c5c237c
   Button       닫기
-  StaticText   Hype Boy
-  StaticText   NewJeans
+  StaticText   트랙 1
+  StaticText   아티스트
   Button       일시정지
 ```
 

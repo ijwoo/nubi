@@ -189,6 +189,18 @@ export class WdaHands implements Hands {
     return { ok: true, element: r.element, rung: r.rung, via: r.via, matched: r.matched };
   }
 
+  async screenshot(): Promise<string | undefined> {
+    try {
+      return await this.withSession((id) =>
+        this.request<string>('GET', `/session/${id}/screenshot`),
+      );
+    } catch {
+      // A screenshot is never load-bearing; failing to take one must not fail
+      // whatever asked for it.
+      return undefined;
+    }
+  }
+
   async health(): Promise<Health> {
     try {
       const status = await this.request<{ ready?: boolean; message?: string }>('GET', '/status');

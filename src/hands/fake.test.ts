@@ -33,15 +33,15 @@ describe('FakeHands — navigation', () => {
 
   it('follows a transition matched by label', async () => {
     hands.goto('search-results');
-    await hands.tap({ label: 'Hype Boy' });
+    await hands.tap({ label: '트랙 1' });
     expect(hands.screenName).toBe('playing');
   });
 
   it('walks a whole route the way a macro would', async () => {
     await hands.launch({ url: 'musicapp://' });
     await hands.tap({ id: 'tab_search' });
-    await hands.type('뉴진스', { submit: true });
-    await hands.tap({ label: 'Hype Boy' });
+    await hands.type('음악', { submit: true });
+    await hands.tap({ label: '트랙 1' });
 
     expect(hands.screenName).toBe('playing');
     const done = await hands.assert({ label: '일시정지' });
@@ -134,7 +134,7 @@ describe('FakeHands — injected failures', () => {
 describe('FakeHands — call log', () => {
   it('records what was asked and where it landed', async () => {
     await hands.tap({ id: 'tab_search' });
-    await hands.type('뉴진스');
+    await hands.type('음악');
 
     expect(hands.calls.map((c) => c.action)).toEqual(['tap', 'type']);
     expect(hands.calls[0]).toMatchObject({ screenBefore: 'home', screenAfter: 'search-empty' });

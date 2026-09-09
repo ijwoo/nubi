@@ -12,7 +12,7 @@ phase 02를 끝내고 문서를 훑었다. 코드가 빠르게 움직인 구간�
 
 ```yaml
 setup:
-  app: com.google.ios.youtubemusic
+  app: com.apple.Music
   state: home
 assert:
   - selector: { label: "일시정지" }

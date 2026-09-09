@@ -80,9 +80,9 @@ StaticText  iCloud 데이터, App Store, Apple 서비스 등에...
 근데 **가짜 픽스처 테스트 하나가 깨졌다.**
 
 ```
-Cell        Hype Boy      ← 라벨은 곡 제목만
-StaticText  Hype Boy
-StaticText  NewJeans      ← 아티스트. 셀 라벨에 없다
+Cell        트랙 1      ← 라벨은 곡 제목만
+StaticText  트랙 1
+StaticText  아티스트      ← 아티스트. 셀 라벨에 없다
 ```
 
 아티스트 이름이 지워졌다. 설정 앱은 부모 라벨이 자식들을 이어붙인 형태라 아무것도 안 잃었지만, 항상 그렇지 않다. **구분에 필요한 정보를 버리고 있었다.**

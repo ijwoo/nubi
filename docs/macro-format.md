@@ -6,21 +6,21 @@
 
 ```json
 {
-  "id": "yt-music-play",
+  "id": "music-play",
   "version": 3,
   "triggers": [
-    "유튜브 뮤직에서 {artist} 틀어줘",
-    "{artist} 재생"
+    "음악에서 {track} 재생",
+    "{track} 재생"
   ],
-  "app": "com.google.ios.youtubemusic",
+  "app": "com.apple.Music",
   "risk": "safe",
   "params": {
-    "artist": { "type": "string", "required": true }
+    "track": { "type": "string", "required": true }
   },
   "steps": [
-    { "op": "launch", "url": "youtubemusic://" },
+    { "op": "launch", "url": "music://" },
     { "op": "tap",    "sel": { "id": "search" }, "alt": { "label": "검색" } },
-    { "op": "type",   "text": "{{artist}}", "submit": true },
+    { "op": "type",   "text": "{{track}}", "submit": true },
     { "op": "tap",    "sel": { "index": { "type": "Cell", "n": 0 } } },
     { "op": "assert", "sel": { "label": "일시정지" }, "timeout": 10000 }
   ],
@@ -78,8 +78,8 @@
 `{{param}}` 형태로 스텝 안에 치환됩니다. 치환은 문자열 값에만 적용되고, 셀렉터 구조 자체는 바꾸지 않습니다.
 
 ```json
-{ "op": "type", "text": "{{artist}}" }
-{ "op": "assert", "sel": { "labelContains": "{{artist}}" } }
+{ "op": "type", "text": "{{track}}" }
+{ "op": "assert", "sel": { "labelContains": "{{track}}" } }
 ```
 
 ## stats와 자동 강등

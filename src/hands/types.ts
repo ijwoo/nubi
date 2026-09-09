@@ -47,6 +47,18 @@ export interface Hands {
    */
   answerAlert(button: string): Promise<ActResult>;
 
+  /**
+   * PNG of the current screen, base64, or undefined when the target has no
+   * pixels to give.
+   *
+   * Not part of ordinary observation — the tree is what drives decisions, and
+   * a screenshot costs a thousand times the tokens (ADR 0002). It exists for
+   * the two cases where the tree is not enough: a screen whose accessibility
+   * data is too thin to act on, and explaining afterwards what the agent was
+   * looking at when it went wrong.
+   */
+  screenshot(): Promise<string | undefined>;
+
   health(): Promise<Health>;
   close(): Promise<void>;
 }

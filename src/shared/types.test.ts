@@ -22,9 +22,9 @@ describe('SelectorSchema', () => {
 
 describe('MacroSchema', () => {
   const minimal = {
-    id: 'yt-music-play',
-    triggers: ['유튜브 뮤직에서 {artist} 틀어줘'],
-    app: 'com.google.ios.youtubemusic',
+    id: 'music-play',
+    triggers: ['음악에서 {track} 재생'],
+    app: 'com.apple.Music',
     steps: [{ op: 'tap', sel: { id: 'search' } }],
   };
 

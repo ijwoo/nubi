@@ -103,6 +103,13 @@ export function traced(hands: Hands, trace: Trace, path: () => Path = () => 'rou
       return h;
     },
 
+    async screenshot(): Promise<string | undefined> {
+      // Deliberately not traced. It is diagnostic rather than something the
+      // run did, and a base64 PNG in a JSONL line would make the trace
+      // unreadable and enormous.
+      return hands.screenshot();
+    },
+
     async close(): Promise<void> {
       await hands.close();
     },
