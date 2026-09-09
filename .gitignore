@@ -11,6 +11,8 @@ coverage/
 # state, so a diff of them means nothing. Curated snapshots live in
 # docs/benchmarks/ with the conditions they were measured under.
 traces/
+# 티어 비교는 모델별로 따로 남긴다 — 전부 원시 트레이스라 커밋하지 않는다.
+traces-*/
 
 # Xcode (Orb, added in phase 05)
 *.xcuserdatad/

@@ -165,6 +165,9 @@ function report(rows: Aggregate[]): void {
   console.log();
   if (falseClaims > 0)
     console.log(`⚠ ${falseClaims} attempt(s) claimed success the device did not confirm`);
+  const unclaimed = rows.reduce((a, r) => a + r.unclaimed, 0);
+  if (unclaimed > 0)
+    console.log(`⚠ ${unclaimed} attempt(s) reached the goal without the executor saying so`);
   if (recoveries > 0) console.log(`  ${recoveries} session recovery(ies) during the set`);
   if (!useFake) console.log('  traces: traces/');
 

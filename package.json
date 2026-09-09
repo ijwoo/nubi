@@ -22,6 +22,7 @@
     "wda": "./scripts/wda.sh",
     "record": "tsx scripts/record.ts",
     "eval": "tsx scripts/eval.ts",
+    "compare": "tsx scripts/compare-models.ts",
     "check:docs": "tsx scripts/check-docs.ts",
     "report": "tsx scripts/report.ts"
   },

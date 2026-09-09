@@ -125,6 +125,15 @@ export interface Aggregate {
   recoveries: number;
   /** Attempts where the executor claimed success but the assertion disagreed. */
   falseClaims: number;
+  /**
+   * Attempts the device confirmed that the executor never claimed.
+   *
+   * Usually an executor that died partway with the goal already met — an API
+   * error on the step that would have said `done`. It counts as a success,
+   * because it was one, but folding it in silently hides the error: the run
+   * reads as clean and the p95 quietly carries a retry nobody sees.
+   */
+  unclaimed: number;
 }
 
 export function aggregate(result: TaskResult): Aggregate {
@@ -149,6 +158,7 @@ export function aggregate(result: TaskResult): Aggregate {
     totalUsd: runs.reduce((a, r) => a + r.usd, 0),
     recoveries: runs.reduce((a, r) => a + r.recoveries, 0),
     falseClaims: runs.filter((r) => r.claimed && !r.asserted).length,
+    unclaimed: runs.filter((r) => !r.claimed && r.asserted).length,
   };
 }
 
