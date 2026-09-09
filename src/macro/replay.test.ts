@@ -159,6 +159,36 @@ describe('replay — refusing a bad repair', () => {
     expect(store.get('demo').version).toBe(1);
   });
 
+  it('will not repair a safe step onto something irreversible', async () => {
+    // The nearest match to a control that vanished is chosen by resemblance,
+    // which has no notion of consequence — and the choice is written into the
+    // macro, so it is every later run that pays, unattended.
+    // The route has to reach a screen that holds a destructive control, so it
+    // searches first — `텍스트 지우기` only exists once something is typed.
+    // Starting the macro with `launch` would send the fake back to the root
+    // screen and undo the setup.
+    const macro = {
+      ...broken(),
+      steps: [
+        { op: 'tap', sel: { type: 'SearchField', label: '검색' } },
+        { op: 'type', text: '손쉬운', submit: false },
+        { op: 'tap', sel: { id: 'renamed_in_the_update' } },
+      ],
+    } as Macro;
+
+    const preview = FakeHands.fromScenario(SCENARIO);
+    preview.goto('search-results');
+    const destructive = (await preview.screen()).elements.findIndex((e) => e.l === '텍스트 지우기');
+    expect(destructive).toBeGreaterThanOrEqual(0);
+
+    const executor = replay(macro, [{ element: destructive, why: '가장 비슷함' }]);
+    expect(await executor.run(hands, task, trace)).toBe(false);
+    expect(store.get('demo').version).toBe(1); // untouched
+    expect(trace.events.some((e) => e.detail.reason?.toString().includes('irreversible'))).toBe(
+      true,
+    );
+  });
+
   it('stops after the repair budget, rather than mending its way through', async () => {
     // A route needing repair at every step has changed, not shifted. Rewriting
     // it wholesale would produce a macro nobody chose.
