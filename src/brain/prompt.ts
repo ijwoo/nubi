@@ -27,6 +27,7 @@ export function renderScreen(screen: Screen): string {
   return [
     `app: ${screen.app}`,
     `screen: ${screen.hash}  (${screen.elements.length} elements)`,
+    ...(screen.keyboard ? ['note: the keyboard is open, so a text field has focus'] : []),
     ...(screen.truncated ? ['note: element list was truncated'] : []),
     '',
     ...lines,
@@ -44,7 +45,9 @@ How to work:
 - One action at a time. After it runs you will see the new screen. Do not plan
   several steps ahead: on a phone the first result is usually not what was
   imagined, and the rest of the plan is then wasted.
-- Text goes to whatever has focus, so tap a field before typing into it.
+- Text goes to whatever has focus. Tap a field to focus it — but only once: if
+  the keyboard is already open, a field is focused, so type instead of tapping
+  again.
 - Prefer a control whose purpose is unambiguous from its label or identifier.
 - If a screen has no control that moves toward the goal, look for a way to
   scroll or go back rather than tapping something at random.

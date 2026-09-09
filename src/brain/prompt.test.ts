@@ -85,4 +85,11 @@ describe('renderTurn', () => {
   it('shows how many steps are left', () => {
     expect(renderTurn({ ...base, stepsRemaining: 3 })).toContain('Steps left: 3');
   });
+
+  it('says the keyboard is open so the model types instead of tapping again', () => {
+    // Live run rmttza3la3nbz tapped the search field, saw an identical screen,
+    // and tapped it again before typing — a wasted turn and a wasted call.
+    expect(renderScreen({ ...screen, keyboard: true })).toContain('keyboard is open');
+    expect(renderScreen(screen)).not.toContain('keyboard is open');
+  });
 });

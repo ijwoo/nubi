@@ -136,6 +136,8 @@ export function compact(root: WdaNode, opts: CompactOptions): Screen {
   const size = { w: root.rect?.width ?? 0, h: root.rect?.height ?? 0 };
 
   const nodes = flatten(root);
+  // Read before the keys are dropped — their presence is the observable part.
+  const keyboard = nodes.some((n) => KEYBOARD.has(n.type));
   for (const n of nodes) n.keep = isAddressable(n, size);
   dropSubsumed(nodes);
   dropPresentation(nodes);
@@ -162,9 +164,10 @@ export function compact(root: WdaNode, opts: CompactOptions): Screen {
     app: opts.app,
     elements,
     size,
-    hash: hashElements(elements),
+    hash: hashElements(elements, keyboard),
     capturedAt: new Date().toISOString(),
   };
+  if (keyboard) screen.keyboard = true;
   if (truncated) screen.truncated = true;
   return screen;
 }
@@ -360,7 +363,7 @@ function contains(outer: Rect, inner: Rect): boolean {
  * Rects are quantized to 4pt so a one-pixel layout jitter — or a scroll that
  * settles a hair differently — does not read as a different screen.
  */
-export function hashElements(elements: Element[]): string {
+export function hashElements(elements: Element[], keyboard = false): string {
   const q = (n: number) => Math.round(n / 4) * 4;
   const body = elements
     .map(
@@ -368,7 +371,12 @@ export function hashElements(elements: Element[]): string {
         `${e.t}|${e.id ?? ''}|${e.l ?? ''}|${e.v ?? ''}|${q(e.r[0])},${q(e.r[1])},${q(e.r[2])},${q(e.r[3])}`,
     )
     .join('\n');
-  return createHash('sha1').update(body).digest('hex').slice(0, 12);
+  // Part of the hash because opening the keyboard is often the only thing a tap
+  // changes, and a screen that hashes the same reads as a tap that did nothing.
+  return createHash('sha1')
+    .update(keyboard ? `kb\n${body}` : body)
+    .digest('hex')
+    .slice(0, 12);
 }
 
 /**
