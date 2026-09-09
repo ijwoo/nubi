@@ -136,8 +136,10 @@ export function compact(root: WdaNode, opts: CompactOptions): Screen {
   const size = { w: root.rect?.width ?? 0, h: root.rect?.height ?? 0 };
 
   const nodes = flatten(root);
-  // Read before the keys are dropped — their presence is the observable part.
-  const keyboard = nodes.some((n) => KEYBOARD.has(n.type));
+  // Read before the keys are dropped: their presence is the observable part,
+  // and their top edge is where everything else the keyboard draws begins.
+  const keys = nodes.filter((n) => KEYBOARD.has(n.type));
+  const keyboard = keys.length === 0 ? undefined : { top: Math.min(...keys.map((n) => n.rect.y)) };
   for (const n of nodes) n.keep = isAddressable(n, size);
   dropSubsumed(nodes);
   dropPresentation(nodes);
@@ -164,10 +166,10 @@ export function compact(root: WdaNode, opts: CompactOptions): Screen {
     app: opts.app,
     elements,
     size,
-    hash: hashElements(elements, keyboard),
+    hash: hashElements(elements, keyboard !== undefined),
     capturedAt: new Date().toISOString(),
   };
-  if (keyboard) screen.keyboard = true;
+  if (keyboard) screen.keyboard = keyboard;
   if (truncated) screen.truncated = true;
   return screen;
 }

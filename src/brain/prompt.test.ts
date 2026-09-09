@@ -89,7 +89,7 @@ describe('renderTurn', () => {
   it('says the keyboard is open so the model types instead of tapping again', () => {
     // Live run rmttza3la3nbz tapped the search field, saw an identical screen,
     // and tapped it again before typing — a wasted turn and a wasted call.
-    expect(renderScreen({ ...screen, keyboard: true })).toContain('keyboard is open');
+    expect(renderScreen({ ...screen, keyboard: { top: 600 } })).toContain('keyboard is open');
     expect(renderScreen(screen)).not.toContain('keyboard is open');
   });
 });

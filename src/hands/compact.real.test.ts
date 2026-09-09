@@ -126,7 +126,7 @@ describe('real trees — the on-screen keyboard', () => {
     // The keys go, the one bit they carry stays. It is the only focus signal
     // there is: `isFocused` reads 0 on every node in these trees, including a
     // search field actively taking input.
-    expect(screen.keyboard).toBe(true);
+    expect(screen.keyboard?.top).toBeGreaterThan(0);
     expect(screenOf('settings').keyboard).toBeUndefined();
   });
 

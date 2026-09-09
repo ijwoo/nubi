@@ -79,7 +79,7 @@ describe('recorded Settings — navigation', () => {
     const hands = open();
     expect((await hands.screen()).keyboard).toBeUndefined();
     await hands.tap({ type: 'SearchField', label: '검색' });
-    expect((await hands.screen()).keyboard).toBe(true);
+    expect((await hands.screen()).keyboard?.top).toBeGreaterThan(0);
   });
 
   it('kept the first view of the list apart from a return to it', async () => {
