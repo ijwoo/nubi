@@ -95,7 +95,7 @@ export function labelOf(node: WdaNode): string | undefined {
  *
  * Label and value answer different questions and the model needs both: the
  * label identifies the control ("Artists, songs, lyrics"), the value says what
- * state it is in ("NewJeans"). Collapsing them into one field forces a choice
+ * state it is in (the name typed into it). Collapsing them into one field forces a choice
  * that is wrong for one control type or the other — placeholder text for a
  * filled field, or a bare "1" for a switch with no hint of what it toggles.
  */

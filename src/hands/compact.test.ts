@@ -31,7 +31,7 @@ describe('compact', () => {
     // see that the search box already holds a query.
     const search = screen.elements.find((e) => e.t === 'SearchField');
     expect(search?.l).toBe('아티스트, 곡, 가사');
-    expect(search?.v).toBe('뉴진스');
+    expect(search?.v).toBe('음악');
   });
 
   it('leaves value unset when it only repeats the label', () => {
@@ -47,11 +47,11 @@ describe('compact', () => {
   });
 
   it('collapses a child that repeats its kept ancestor label', () => {
-    // The "Hype Boy" cell wraps a StaticText with the same label.
-    expect(screen.elements.filter((e) => e.l === 'Hype Boy')).toHaveLength(1);
-    expect(byLabel('Hype Boy')?.t).toBe('Cell');
+    // The "트랙 1" cell wraps a StaticText with the same label.
+    expect(screen.elements.filter((e) => e.l === '트랙 1')).toHaveLength(1);
+    expect(byLabel('트랙 1')?.t).toBe('Cell');
     // A sibling with different text survives.
-    expect(byLabel('NewJeans')?.t).toBe('StaticText');
+    expect(byLabel('아티스트')?.t).toBe('StaticText');
   });
 
   it('drops invisible, zero-size, and offscreen nodes', () => {

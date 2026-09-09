@@ -1,88 +1,54 @@
 # Nubi
 
-**A voice-driven iPhone agent that learns a path once, then replays it without the model.**
+**말로 시키면 아이폰이 대신 움직입니다. 한 번 찾은 길은 다음부터 모델 없이 재생합니다.**
 
-> `nubi` — from the Korean verb *누비다 (nubida)*, "to roam across." It roams your app
-> screens and taps for you.
+> `nubi` — 순우리말 *누비다*에서. 앱 화면을 이리저리 누비고 다니며 대신 눌러줍니다.
 
-Say what you want. Nubi drives your actual iPhone — reading the accessibility tree,
-finding the right control, tapping it. The first time it has to figure the route out.
-Every time after that, it just remembers.
+접근성 트리를 읽고, 눌러야 할 컨트롤을 찾고, 탭합니다. 처음엔 길을 찾아야 하지만 그 다음부터는 기억한 경로를 따라갑니다.
 
 ---
 
-## The problem
+## 문제
 
-Every "AI controls your phone" demo hits the same wall: a screenshot → model → tap
-round trip costs seconds, and real tasks are 15–25 steps deep. One request takes five
-minutes and the context window fills with screenshots.
+"AI가 폰을 조작한다"는 데모는 전부 같은 벽에 부딪힙니다. **스크린샷 → 모델 → 탭** 왕복이 스텝당 수 초 걸리는데 실제 작업은 15~25스텝입니다. 한 번에 5분이 걸리고, 스크린샷이 쌓이면서 컨텍스트가 터집니다.
 
-That is a fun demo. Nobody uses it twice.
+재밌는 데모지만 아무도 두 번은 쓰지 않습니다.
 
-To be usable daily, **the second time has to be fast** — the way it is for a person.
+매일 쓰려면 **두 번째가 빨라야** 합니다. 사람이 그러듯이요.
 
-## The idea
+## 접근
 
-Nubi separates *finding* a route from *following* one.
+Nubi는 **길을 찾는 것**과 **길을 따라가는 것**을 분리합니다.
 
-The first run is a full agent loop: observe the screen, decide, act, repeat. Slow, and
-it costs tokens. But when it succeeds, Nubi extracts the route as a **selector-based
-macro** and files it away.
+첫 실행은 풀 에이전트 루프입니다. 화면을 보고, 판단하고, 실행하고, 반복. 느리고 토큰을 씁니다. 대신 성공하면 그 경로를 **셀렉터 기반 매크로**로 저장합니다.
 
-The next run replays that macro directly. No model call. When a selector breaks — the
-app shipped a redesign — only *that step* escalates back to the model, which repairs the
-selector and writes the fix back into the macro.
+다음 실행은 그 매크로를 그대로 재생합니다. 모델 호출이 없습니다. 셀렉터가 깨지면 — 앱이 업데이트됐다든지 — **그 스텝만** 모델로 올라가고, 고쳐진 셀렉터가 매크로에 되쓰입니다.
 
-Find once. Replay forever. Repair on contact.
+한 번 찾고, 계속 재생하고, 깨지면 고칩니다.
 
-## Results
+## 결과
 
-| Same task | First run (explore) | After learning (replay) |
+| 동일 태스크 | 첫 실행 (탐색) | 학습 후 (재생) |
 | --- | --- | --- |
-| Model calls | ~20 | **0** |
-| Input tokens | ~120k | **0** |
-| Cost per run | measuring | **$0** |
-| Wall clock | measuring | measuring |
-| Success rate | measuring | measuring |
+| 모델 호출 | ~20회 | **0회** |
+| 입력 토큰 | ~120k | **0** |
+| 회당 비용 | 측정 예정 | **$0** |
+| 소요 시간 | 측정 예정 | 측정 예정 |
+| 성공률 | 측정 예정 | 측정 예정 |
 
-Zero model calls, tokens, and cost on replay are **structural** — the replay path never
-opens a socket to the API. Wall clock and success rate need Explore to exist before there
-is a first-run column to compare against; they land with phase 04.
+재생 시 호출·토큰·비용이 0인 것은 **구조적 사실**입니다 — 재생 경로는 API로 소켓을 열지 않습니다. 소요 시간과 성공률은 Explore가 있어야 "첫 실행" 열이 생기므로 phase 04에서 채워집니다.
 
-The harness itself works and has a floor to measure against. Replaying a hand-written
-route on a simulator, five runs:
+측정 장치는 이미 동작하고, 비교의 바닥이 되는 숫자가 있습니다. 시뮬레이터에서 손으로 쓴 경로를 5회 재생한 결과:
 
-| Task | Executor | Success | p50 | p95 | Model calls |
+| 태스크 | 실행기 | 성공 | p50 | p95 | 모델 호출 |
 | --- | --- | --- | ---: | ---: | ---: |
 | settings-open-accessibility | scripted | 5/5 | 8787ms | 8942ms | 0 |
 
-Conditions and how to read that in
-[`docs/benchmarks/`](docs/benchmarks/2026-09-09-scripted-baseline.md). A number without
-its conditions is not reproducible, and one that is not reproducible is worse than none.
+측정 조건과 읽는 법은 [`docs/benchmarks/`](docs/benchmarks/2026-09-09-scripted-baseline.md)에 있습니다. **조건 없는 숫자는 재현할 수 없고, 재현할 수 없는 숫자는 없느니만 못합니다.**
 
-## How it works
+## 기기 없이 돌려보기
 
-A request takes one of three paths.
-
-**Route** *(Haiku, ~300ms)* — match the utterance against the macro registry, extract
-parameters. Hit → Replay. Miss → Explore.
-
-**Replay** *(no model)* — run the stored steps. Each step resolves a selector against the
-live accessibility tree, then acts. This is the path that turns five minutes into ten
-seconds.
-
-**Repair** *(Opus, 1–2 calls)* — fires only when a selector misses. The model gets the
-current tree plus the intent that failed, proposes a replacement, and the working
-selector is patched back into the macro file.
-
-**Explore** *(Opus, N calls)* — no macro exists yet. Full observe-decide-act loop. On
-success the trajectory is distilled into a macro candidate. **This is what feeds the
-replay path** — the whole design is a loop from Explore back into Replay.
-
-## Try it without a phone
-
-Screens recorded from a real device are replayed by a fake backend, so a fresh
-clone can walk a route with no device, no API key, and no network.
+실기기에서 캡처한 화면을 가짜 백엔드가 재생하므로, 클론하면 **기기·API 키·네트워크 없이** 경로를 걸어볼 수 있습니다.
 
 ```bash
 npm install
@@ -90,102 +56,92 @@ npm run nubi -- demo
 ```
 
 ```
-✓ launch             home -> home
-✓ tap 검색 탭           home -> search-empty
-✓ type "뉴진스"         search-empty -> search-results
-✓ tap Hype Boy       search-results -> playing
-✓ assert 재생 중        playing -> playing
+✓ 앱 실행               home -> home
+✓ 검색 탭               home -> search-empty
+✓ 검색어 입력             search-empty -> search-results
+✓ 첫 결과 선택            search-results -> playing
+✓ 재생 확인              playing -> playing
 ```
 
-## Commands
+## 명령
 
-| | Needs a device | |
+| | 기기 | |
 | --- | --- | --- |
-| `npm test` | no | Pure logic and the fake backend |
-| `npm run nubi -- demo` | no | Replay a recorded route |
-| `npm run eval -- --fake` | no | Run the task set over recorded screens |
-| `npm run wda` | simulator | Build and start WebDriverAgent |
-| `npm run live` | yes | Contract and action checks against a real agent |
-| `npm run record -- settings` | yes | Walk an app and record a scenario |
-| `npm run eval` | yes | Run the task set and measure it |
+| `npm test` | 불필요 | 순수 로직 + 가짜 백엔드 |
+| `npm run nubi -- demo` | 불필요 | 녹화된 경로 재생 |
+| `npm run eval -- --fake` | 불필요 | 녹화 화면으로 태스크 실행 |
+| `npm run check` | 불필요 | 타입 + 린트 + 테스트 + 문서 검사 |
+| `npm run wda` | 시뮬레이터 | WebDriverAgent 빌드·실행 |
+| `npm run live` | 필요 | 계약과 액션을 실기에 검증 |
+| `npm run record -- settings` | 필요 | 앱을 걸어다니며 시나리오 녹화 |
+| `npm run eval` | 필요 | 태스크 실행 + 측정 |
+| `npm run report -- <macro>` | 필요 | 스텝별 화면이 붙은 실행 리포트 |
 
-A simulator is enough for all of these. WebDriverAgent needs no code signing there, so
-`npm run wda` works over SSH with no cable and no GUI.
+시뮬레이터면 전부 됩니다. 시뮬레이터용 WebDriverAgent는 코드 서명이 필요 없어서 **`npm run wda`가 SSH로도, 케이블 없이도, GUI 없이도** 동작합니다.
 
-## Architecture
+## 구조
 
 ```
 Mac                                    iPhone
 ┌────────────────────────────┐
-│  Orb      voice in, state  │
+│  Orb      음성 입력·상태 표시  │
 │   ↕                        │
-│  Brain    route · replay   │        ┌──────────────┐
-│   │       · repair         │        │  WDA         │
+│  Brain    라우팅 · 재생      │        ┌──────────────┐
+│   │       · 복구            │        │  WDA         │
 │   │       ↘ Anthropic API  │        │  (XCUITest)  │
 │   ↓                        │        │      ↓       │
-│  Hands    WDA client       │──USB──▶│  target app  │
-│           session recovery │        └──────────────┘
-│           tree compaction  │
+│  Hands    WDA 클라이언트     │──USB──▶│  대상 앱      │
+│           세션 복구          │        └──────────────┘
+│           트리 압축          │
 └────────────────────────────┘               ▲
               │                              │
-              └──── relay ──▶ approval on the phone
+              └──── relay ──▶ 아이폰에서 승인
 ```
 
-Hands is a library, not a service — Brain imports it in-process. It is also exposed as an
-MCP server so Claude Code can drive the phone directly during development.
+Hands는 서비스가 아니라 라이브러리입니다. Brain이 in-process로 import 합니다. 별도로 MCP 서버로도 노출해서, 개발 중에 Claude Code가 직접 폰을 조작할 수 있게 합니다.
 
-Two implementations satisfy that interface: one driving WebDriverAgent, one replaying
-screens recorded off a device. A shared contract suite runs against both — `npm test`
-against the fake, `npm run live` against a real agent — because implementing the same
-interface proves nothing about behaving the same way.
+**구현이 둘입니다** — WebDriverAgent를 조작하는 것과, 기기에서 녹화한 화면을 재생하는 것. 공통 계약 테스트를 양쪽에 돌립니다(`npm test`는 가짜에, `npm run live`는 실기에). 같은 인터페이스를 구현한다는 게 같은 동작을 보장하지 않기 때문입니다.
 
-Risky actions (payment, deletion, sending) never auto-execute. They pause and ask for
-approval **on the phone**, through the existing
-[pip-any](https://github.com/imjaewoo/pip-any) relay and Live Activity.
+결제·삭제·전송처럼 되돌릴 수 없는 액션은 자동 실행되지 않습니다. 멈추고 **아이폰에서** 승인을 받습니다 — 기존 [pip-any](https://github.com/imjaewoo/pip-any) relay와 Live Activity를 통해서요.
 
-## Status
+## 진행 상황
 
-Built in five phases, each ending in something measurable.
+다섯 단계로 만들고, 각 단계는 측정 가능한 산출물로 끝납니다.
 
-| | Phase | Delivers | State |
+| | 단계 | 산출물 | 상태 |
 | --- | --- | --- | --- |
-| 01 | Hands | tap/type/assert against the simulator; session auto-recovery | done |
-| 02 | Trace + Eval | the harness, and a floor to measure against | done |
-| 03 | Brain · Explore | cold success rate and real token cost | |
-| 04 | Macro · Replay + Repair | the before/after table | |
-| 05 | Orb + approval gate | the demo | |
+| 01 | Hands | 시뮬레이터에서 tap/type/assert, 세션 자동 복구 | 완료 |
+| 02 | Trace + Eval | 측정 장치와 비교의 바닥 | 완료 |
+| 03 | Brain · Explore | cold 성공률과 실제 토큰 비용 | |
+| 04 | Macro · Replay + Repair | before/after 비교표 | |
+| 05 | Orb + 승인 게이트 | 데모 | |
 
-Eval comes before macros on purpose: proving the speedup needs a measured baseline, and
-you only get one chance to record it.
+**eval을 매크로보다 먼저** 한 것은 의도적입니다. 빨라졌다는 걸 증명하려면 측정된 바닥이 필요하고, 그걸 기록할 기회는 한 번뿐입니다.
 
-## Docs
+## 문서
 
-Design notes and decision records live in [`docs/`](docs/) (written in Korean).
+설계 노트와 결정 기록은 [`docs/`](docs/)에 있습니다.
 
-- [Overview](docs/overview.md) — problem, approach, what this claims
-- [Architecture](docs/architecture.md)
-- [Execution paths](docs/execution-paths.md) — route / replay / repair / explore
-- [Macro format](docs/macro-format.md)
-- [Selector strategy](docs/selector-strategy.md)
-- [Eval design](docs/eval-design.md)
-- [ADRs](docs/adr/) — why things are the way they are
-- [Journal](docs/journal/) — what actually happened, including what did not work
+- [개요](docs/overview.md) — 문제, 접근, 주장하는 것과 아닌 것
+- [아키텍처](docs/architecture.md)
+- [실행 경로](docs/execution-paths.md) — 라우팅 / 재생 / 복구 / 탐색
+- [매크로 포맷](docs/macro-format.md)
+- [셀렉터 전략](docs/selector-strategy.md)
+- [측정 설계](docs/eval-design.md)
+- [ADR](docs/adr/) — 왜 이렇게 결정했는가
+- [작업 기록](docs/journal/) — 실제로 무슨 일이 있었는가, 안 된 것 포함
+- [벤치마크](docs/benchmarks/) — 측정 조건과 함께 남긴 실측
 
-## Limitations
+## 한계
 
-Stated up front, because they are real.
+먼저 밝힙니다. 전부 실제 제약입니다.
 
-- **iOS shows an "Automation Running" banner** for the whole session, and the phone is
-  occupied — you cannot use it by hand while Nubi drives.
-- **A free Apple developer account requires reinstalling WDA every 7 days.** A paid
-  account gets a year.
-- **Biometric prompts cannot be passed.** That is deliberate, not a gap; the approval
-  gate takes that role.
-- **Macros are brittle against app redesigns.** Repair softens this but does not remove
-  it, and apps with a thin accessibility tree fall back to coordinates, which break more.
-- Demos target apps with clean terms of service (music, notes, reminders, maps,
-  settings). Automating commerce checkout is out of scope.
+- **iOS가 세션 내내 "Automation Running" 배너를 띄우고**, 그동안 폰은 점유됩니다 — 사람이 동시에 쓸 수 없습니다.
+- **무료 개발자 계정은 7일마다 WDA를 재설치해야** 합니다. 유료 계정이면 1년.
+- **생체인증은 통과할 수 없습니다.** 이건 빠진 기능이 아니라 의도된 것이고, 승인 게이트가 그 자리를 대신합니다.
+- **매크로는 앱 재설계에 취약합니다.** 자가치유가 완화하지만 없애지는 못하고, 접근성 트리가 부실한 앱은 좌표로 폴백해서 더 잘 깨집니다.
+- 데모는 약관이 깨끗한 앱(음악·메모·미리알림·지도·설정)을 대상으로 합니다. 커머스 결제 자동화는 범위 밖입니다.
 
-## License
+## 라이선스
 
 MIT

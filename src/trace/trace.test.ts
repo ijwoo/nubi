@@ -132,8 +132,8 @@ describe('summarize', () => {
 
     await subject.launch({ url: 'musicapp://' });
     await subject.tap({ id: 'tab_search' });
-    await subject.type('뉴진스', { submit: true });
-    await subject.tap({ label: 'Hype Boy' });
+    await subject.type('음악', { submit: true });
+    await subject.tap({ label: '트랙 1' });
     await subject.assert({ label: '일시정지' });
     trace.end(true);
 

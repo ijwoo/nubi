@@ -26,8 +26,8 @@
           },
           {
             "type": "XCUIElementTypeStaticText",
-            "name": "Hype Boy",
-            "label": "Hype Boy",
+            "name": "트랙 1",
+            "label": "트랙 1",
             "rect": { "x": 40, "y": 520, "width": 313, "height": 28 },
             "isEnabled": "true",
             "isVisible": "1",
@@ -36,8 +36,8 @@
           },
           {
             "type": "XCUIElementTypeStaticText",
-            "name": "NewJeans",
-            "label": "NewJeans",
+            "name": "아티스트",
+            "label": "아티스트",
             "rect": { "x": 40, "y": 550, "width": 313, "height": 22 },
             "isEnabled": "true",
             "isVisible": "1",

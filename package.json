@@ -22,7 +22,8 @@
     "wda": "./scripts/wda.sh",
     "record": "tsx scripts/record.ts",
     "eval": "tsx scripts/eval.ts",
-    "check:docs": "tsx scripts/check-docs.ts"
+    "check:docs": "tsx scripts/check-docs.ts",
+    "report": "tsx scripts/report.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

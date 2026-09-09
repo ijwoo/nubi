@@ -242,6 +242,15 @@ export class FakeHands implements Hands {
     this.alert = { text, buttons };
   }
 
+  /**
+   * Recordings hold trees, not pixels. Returning undefined is the honest
+   * answer — a placeholder image would make a report look complete when it is
+   * showing nothing that happened.
+   */
+  async screenshot(): Promise<string | undefined> {
+    return undefined;
+  }
+
   async health(): Promise<Health> {
     return { ready: true, recoveries: this.recoveries, detail: `fake @ ${this.current}` };
   }
