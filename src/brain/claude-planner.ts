@@ -14,11 +14,21 @@ import { SYSTEM_PROMPT, renderTurn } from './prompt.js';
 
 export interface ClaudePlannerOptions {
   model?: string;
-  /** ADR 0006 puts planning on the expensive tier; this is where that applies. */
+  /** ADR 0010 puts planning on Sonnet; `--model` overrides for a comparison. */
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
   maxTokens?: number;
   client?: Anthropic;
 }
+
+/**
+ * Models that reject `output_config.effort` outright.
+ *
+ * Sending it to Haiku 4.5 returns a 400 before the model sees anything, so a
+ * tier sweep reads 0/5 with zero tokens spent — a result that looks exactly
+ * like the small model failing the task, and would have been written up as
+ * evidence for keeping planning on the expensive tier.
+ */
+const NO_EFFORT = new Set(['claude-haiku-4-5', 'claude-haiku-4-5-20251001']);
 
 const TOOLS: Anthropic.Beta.BetaToolUnion[] = [
   {
@@ -106,7 +116,7 @@ export class ClaudePlanner implements Planner {
 
   constructor(options: ClaudePlannerOptions = {}) {
     this.client = options.client ?? new Anthropic();
-    this.model = options.model ?? 'claude-opus-5';
+    this.model = options.model ?? 'claude-sonnet-5';
     this.effort = options.effort ?? 'high';
     this.maxTokens = options.maxTokens ?? 4096;
   }
@@ -122,7 +132,7 @@ export class ClaudePlanner implements Planner {
       context_management: {
         edits: [{ type: 'clear_tool_uses_20250919', clear_tool_inputs: true }],
       },
-      output_config: { effort: this.effort },
+      ...(NO_EFFORT.has(this.model) ? {} : { output_config: { effort: this.effort } }),
       system: [
         {
           type: 'text',

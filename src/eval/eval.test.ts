@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { FakeHands } from '../hands/fake.js';
+import type { Hands } from '../hands/types.js';
 import { MacroSchema } from '../shared/types.js';
 import { ScriptedExecutor } from './executor.js';
 import { aggregate, runTask } from './runner.js';
@@ -77,6 +78,26 @@ describe('runTask against the fake', () => {
 
     expect(agg.successRate).toBe(0);
     expect(agg.falseClaims).toBe(2);
+  });
+
+  it('records an attempt that reached the goal without claiming it', async () => {
+    // A live Sonnet run did this: two taps landed on the target screen, then
+    // the API returned a 500 on the call that would have said `done`. The goal
+    // was met, so it counts — but folding it in silently would hide the error
+    // and leave 17 unexplained seconds sitting in the p95.
+    const dies = {
+      name: 'dies',
+      run: async (hands: Hands) => {
+        await hands.tap({ id: 'com.apple.settings.accessibility' });
+        throw new Error('500 api_error');
+      },
+    };
+    const result = await runTask({ hands: fake(), task, executor: dies, runs: 2 });
+    const agg = aggregate(result);
+
+    expect(agg.successRate).toBe(1);
+    expect(agg.unclaimed).toBe(2);
+    expect(agg.falseClaims).toBe(0);
   });
 
   it('resets between attempts so run 2 does not inherit run 1', async () => {
