@@ -1,0 +1,15 @@
+{
+  "id": "settings-open-about",
+  "version": 1,
+  "triggers": ["설정에서 기기 정보 열어줘", "아이폰 정보 보여줘"],
+  "app": "com.apple.Preferences",
+  "risk": "safe",
+  "params": {},
+  "steps": [
+    { "op": "launch", "bundleId": "com.apple.Preferences", "restart": true },
+    { "op": "tap", "sel": { "id": "com.apple.settings.general" } },
+    { "op": "tap", "sel": { "id": "About", "type": "Button" } },
+    { "op": "assert", "sel": { "id": "SW_VERSION_SPECIFIER" }, "timeout": 8000 }
+  ],
+  "stats": { "runs": 0, "fails": 0, "avgMs": 0 }
+}

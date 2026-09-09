@@ -85,6 +85,21 @@ const CONTAINER = new Set([
 ]);
 
 /**
+ * The on-screen keyboard.
+ *
+ * A keyboard adds twenty-six or more elements and, on a search screen, pushes
+ * the observation past its whole budget — measured at 828 tokens against a
+ * target of 600. None of it is actionable here: text is entered with a `type`
+ * action that goes to whatever holds focus, never by tapping letters. Showing
+ * the model keys it cannot usefully press costs the budget twice, in tokens
+ * and in what it crowds out.
+ *
+ * Only `Key` is dropped. A custom keypad drawn as Buttons survives, because
+ * there the buttons really are the way in.
+ */
+const KEYBOARD = new Set(['Key']);
+
+/**
  * Labels longer than this are cut.
  *
  * Real rows run past 60 characters — a single Settings cell reads "Apple 계정,
@@ -187,6 +202,7 @@ function isAddressable(n: Node, size: { w: number; h: number }): boolean {
   if (!wdaBool(n.wda.isVisible, false)) return false;
   if (n.rect.w <= 0 || n.rect.h <= 0) return false;
   if (!intersectsScreen(n.rect, size)) return false;
+  if (KEYBOARD.has(n.type)) return false;
 
   const named = n.text !== undefined || n.value !== undefined || n.id !== undefined;
   if (INTERACTIVE.has(n.type)) return true;

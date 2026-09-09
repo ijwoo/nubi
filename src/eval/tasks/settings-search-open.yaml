@@ -1,0 +1,24 @@
+id: settings-search-open
+prompt: "설정 검색창에 손쉬운 입력해줘"
+
+# Text entry, which needs two actions in the right order: focus a field, then
+# type. A planner that types without tapping first sends the text nowhere.
+# It is also the screen where the keyboard appears, so it is the widest
+# observation in the set.
+note: "text input — focus then type"
+
+setup:
+  bundleId: com.apple.Preferences
+  restart: true
+  settleMs: 1200
+
+# The clear button only appears once the field holds text, so it is evidence
+# the typing landed rather than that a screen was reached.
+assert:
+  selector: { label: "텍스트 지우기" }
+  withinMs: 10000
+
+runs: 5
+
+scripted:
+  macro: settings-search-open
