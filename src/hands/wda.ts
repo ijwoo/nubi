@@ -13,7 +13,15 @@ import type { WdaNode } from './wda-types.js';
  */
 
 export interface WdaOptions {
-  /** Simulator serves this directly; a device needs `iproxy` forwarding to it. */
+  /**
+   * Where the agent is listening.
+   *
+   * A simulator serves this on the Mac directly. A device serves it on the
+   * device, reached either through `iproxy` over the cable — still
+   * `127.0.0.1` from here — or over Wi-Fi at the phone's own address. The
+   * second is why `NUBI_WDA_URL` exists: nothing above Hands should have to
+   * know which, and rebuilding to change a hostname is not a workflow.
+   */
   baseUrl?: string;
   /** App to attach the session to. Omit to drive whatever is in the foreground. */
   bundleId?: string;
@@ -61,7 +69,10 @@ export class WdaHands implements Hands {
   private recoveries = 0;
 
   constructor(options: WdaOptions = {}) {
-    this.baseUrl = (options.baseUrl ?? 'http://127.0.0.1:8100').replace(/\/$/, '');
+    this.baseUrl = (options.baseUrl ?? process.env.NUBI_WDA_URL ?? 'http://127.0.0.1:8100').replace(
+      /\/$/,
+      '',
+    );
     this.bundleId = options.bundleId;
     this.timeoutMs = options.timeoutMs ?? 30_000;
   }
@@ -73,6 +84,11 @@ export class WdaHands implements Hands {
    * recovery legible after the fact — and so tests can end a session out from
    * under the client and watch it rebuild.
    */
+  /** Where this client is talking to, for a check that says so out loud. */
+  get agentUrl(): string {
+    return this.baseUrl;
+  }
+
   get activeSessionId(): string | undefined {
     return this.sessionId;
   }
