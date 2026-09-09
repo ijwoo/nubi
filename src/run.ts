@@ -60,13 +60,19 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
     });
     const ok = await executor.run(watched, taskFor(utterance, match.macro.app), trace);
     trace.end(ok, { macro: match.macro.id });
+    const ms = elapsed(trace);
+    // Recorded here and not in the eval: these are the runs a person asked
+    // for, and demotion should reflect how a route behaves in use rather than
+    // how it scored on a benchmark. Without this the counters stay at zero and
+    // `isDemoted` — which needs five runs — can never become true.
+    opts.store.recordRun(match.macro.id, { ok, durationMs: ms });
     return {
       kind: 'replayed',
       macroId: match.macro.id,
       ok,
       repairs: executor.repairs,
       usd: costOf(trace.events).usd,
-      ms: elapsed(trace),
+      ms,
     };
   }
 
@@ -76,7 +82,13 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
 
   if (!ok) {
     trace.end(false, { goal: utterance });
-    return { kind: 'explored', ok: false, why: '경로를 찾지 못함', usd: usd(), ms: elapsed(trace) };
+    return {
+      kind: 'explored',
+      ok: false,
+      why: (await blockingAlert(opts.hands)) ?? '경로를 찾지 못함',
+      usd: usd(),
+      ms: elapsed(trace),
+    };
   }
 
   if (opts.noSave) {
@@ -129,6 +141,27 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
   opts.store.save(macro);
   trace.end(true, { goal: utterance, saved: macro.id });
   return { kind: 'explored', ok: true, saved: macro.id, usd: usd(), ms: elapsed(trace) };
+}
+
+/**
+ * Whether a system alert is sitting over the app, and what it says.
+ *
+ * On a real phone this is the common failure and the least obvious one: a
+ * permission prompt absorbs every touch while `/source` keeps returning a
+ * perfectly ordinary tree, so the run reads as "could not find a route" when
+ * the route was never the problem. Nubi does not answer these (ADR 0008), so
+ * the useful thing it can do is say which one is in the way.
+ */
+async function blockingAlert(hands: Hands): Promise<string | undefined> {
+  try {
+    const alert = (await hands.screen()).alert;
+    if (!alert) return undefined;
+    const buttons = alert.buttons.length > 0 ? `  [${alert.buttons.join(' / ')}]` : '';
+    return `시스템 알림이 막고 있습니다 — "${alert.text.slice(0, 60)}"${buttons}`;
+  } catch {
+    // The screen is unreadable too; the original failure is the better answer.
+    return undefined;
+  }
 }
 
 /**
