@@ -9,71 +9,104 @@
 ## 태스크 정의
 
 ```yaml
-# src/eval/tasks/yt-music-play.yaml
-id: yt-music-play
-prompt: "유튜브 뮤직에서 뉴진스 틀어줘"
+# src/eval/tasks/settings-open-accessibility.yaml
+id: settings-open-accessibility
+prompt: "설정에서 손쉬운 사용 열어줘"
+note: "list-to-detail navigation with a stable identifier"
 
 setup:
-  app: com.google.ios.youtubemusic
-  state: home          # 실행 전 앱을 홈 상태로 되돌림
+  bundleId: com.apple.Preferences
+  restart: true        # 앱을 죽이고 다시 띄운다
+  settleMs: 1200       # 실행 후 안정화 대기
 
 assert:
-  - selector: { label: "일시정지" }    # 재생 중이면 이 버튼이 뜬다
-    within_ms: 30000
+  selector: { id: ACCESSIBILITY_PLACARD }
+  withinMs: 10000
 
-modes: [cold, warm]     # cold = Explore, warm = Replay
-runs: 5                 # 모드당 반복
+runs: 5
+
+scripted:
+  macro: settings-open-accessibility
 ```
 
-`setup.state`가 중요합니다. 매 실행 전 앱을 같은 상태로 되돌리지 않으면 두 번째 실행이 첫 번째 덕을 봅니다.
+### 태스크는 경로를 담지 않는다
+
+**목표와 증거만 정의한다.** 스텝을 태스크에 넣으면 모든 측정이 "누군가 적어둔 스텝"의 측정이 된다. 같은 목표에 다른 방법으로 도달하는 걸 비교하는 게 요점인데.
+
+스텝은 매크로에 있고, 태스크는 `scripted.macro`로 참조만 한다. Explore는 `prompt`를 그대로 받는다.
+
+### setup이 매 런 앞에 붙는 이유
+
+`restart: true`가 없으면 두 번째 런이 첫 번째가 남긴 상태를 물려받는다. 두 번째가 빨라 보이는데 접근 방식과는 아무 상관이 없다.
+
+## 실행기와 러너
+
+역할이 셋으로 나뉜다.
+
+| | 하는 일 |
+| --- | --- |
+| **Task** | 목표와 증거를 정의한다. 경로는 정의하지 않는다 |
+| **Executor** | 시도한다. 자기가 끝냈다고 생각하는지 보고한다 |
+| **Runner** | setup, 시간 측정, 그리고 **기기에 assertion을 직접 확인** |
+
+**실행기가 자기 성공을 판정하면 안 된다.** 그러면 측정하는 게 실행기의 의견이다. 러너가 태스크의 assertion을 기기에 별도로 확인하고, 실행기의 주장과 다르면 `falseClaims`로 리포트에 드러난다. 자세한 이유는 [ADR 0009](adr/0009-runner-judges-not-executor.md).
+
+### 실행기 목록
+
+| 이름 | 상태 | 하는 일 |
+| --- | --- | --- |
+| `scripted` | 있음 | 고정 스텝 목록 재생. 모델 호출 0 — 모든 비교의 바닥 |
+| `explore` | phase 03 | 관찰 → 모델 → 액션 루프 |
+| `replay` | phase 04 | 학습된 매크로 재생 + 셀렉터 자가치유 |
+
+`scripted`는 phase 04 replay의 원형이지만 매크로 추출도 자가치유도 없다. 측정 장치를 빈 채로 두지 않으려는 최소한이다.
+
+### 측정 구간
+
+시간은 **setup 이후부터** 잰다. `Trace.beginAttempt()`가 시작점을 옮긴다.
+
+앱 재시작은 모든 접근 방식이 똑같이 치르고 아무도 선택하지 않은 비용이다. 측정에 넣으면 Explore와 Replay 양쪽에 같은 상수가 얹혀 **차이가 실제보다 작아 보인다.** 실제로 첫 측정에서 이 실수를 했고, p50이 14579ms에서 8787ms로 바뀌었다 ([journal](journal/2026-09-09-first-numbers.md)).
+
+setup 이벤트 자체는 트레이스에 남긴다. 준비 중에 죽은 런도 읽을 가치가 있다.
 
 ## 측정 항목
 
-| 항목 | 단위 | 출처 |
-| --- | --- | --- |
-| 성공률 | % | assert 통과 비율 |
-| 소요 시간 | ms (p50 / p95) | 벽시계 |
-| 모델 호출 | 회 | trace |
-| 입력 / 출력 토큰 | 개 | API usage |
-| 비용 | USD | 토큰 × 모델 단가 |
-| 스텝 수 | 개 | trace |
-| Repair 발동 | 회 | trace |
+| 항목 | 단위 | 출처 | 상태 |
+| --- | --- | --- | --- |
+| 성공률 | % | 러너의 assertion | 있음 |
+| 소요 시간 | ms (p50 / p95) | 벽시계 | 있음 |
+| 액션 / 관찰 / assert 횟수 | 회 | trace | 있음 |
+| 모델 호출 | 회 | trace | 있음 (아직 항상 0) |
+| 입력 / 출력 토큰 | 개 | trace의 `model` 이벤트 | 있음 (아직 항상 0) |
+| 세션 복구 | 회 | trace | 있음 |
+| 거짓 성공 주장 | 회 | 실행기 주장 vs 러너 확인 | 있음 |
+| 비용 | USD | 토큰 × 모델 단가 | phase 03 |
+| Repair 발동 | 회 | trace | phase 04 |
 
-**p50과 p95를 같이 봅니다.** 평균만 보면 가끔 5분 걸리는 걸 놓칩니다. 실사용에서 짜증나는 건 p95입니다.
+**p50과 p95를 같이 본다.** 평균만 보면 가끔 오래 걸리는 런을 놓치는데, 실사용에서 짜증나는 건 p95다. 표본이 작아서 **nearest-rank**로 계산한다 — 보간하면 어떤 런도 겪지 않은 시간이 보고된다.
+
+`falseClaims`가 0이 아닌 접근 방식은 성공률과 별개로 신뢰할 수 없다는 신호다([ADR 0009](adr/0009-runner-judges-not-executor.md)).
 
 ## 실행
 
 ```bash
-npm run eval                      # 전체
-npm run eval -- --task yt-music   # 하나만
-npm run eval -- --mode warm       # 재생만
+npm run eval                                        # 전체, 실기
+npm run eval -- --fake                              # 녹화 화면으로, 기기 불필요
+npm run eval -- --task settings-open-accessibility  # 하나만
+npm run eval -- --runs 3                            # 반복 횟수 지정
 ```
 
-출력은 두 가지 — 사람이 볼 마크다운 표, 기계가 볼 JSON.
+출력은 사람이 읽는 표다.
 
 ```
-                    cold              warm
-─────────────────────────────────────────────────
-success             4/5  (80%)        5/5  (100%)
-p50                 measuring         measuring
-p95                 measuring         measuring
-model calls         21.4 avg          0
-input tokens        118k avg          0
-cost / run          measuring         $0
+task                         executor  ok   p50     p95     acts  obs  model  in tok
+───────────────────────────  ────────  ───  ──────  ──────  ────  ───  ─────  ──────
+settings-open-accessibility  scripted  5/5  8787ms  8942ms  2     1    0      0
 ```
 
-## 리포트를 어디에 두나
+기계가 읽을 형식은 아직 없다. 트레이스(`traces/*.jsonl`)가 그 역할을 하고 있고, 비교할 실행기가 둘 이상 생기면 그때 붙인다.
 
-- **원시 결과**는 커밋하지 않습니다 (`.gitignore`의 `eval-results/`). 기기 상태·네트워크에 따라 흔들리는 값이라 diff가 무의미합니다.
-- **큐레이션된 스냅샷**은 `docs/benchmarks/`에 날짜와 함께 커밋합니다. README 표가 여기서 나옵니다.
-- 스냅샷에는 **측정 조건을 반드시 같이** 적습니다. 기기, iOS 버전, 앱 버전, 네트워크, 모델 ID. 이게 없으면 숫자가 재현 불가능하고, 재현 불가능한 숫자는 포폴에서 오히려 마이너스입니다.
-
-## 정직성 규칙
-
-1. **추측한 숫자를 쓰지 않습니다.** 안 재본 건 "측정 예정"입니다.
-2. **실패한 실행을 빼지 않습니다.** 성공률은 전체 실행 기준입니다.
-3. **구조적 사실과 측정값을 구분합니다.** "재생 시 모델 호출 0회"는 코드를 보면 확인되는 사실이고, "재생이 11초"는 측정값입니다. 표에서 둘을 섞지 않습니다.
-4. **측정 조건을 항상 붙입니다.**
+실기 실행은 트레이스를 `traces/`에 남긴다. `--fake`는 메모리에만 둔다 — 수천 번 돌려도 디스크를 어지르지 않아야 한다.
 
 ## 트레이스
 
@@ -126,13 +159,35 @@ JSONL인 이유는 실제로 하게 되는 작업이 `grep`과 "도는 중에 ta
 
 ## 결정적 테스트
 
-실기기 eval은 느리고 흔들립니다. CI에서 돌릴 수 없습니다.
+실기기 eval은 느리고 흔들린다. CI에서 돌릴 수 없다.
 
-그래서 별도로, **녹화된 트리 시퀀스를 리플레이하는** 결정적 테스트를 둡니다. 실제 세션에서 캡처한 트리를 픽스처로 저장하고 Hands를 가짜 백엔드로 물리면, 셀렉터 해석·매크로 리플레이·Repair 로직을 기기 없이 검증할 수 있습니다.
+그래서 **녹화된 화면을 재생하는** `FakeHands`를 CI가 돌린다. 실제 기기에서 캡처한 트리를 픽스처로 두면 셀렉터 해석·매크로 재생·트레이스 기록을 기기 없이 검증할 수 있다.
 
 ```
-src/eval/fixtures/       녹화된 트리 시퀀스
-src/hands/fake.ts        픽스처를 재생하는 Hands 구현
+src/hands/fixtures/real/       앱별 단일 화면 덤프
+src/hands/fixtures/settings/   화면 + 전이 (npm run record 로 녹화)
+src/hands/fake.ts              픽스처를 재생하는 Hands 구현
 ```
 
-CI는 이걸 돌립니다. 실기기 eval은 수동으로, 릴리스 전에.
+**공통 계약**([architecture.md](architecture.md))이 가짜와 실기 양쪽에서 통과하는 게 이 구조의 근거다. 같은 케이스가 양쪽에서 돌지 않으면 "가짜로 개발한다"는 전제가 성립하지 않는다.
+
+| | |
+| --- | --- |
+| `npm test` | 순수 로직 + 가짜 백엔드. 기기 불필요 |
+| `npm run live` | 계약 + 액션 검증을 실기에 |
+| `npm run eval -- --fake` | 녹화 화면으로 태스크 실행 |
+| `npm run eval` | 실기로 태스크 실행. 트레이스를 `traces/`에 |
+
+## 리포트를 어디에 두나
+
+- **원시 트레이스**는 커밋하지 않는다 (`.gitignore`의 `traces/`). 기기 상태·네트워크에 따라 흔들리는 값이라 diff가 무의미하다.
+- **큐레이션된 스냅샷**은 [`docs/benchmarks/`](benchmarks/)에 날짜와 함께 커밋한다. README 표가 여기서 나온다.
+- 스냅샷에는 **측정 조건을 반드시 같이** 적는다. 기기, iOS 버전, Xcode 버전, WDA 버전, 앱, 반복 횟수. 이게 없으면 숫자가 재현 불가능하고, 재현 불가능한 숫자는 포폴에서 오히려 마이너스다.
+
+## 정직성 규칙
+
+1. **추측한 숫자를 쓰지 않는다.** 안 재본 건 "측정 예정"이다.
+2. **실패한 실행을 빼지 않는다.** 성공률은 전체 실행 기준이다.
+3. **구조적 사실과 측정값을 구분한다.** "재생 시 모델 호출 0회"는 코드를 보면 확인되는 사실이고, "재생이 8787ms"는 측정값이다. 표에서 둘을 섞지 않는다.
+4. **측정 조건을 항상 붙인다.**
+5. **첫 숫자를 의심한다.** 트레이스를 열어 이벤트 합과 총 시간이 맞는지 확인한다. 실제로 첫 측정이 준비 작업을 포함해서 67% 부풀어 있었다.

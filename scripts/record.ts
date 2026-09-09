@@ -37,9 +37,13 @@ const RECIPES: Record<string, Recipe> = {
     bundleId: 'com.apple.Preferences',
     start: 'root',
     moves: [
-      { screen: 'general', tap: { id: 'com.apple.settings.general' } },
-      { screen: 'root-again', back: true },
+      // The route the settings-open-accessibility macro actually takes, so the
+      // fake can replay the same task the device runs.
       { screen: 'accessibility', tap: { id: 'com.apple.settings.accessibility' } },
+      { screen: 'root-again', back: true },
+      // A second destination, to give selector resolution more than one target
+      // and to record what coming back a second time looks like.
+      { screen: 'general', tap: { id: 'com.apple.settings.general' } },
       { screen: 'root-third', back: true },
     ],
   },

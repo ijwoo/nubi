@@ -17,11 +17,12 @@
     "test:watch": "vitest",
     "lint": "biome check .",
     "fix": "biome check --write .",
-    "check": "npm run typecheck && npm run lint && npm test",
+    "check": "npm run typecheck && npm run lint && npm test && npm run check:docs",
     "live": "tsx scripts/live-check.ts",
     "wda": "./scripts/wda.sh",
     "record": "tsx scripts/record.ts",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "tsx scripts/eval.ts",
+    "check:docs": "tsx scripts/check-docs.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
