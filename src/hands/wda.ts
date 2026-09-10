@@ -145,9 +145,7 @@ export class WdaHands implements Hands {
   private async session(): Promise<string> {
     if (this.sessionId) return this.sessionId;
     const created = await this.request<{ sessionId: string }>('POST', '/session', {
-      capabilities: {
-        alwaysMatch: this.bundleId ? { bundleId: this.bundleId } : {},
-      },
+      capabilities: { alwaysMatch: sessionCapabilities(this.bundleId) },
     });
     this.sessionId = created.sessionId;
     return created.sessionId;
@@ -485,4 +483,22 @@ export class WdaHands implements Hands {
       return this.bundleId ?? 'unknown';
     }
   }
+}
+
+/**
+ * What a session asks for when it opens.
+ *
+ * `forceAppLaunch` is the important one, and it defaults to true in WDA — a
+ * session that names an app relaunches it. That makes opening a session a
+ * destructive act, and it is easy to miss because the destruction happens
+ * before the first reading: checking whether a song was playing stopped it,
+ * and the reading that followed reported that it had never started. The tool
+ * changed the thing it was measuring and then believed the measurement.
+ *
+ * Restarting is what `launch({ restart: true })` is for. It should be a step
+ * someone asked for, not a side effect of looking.
+ */
+export function sessionCapabilities(bundleId: string | undefined): Record<string, unknown> {
+  if (!bundleId) return {};
+  return { bundleId, forceAppLaunch: false, shouldTerminateApp: false };
 }

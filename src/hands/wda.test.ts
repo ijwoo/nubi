@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WdaError, WdaHands } from './wda.js';
+import { WdaError, WdaHands, sessionCapabilities } from './wda.js';
 
 /**
  * The device-dependent parts of WdaHands are covered by `npm run live`.
@@ -64,5 +64,23 @@ describe('WdaError.isSessionLost', () => {
         'http://127.0.0.1:8100',
       );
     });
+  });
+
+  it('attaches to the app rather than restarting it', () => {
+    // WDA relaunches whatever a session names unless told not to, which makes
+    // opening a session destructive. Checking whether a song was playing
+    // stopped it, and the reading that followed reported that it had never
+    // started — the tool changed the thing it measured, then believed the
+    // measurement.
+    expect(sessionCapabilities('com.google.ios.youtubemusic')).toEqual({
+      bundleId: 'com.google.ios.youtubemusic',
+      forceAppLaunch: false,
+      shouldTerminateApp: false,
+    });
+  });
+
+  it('asks for nothing in particular when no app is named', () => {
+    // Driving whatever is in the foreground, which should not disturb it.
+    expect(sessionCapabilities(undefined)).toEqual({});
   });
 });
