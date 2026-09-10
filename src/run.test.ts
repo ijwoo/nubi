@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ScriptedPlanner } from './brain/planner.js';
 import { ScriptedGate } from './gate/index.js';
 import { FakeHands } from './hands/fake.js';
+import { ScriptedJudge } from './judge/index.js';
 import { ScriptedRepairer } from './macro/repair.js';
 import { MacroStore } from './macro/store.js';
 import { idFor, run } from './run.js';
@@ -160,6 +161,52 @@ describe('run — what replay leaves behind', () => {
     if (out.kind !== 'replayed') throw new Error('unreachable');
     expect(out.ok).toBe(false);
     expect(store.get(first.saved).stats.fails).toBe(1);
+  });
+});
+
+describe('run — judging what exploring claims', () => {
+  it('does not save or report success when the screen disagrees', async () => {
+    // Live: exploring "추천 노래 하나 틀어줘" in YouTube Music navigated to a
+    // song, left the player showing the button you press to start, and said
+    // done. The executor's word is not evidence (ADR 0009).
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const idx = await accessibilityIndex(hands);
+    const judge = new ScriptedJudge([false]);
+
+    const out = await run('손쉬운 사용 열어줘', { ...opts(hands, idx), judge });
+
+    expect(out.kind).toBe('explored');
+    if (out.kind !== 'explored') throw new Error('unreachable');
+    expect(out.ok).toBe(false);
+    expect(out.why).toContain('화면이 그렇게 보이지 않음');
+    expect(out.saved).toBeUndefined();
+    expect(store.all()).toHaveLength(0);
+  });
+
+  it('judges the screen against the request, without the history', async () => {
+    // A model shown what the run did reviews its own account of events. The
+    // screen and the request are the whole input.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const idx = await accessibilityIndex(hands);
+    const judge = new ScriptedJudge([true]);
+
+    await run('손쉬운 사용 열어줘', { ...opts(hands, idx), judge });
+
+    expect(judge.asked).toHaveLength(1);
+    expect(judge.asked[0]?.goal).toBe('손쉬운 사용 열어줘');
+    expect(judge.asked[0]?.screen.elements.length).toBeGreaterThan(0);
+  });
+
+  it('saves when the screen agrees', async () => {
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const idx = await accessibilityIndex(hands);
+    const out = await run('손쉬운 사용 열어줘', {
+      ...opts(hands, idx),
+      judge: new ScriptedJudge([true]),
+    });
+    expect(out.kind).toBe('explored');
+    if (out.kind !== 'explored') throw new Error('unreachable');
+    expect(out.saved).toBeDefined();
   });
 });
 

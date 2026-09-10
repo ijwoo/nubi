@@ -3,12 +3,13 @@ import type { Planner } from './brain/planner.js';
 import type { Task } from './eval/task.js';
 import { DenyingGate, type Gate, reasonsToAsk, verdictFor } from './gate/index.js';
 import type { Hands } from './hands/types.js';
+import { type Judge, TrustingJudge } from './judge/index.js';
 import { deriveAssertion, extractMacro } from './macro/extract.js';
 import { matchMacro } from './macro/match.js';
 import type { Repairer } from './macro/repair.js';
 import { ReplayExecutor } from './macro/replay.js';
 import type { MacroStore } from './macro/store.js';
-import { type Macro, isDemoted } from './shared/types.js';
+import { type Macro, type Screen, isDemoted } from './shared/types.js';
 import { costOf } from './trace/cost.js';
 import { Trace, traced } from './trace/index.js';
 
@@ -40,6 +41,14 @@ export interface RunOptions {
    * exactly where it matters most.
    */
   gate?: Gate;
+  /**
+   * Who decides whether exploring actually accomplished the request.
+   *
+   * Defaults to taking the executor's word, which is what this did before
+   * there was a judge — kept as the default so an offline caller does not
+   * silently acquire a model call, and set to a real one by the CLI.
+   */
+  judge?: Judge;
   /** The app to explore in when nothing matches. */
   app: string;
   /** Skip saving a newly found route. */
@@ -100,15 +109,21 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
   }
 
   const explorer = new ExploreExecutor({ planner: opts.planner });
-  const ok = await explorer.run(watched, taskFor(utterance, opts.app), trace);
+  const claimed = await explorer.run(watched, taskFor(utterance, opts.app), trace);
   const usd = () => costOf(trace.events).usd;
 
+  // The executor's own word is not evidence (ADR 0009). Exploring "추천 노래
+  // 하나 틀어줘" once navigated to a song, left the player showing the button
+  // you press to start, and said done.
+  const ok = claimed && (await judged(utterance, explorer.finalScreen, opts, trace));
+
   if (!ok) {
-    trace.end(false, { goal: utterance });
+    trace.end(false, { goal: utterance, claimed });
+    const alert = await blockingAlert(opts.hands);
     return {
       kind: 'explored',
       ok: false,
-      why: (await blockingAlert(opts.hands)) ?? '경로를 찾지 못함',
+      why: alert ?? (claimed ? '했다고 했지만 화면이 그렇게 보이지 않음' : '경로를 찾지 못함'),
       usd: usd(),
       ms: elapsed(trace),
     };
@@ -200,6 +215,34 @@ async function clear(
     !approval.granted,
   );
   return approval.granted ? undefined : (approval.why ?? '승인되지 않음');
+}
+
+/**
+ * Whether the screen shows the request was carried out.
+ *
+ * Read separately from the run that produced it, and not given the history:
+ * a model reviewing its own account of events agrees with it. The screen and
+ * the request are the whole input.
+ */
+async function judged(
+  utterance: string,
+  screen: Screen | undefined,
+  opts: RunOptions,
+  trace: Trace,
+): Promise<boolean> {
+  if (!screen) return false;
+  const judge = opts.judge ?? new TrustingJudge();
+  const started = Date.now();
+  const verdict = await judge.verdict(utterance, screen);
+  if (verdict.usage) trace.model('route', verdict.usage, Date.now() - started, { op: 'judge' });
+  trace.event(
+    'assert',
+    'route',
+    { op: 'judge', by: judge.name, ok: verdict.ok, why: verdict.why },
+    Date.now() - started,
+    !verdict.ok,
+  );
+  return verdict.ok;
 }
 
 /**

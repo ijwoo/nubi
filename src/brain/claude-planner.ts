@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { supportsEffort } from '../shared/model.js';
 import type { PlanContext, PlanResult, PlannedAction, Planner } from './planner.js';
 import { SYSTEM_PROMPT, renderTurn } from './prompt.js';
 
@@ -19,16 +20,6 @@ export interface ClaudePlannerOptions {
   maxTokens?: number;
   client?: Anthropic;
 }
-
-/**
- * Models that reject `output_config.effort` outright.
- *
- * Sending it to Haiku 4.5 returns a 400 before the model sees anything, so a
- * tier sweep reads 0/5 with zero tokens spent — a result that looks exactly
- * like the small model failing the task, and would have been written up as
- * evidence for keeping planning on the expensive tier.
- */
-const NO_EFFORT = new Set(['claude-haiku-4-5', 'claude-haiku-4-5-20251001']);
 
 const TOOLS: Anthropic.Beta.BetaToolUnion[] = [
   {
@@ -132,7 +123,7 @@ export class ClaudePlanner implements Planner {
       context_management: {
         edits: [{ type: 'clear_tool_uses_20250919', clear_tool_inputs: true }],
       },
-      ...(NO_EFFORT.has(this.model) ? {} : { output_config: { effort: this.effort } }),
+      ...(supportsEffort(this.model) ? { output_config: { effort: this.effort } } : {}),
       system: [
         {
           type: 'text',
