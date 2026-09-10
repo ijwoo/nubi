@@ -141,4 +141,4 @@ Shortcuts/App Intents로 폰 안에서 도는 건 만들 수 있지만 **앱이 
 
 - **무선은 아직 안 해봤습니다.** `NUBI_WDA_URL`로 주소를 바꾸는 길은 열어뒀지만, 실제로 확인한 적은 없습니다.
 - **무료 계정은 7일**마다 프로비저닝이 만료되어 다시 빌드해야 합니다.
-- **`--setup`으로 미리 빌드**해두면 나중이 빠릅니다: `scripts/wda.sh --device --setup`.
+- **`--setup`으로 미리 빌드**해두면 나중이 빠릅니다: `scripts/wda.sh --device --setup`. 안 해두면 첫 실행이 알아서 빌드합니다 — `test-without-building` 은 이름 그대로 빌드를 안 해서, 산출물이 없으면 설치 단계에서 `the file doesn't exist` 로 죽습니다. 빌드 얘기가 한 마디도 안 나오는 에러라 원인을 짚기 어렵습니다.

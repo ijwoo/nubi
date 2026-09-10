@@ -37,6 +37,41 @@ else
   hint "Xcode > Settings > Accounts 에서 Apple ID 추가 (무료 계정도 됩니다)"
 fi
 
+# A certificate is not the same as being able to provision. Xcode creates the
+# profile for a new bundle id, and it can only do that while signed in — the
+# certificate stays in the keychain long after the account session lapses, so
+# the first device build fails with "No Accounts" while every visible sign says
+# signing is set up.
+COUNT_PROFILES='import datetime, glob, plistlib, subprocess, sys
+team, folder = sys.argv[1], sys.argv[2]
+found = 0
+for path in glob.glob(folder + "/*.mobileprovision"):
+    try:
+        raw = subprocess.run(["security", "cms", "-D", "-i", path],
+                             capture_output=True, timeout=5).stdout
+        profile = plistlib.loads(raw)
+    except Exception:
+        continue
+    expires = profile.get("ExpirationDate")
+    if team in (profile.get("TeamIdentifier") or []) and expires \
+            and expires > datetime.datetime.now():
+        found += 1
+print(found)
+'
+
+if [[ -n "$TEAM" ]]; then
+  PROFILES="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+  VALID="$(python3 -c "$COUNT_PROFILES" "$TEAM" "$PROFILES" 2>/dev/null || echo 0)"
+  if [[ "${VALID:-0}" -gt 0 ]]; then
+    pass "프로비저닝  팀 $TEAM 프로파일 $VALID 개"
+  else
+    printf '\033[33m·\033[0m %s\n' "팀 $TEAM 의 유효한 프로비저닝 프로파일이 없습니다"
+    hint "첫 빌드라면 Xcode 가 만들어 줍니다 — 단, 계정이 로그인돼 있어야 합니다"
+    hint "Xcode > Settings > Accounts 에서 Apple ID 를 확인하세요"
+    hint "안 되어 있으면 빌드가 'No Accounts: Add a new account' 로 실패합니다"
+  fi
+fi
+
 if command -v iproxy >/dev/null; then
   pass "iproxy  $(command -v iproxy)"
 else
