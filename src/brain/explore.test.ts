@@ -256,4 +256,48 @@ describe('explore — what the trace records', () => {
     await expect(new ExploreExecutor({ planner }).run(hands, task, trace)).rejects.toThrow();
     expect(trace.events.find((e) => e.kind === 'model')?.failed).toBe(true);
   });
+
+  it('reuses the screen an action produced instead of asking again', async () => {
+    // Every action ends by reading the screen — that is what the trace records
+    // as its result — and the loop used to read it a second time immediately
+    // afterwards with nothing in between. On a phone each of those is 2.2s.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const screen = await hands.screen();
+    // Any control that actually goes somewhere; an action that changes nothing
+    // is deliberately not carried, and would prove the opposite of the point.
+    const idx = screen.elements.findIndex((e) => e.id === 'tab_search');
+    expect(idx).toBeGreaterThanOrEqual(0);
+    hands.calls.length = 0;
+
+    const executor = new ExploreExecutor({
+      planner: new ScriptedPlanner([
+        { kind: 'tap', element: idx, why: '' },
+        { kind: 'done', why: '' },
+      ]),
+    });
+    await executor.run(hands, task, Trace.start());
+
+    // One before the tap, then the screen the tap handed back — and none in
+    // between, where the loop used to ask a second time.
+    expect(hands.calls.filter((c) => c.action === 'screen')).toHaveLength(1);
+  });
+
+  it('looks again when the action changed nothing', async () => {
+    // An unchanged screen means the action did nothing or was read too early.
+    // Both are worth a fresh look rather than a saved round trip.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    hands.calls.length = 0;
+
+    const executor = new ExploreExecutor({
+      planner: new ScriptedPlanner([
+        { kind: 'swipe', direction: 'up', why: '' },
+        { kind: 'done', why: '' },
+      ]),
+    });
+    await executor.run(hands, task, Trace.start());
+
+    // The fixture models navigation, not scrolling, so a swipe leaves the
+    // screen as it was — and the next turn observes rather than trusting it.
+    expect(hands.calls.filter((c) => c.action === 'screen').length).toBe(2);
+  });
 });

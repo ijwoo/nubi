@@ -92,6 +92,20 @@ export class ExploreExecutor implements Executor {
 
     let failures = 0;
     let lastFailure: string | undefined;
+    /**
+     * The screen the last action produced, used instead of observing again.
+     *
+     * Every action already ends by reading the screen — that is what the trace
+     * records as the action's result — and the loop then read it a second
+     * time, back to back, with nothing in between. On a simulator that was
+     * 0.6s of waste per step. On a phone it is 2.2s, because a real Settings
+     * tree is 349KB of JSON over a cable.
+     *
+     * Carried only when it differs from the screen before the action. An
+     * unchanged screen means either the action did nothing or it was read too
+     * early, and both are worth a fresh look rather than a saved round trip.
+     */
+    let carried: Screen | undefined;
 
     for (let step = 0; step < this.maxSteps; step++) {
       if (Date.now() > deadline) {
@@ -99,7 +113,8 @@ export class ExploreExecutor implements Executor {
         return false;
       }
 
-      const screen = await hands.screen();
+      const screen = carried ?? (await hands.screen());
+      carried = undefined;
       // Both ends of the walk, kept for extraction: the first is the baseline
       // an assertion is judged against, the last is where the run claims to
       // have arrived.
@@ -164,6 +179,7 @@ export class ExploreExecutor implements Executor {
       if (outcome.ok) {
         // Observed this iteration, so it is the screen this action acted on.
         this.beforeLast = screen;
+        if (outcome.screen && outcome.screen.hash !== screen.hash) carried = outcome.screen;
         failures = 0;
         lastFailure = undefined;
         this.trail.push(outcome.selector ? { action, selector: outcome.selector } : { action });
@@ -193,11 +209,18 @@ export class ExploreExecutor implements Executor {
     return false;
   }
 
+  /**
+   * Perform one planned action.
+   *
+   * Hands back the screen the action produced as well as whether it worked:
+   * the caller is about to want exactly that, and asking the device for it
+   * again is the single most expensive thing this loop does.
+   */
   private async act(
     hands: Hands,
     action: PlannedAction,
     elements: readonly Element[],
-  ): Promise<{ ok: boolean; why?: string; selector?: Selector }> {
+  ): Promise<{ ok: boolean; why?: string; selector?: Selector; screen?: Screen }> {
     switch (action.kind) {
       case 'tap': {
         const element = elements[action.element];
@@ -206,20 +229,20 @@ export class ExploreExecutor implements Executor {
         }
         const selector = selectorFor(element, elements);
         const r = await hands.tap(selector);
-        return r.ok ? { ok: true, selector } : { ok: false, why: r.reason };
+        return r.ok ? { ok: true, selector, screen: r.screen } : { ok: false, why: r.reason };
       }
       case 'type': {
         const r = await hands.type(action.text, { submit: action.submit });
-        return r.ok ? { ok: true } : { ok: false, why: r.reason };
+        return r.ok ? { ok: true, screen: r.screen } : { ok: false, why: r.reason };
       }
       case 'swipe': {
         const [from, to] = SWIPES[action.direction];
         const r = await hands.swipe(from, to);
-        return r.ok ? { ok: true } : { ok: false, why: r.reason };
+        return r.ok ? { ok: true, screen: r.screen } : { ok: false, why: r.reason };
       }
       case 'back': {
         const r = await hands.back();
-        return r.ok ? { ok: true } : { ok: false, why: r.reason };
+        return r.ok ? { ok: true, screen: r.screen } : { ok: false, why: r.reason };
       }
       default:
         return { ok: false, why: `unhandled action ${action.kind}` };
