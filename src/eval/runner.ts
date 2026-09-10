@@ -1,4 +1,5 @@
 import type { Hands } from '../hands/types.js';
+import type { Judge } from '../judge/index.js';
 import { type RunSummary, Trace, costOf, summarize, traced } from '../trace/index.js';
 import type { Executor } from './executor.js';
 import type { Task } from './task.js';
@@ -20,6 +21,13 @@ export interface RunOptions {
   runs?: number;
   /** Where to write traces. Omit to keep them in memory. */
   traceDir?: string;
+  /**
+   * A second opinion, scored against the task's own assertion.
+   *
+   * The eval is the one place where a written-down answer exists, so it is the
+   * one place a model judge can be measured rather than trusted.
+   */
+  judge?: Judge;
 }
 
 export interface TaskResult {
@@ -33,6 +41,8 @@ export interface AttemptResult extends RunSummary {
   asserted: boolean;
   /** What the executor claimed. Disagreement with `asserted` is worth seeing. */
   claimed: boolean;
+  /** What a model judge made of the same screen, when one was asked. */
+  judged?: boolean;
   /** Dollars, from reported usage rather than an estimate. */
   usd: number;
   cacheReadTokens: number;
@@ -108,13 +118,50 @@ export async function runTask(opts: RunOptions): Promise<TaskResult> {
       check.waitedMs,
       !check.ok,
     );
-    trace.end(check.ok, { task: task.id, executor: executor.name, claimed });
+    // Asked after the assertion, which polls until the screen settles, so both
+    // opinions are formed on the same state rather than either side of a
+    // transition.
+    let judged: boolean | undefined;
+    if (opts.judge) {
+      try {
+        const screen = await hands.screen();
+        const started = Date.now();
+        const verdict = await opts.judge.verdict(task.prompt, screen);
+        judged = verdict.ok;
+        if (verdict.usage) {
+          trace.model('route', verdict.usage, Date.now() - started, { op: 'judge' });
+        }
+        trace.event(
+          'assert',
+          'route',
+          { op: 'judge', by: opts.judge.name, ok: verdict.ok, why: verdict.why },
+          Date.now() - started,
+          verdict.ok !== check.ok,
+        );
+      } catch (err) {
+        trace.event(
+          'error',
+          'route',
+          { op: 'judge', error: err instanceof Error ? err.message : String(err) },
+          0,
+          true,
+        );
+      }
+    }
+
+    trace.end(check.ok, {
+      task: task.id,
+      executor: executor.name,
+      claimed,
+      ...(judged === undefined ? {} : { judged }),
+    });
 
     const cost = costOf(trace.events);
     runs.push({
       ...summarize(trace.events),
       asserted: check.ok,
       claimed,
+      ...(judged === undefined ? {} : { judged }),
       usd: cost.usd,
       cacheReadTokens: cost.cacheReadTokens,
       cacheWriteTokens: cost.cacheWriteTokens,
@@ -146,6 +193,10 @@ export interface Aggregate {
   recoveries: number;
   /** Selectors mended and written back into a macro across the attempts. */
   repairs: number;
+  /** Attempts where a model judge disagreed with the task's own assertion. */
+  judgeDisagreed: number;
+  /** Of those, the dangerous direction: the judge said yes, the device said no. */
+  judgeFalseYes: number;
   /** Attempts where the executor claimed success but the assertion disagreed. */
   falseClaims: number;
   /**
@@ -181,6 +232,8 @@ export function aggregate(result: TaskResult): Aggregate {
     totalUsd: runs.reduce((a, r) => a + r.usd, 0),
     recoveries: runs.reduce((a, r) => a + r.recoveries, 0),
     repairs: runs.reduce((a, r) => a + r.repairs, 0),
+    judgeDisagreed: runs.filter((r) => r.judged !== undefined && r.judged !== r.asserted).length,
+    judgeFalseYes: runs.filter((r) => r.judged === true && !r.asserted).length,
     falseClaims: runs.filter((r) => r.claimed && !r.asserted).length,
     unclaimed: runs.filter((r) => !r.claimed && r.asserted).length,
   };
