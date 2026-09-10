@@ -100,6 +100,39 @@ describe('runTask against the fake', () => {
     expect(agg.falseClaims).toBe(0);
   });
 
+  it('survives a judgement that cannot be made', async () => {
+    // Judging talks to the device like anything else, so it fails like
+    // anything else. Unguarded, one aborted request ended a 45-run
+    // measurement after a single result — the other 44 were never attempted.
+    const hands = fake();
+    const judge = hands.assert.bind(hands);
+    let asked = 0;
+    hands.assert = async (...args: Parameters<Hands['assert']>) => {
+      asked += 1;
+      if (asked === 1) throw new Error('This operation was aborted');
+      return judge(...args);
+    };
+
+    // Without an assert step of its own, the only assertion in the run is the
+    // runner's own judgement — which is the call under test.
+    const walkOnly = {
+      ...macro,
+      steps: macro.steps.filter((step) => step.op !== 'assert'),
+    };
+    const result = await runTask({
+      hands,
+      task,
+      executor: new ScriptedExecutor(walkOnly),
+      runs: 2,
+    });
+    const agg = aggregate(result);
+
+    // Both attempts ran; the one that could not be judged counts as a failure.
+    expect(asked).toBe(2);
+    expect(agg.attempts).toBe(2);
+    expect(agg.successes).toBe(1);
+  });
+
   it('resets between attempts so run 2 does not inherit run 1', async () => {
     const hands = fake();
     const once = new ScriptedExecutor({
