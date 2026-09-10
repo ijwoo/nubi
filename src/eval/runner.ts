@@ -79,11 +79,32 @@ export async function runTask(opts: RunOptions): Promise<TaskResult> {
       );
     }
 
-    const check = await hands.assert(task.assert.selector, task.assert.withinMs);
+    // Judging is the runner's own job (ADR 0009), and it talks to the device
+    // like anything else does — so it can fail like anything else does. An
+    // unguarded call here took a whole 45-run measurement down over one
+    // aborted request, keeping a single result out of forty-five.
+    //
+    // A run that cannot be judged has not passed. Recording that and moving on
+    // is what lets the rest of the set finish and the failure stay visible.
+    let check: { ok: boolean; waitedMs: number; error?: string };
+    try {
+      check = await hands.assert(task.assert.selector, task.assert.withinMs);
+    } catch (err) {
+      check = {
+        ok: false,
+        waitedMs: 0,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
     trace.event(
       'assert',
       'route',
-      { op: 'task-assert', ok: check.ok, waitedMs: check.waitedMs },
+      {
+        op: 'task-assert',
+        ok: check.ok,
+        waitedMs: check.waitedMs,
+        ...(check.error === undefined ? {} : { error: check.error }),
+      },
       check.waitedMs,
       !check.ok,
     );

@@ -12,7 +12,9 @@
  *   npm run eval -- --model claude-sonnet-5
  *   npm run eval -- --effort low
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ClaudePlanner, ExploreExecutor } from '../src/brain/index.js';
 import {
@@ -26,6 +28,7 @@ import {
 import { FakeHands } from '../src/hands/fake.js';
 import type { Hands } from '../src/hands/types.js';
 import { WdaHands } from '../src/hands/wda.js';
+import { MacroStore, ReplayExecutor, ScriptedRepairer } from '../src/macro/index.js';
 import { hasApiKey, loadEnv } from '../src/shared/env.js';
 import { MacroSchema } from '../src/shared/types.js';
 
@@ -45,9 +48,27 @@ const flag = (name: string): string | undefined => {
 };
 const useFake = argv.includes('--fake');
 const which = flag('executor') ?? 'scripted';
-if (!['scripted', 'explore', 'both'].includes(which)) {
-  console.error(`unknown executor "${which}" — scripted | explore | both`);
+if (!['scripted', 'replay', 'explore', 'both', 'all'].includes(which)) {
+  console.error(`unknown executor "${which}" — scripted | replay | explore | both | all`);
   process.exit(1);
+}
+const wants = (name: 'scripted' | 'replay' | 'explore') =>
+  which === name || which === 'all' || (which === 'both' && name !== 'replay');
+
+/**
+ * Macros are copied somewhere temporary before replay runs against them.
+ *
+ * Replay repairs the route it is running and writes the fix back, which is the
+ * point of it — and exactly what a measurement must not do to the library it
+ * is measuring. A benchmark that permanently edits its own subject cannot be
+ * run twice.
+ */
+function scratchLibrary(): MacroStore {
+  const dir = mkdtempSync(join(tmpdir(), 'nubi-eval-'));
+  for (const file of readdirSync(MACRO_DIR).filter((f) => f.endsWith('.json'))) {
+    copyFileSync(MACRO_DIR + file, join(dir, file));
+  }
+  return new MacroStore(dir);
 }
 const model = flag('model');
 const effort = flag('effort');
@@ -84,7 +105,7 @@ const results: Aggregate[] = [];
 function executorsFor(task: ReturnType<typeof loadTask>): Executor[] {
   const chosen: Executor[] = [];
 
-  if (which !== 'explore') {
+  if (wants('scripted')) {
     if (!task.scripted) {
       console.log(`${task.id}: no macro for the scripted executor, skipping it`);
     } else {
@@ -95,7 +116,25 @@ function executorsFor(task: ReturnType<typeof loadTask>): Executor[] {
     }
   }
 
-  if (which !== 'scripted') {
+  if (wants('replay')) {
+    if (!task.scripted) {
+      console.log(`${task.id}: no macro for the replay executor, skipping it`);
+    } else {
+      const store = scratchLibrary();
+      chosen.push(
+        new ReplayExecutor({
+          macro: store.get(task.scripted.macro),
+          store,
+          // Scrolling is free and needs nobody; repair would need a key and a
+          // model, and mixing the two would leave it unclear which one earned
+          // the difference from `scripted`.
+          repairer: new ScriptedRepairer([undefined]),
+        }),
+      );
+    }
+  }
+
+  if (wants('explore')) {
     // Explore is the only executor that needs credentials, so it fails here
     // rather than partway through a run that has already cost time.
     if (!hasApiKey()) {
