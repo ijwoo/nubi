@@ -104,6 +104,50 @@ describe('replay — a target below the fold', () => {
   });
 });
 
+describe('replay — a list still moving', () => {
+  it('reads until the screen repeats before deciding it has arrived', async () => {
+    // On a phone the list is still decelerating when a swipe returns. Judging
+    // from that frame found the row in the bottom band, and the tap that
+    // followed landed on nothing — a failure that cost a full rescan.
+    //
+    // The fake models neither momentum nor a tap that goes nowhere, so it
+    // cannot reproduce that. What it can show is the mechanism: the decision
+    // is made on a screen that read the same twice, not on the first one back.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const executor = replay(macro());
+
+    expect(await executor.run(hands, task, trace)).toBe(true);
+
+    const swipes = hands.calls.filter((c) => c.action === 'swipe').length;
+    const reads = hands.calls.filter((c) => c.action === 'screen').length;
+    // One reading before the first swipe, then at least one per swipe to see
+    // it repeat. Deciding straight from the swipe's own screen needs none.
+    expect(reads).toBeGreaterThan(swipes);
+  });
+
+  it('stops reading rather than waiting on a screen that never repeats', async () => {
+    // A screen that keeps changing is animating on its own. Deciding from a
+    // stale frame is no worse than another that will also be stale.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    let n = 0;
+    const read = hands.screen.bind(hands);
+    hands.screen = async () => ({ ...(await read()), hash: `never-still-${n++}` });
+
+    const executor = new ReplayExecutor({
+      macro: macro(),
+      store,
+      repairer: new ScriptedRepairer([undefined]),
+      maxSettleReads: 2,
+      maxScrolls: 2,
+    });
+    store.save(macro());
+    await executor.run(hands, task, trace);
+
+    expect(hands.calls.filter((c) => c.action === 'swipe').length).toBeLessThanOrEqual(2);
+    expect(hands.calls.filter((c) => c.action === 'screen').length).toBeLessThanOrEqual(8);
+  });
+});
+
 describe('reachable', () => {
   const screen = { size: { w: 393, h: 852 } } as Screen;
   const at = (y: number): Element => ({ i: 0, t: 'Button', r: [16, y, 361, 53], e: true });

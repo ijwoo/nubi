@@ -1,6 +1,7 @@
 import { selectorFor } from '../brain/explore.js';
 import type { Executor } from '../eval/executor.js';
 import type { Task } from '../eval/task.js';
+import { resolveWithFallback } from '../hands/selector.js';
 import type { Hands } from '../hands/types.js';
 import type { Element, Macro, Screen } from '../shared/types.js';
 import type { Trace } from '../trace/index.js';
@@ -30,6 +31,15 @@ export interface ReplayOptions {
    * forever, which a settings screen is not but a feed is.
    */
   maxScrolls?: number;
+  /**
+   * Readings allowed while waiting for a scrolled list to stop.
+   *
+   * A ceiling, not a target — one is usually enough, since the screen a swipe
+   * returns is often already still. A list that never settles is animating on
+   * its own, and deciding from a stale frame there is no worse than deciding
+   * from a fresh one that will also be stale.
+   */
+  maxSettleReads?: number;
 }
 
 export class ReplayExecutor implements Executor {
@@ -39,6 +49,7 @@ export class ReplayExecutor implements Executor {
   private readonly repairer: Repairer;
   private readonly maxRepairs: number;
   private readonly maxScrolls: number;
+  private readonly maxSettleReads: number;
   private macro: Macro;
 
   /** Repairs written into the macro during the last run. */
@@ -50,6 +61,7 @@ export class ReplayExecutor implements Executor {
     this.repairer = options.repairer;
     this.maxRepairs = options.maxRepairs ?? 2;
     this.maxScrolls = options.maxScrolls ?? 6;
+    this.maxSettleReads = options.maxSettleReads ?? 3;
   }
 
   async run(hands: Hands, _task: Task, trace: Trace): Promise<boolean> {
@@ -127,8 +139,16 @@ export class ReplayExecutor implements Executor {
       }
       before = after.hash;
 
-      const found = await hands.find(step.sel, step.alt);
-      if (found.ok && reachable(found.element, after)) {
+      // Settled before judged, and judged on one screen rather than three.
+      //
+      // The list is still decelerating when a swipe returns. Asking `find`
+      // afterwards was a second reading, checking reachability against the
+      // swipe's screen a third, and tapping a fourth — measured on a phone,
+      // the row moved between them and the tap landed on nothing, which cost
+      // a full rescan and thirty seconds.
+      const still = await this.settle(hands, after);
+      const found = resolveWithFallback(step.sel, step.alt, still);
+      if (found.ok && reachable(found.element, still)) {
         trace.event(
           'recover',
           'replay',
@@ -146,6 +166,23 @@ export class ReplayExecutor implements Executor {
       Date.now() - started,
     );
     return false;
+  }
+
+  /**
+   * Read until the screen stops changing, so a decision is made about a list
+   * that has stopped rather than one still coasting.
+   *
+   * Starts from the screen the swipe already returned, so the common case
+   * costs one extra reading: momentum usually ends within it.
+   */
+  private async settle(hands: Hands, from: Screen): Promise<Screen> {
+    let previous = from;
+    for (let read = 0; read < this.maxSettleReads; read++) {
+      const next = await hands.screen();
+      if (next.hash === previous.hash) return next;
+      previous = next;
+    }
+    return previous;
   }
 
   private async repair(hands: Hands, trace: Trace, stepIndex: number): Promise<boolean> {
