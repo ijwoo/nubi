@@ -18,7 +18,14 @@ import type { Macro, Risk, Selector } from '../shared/types.js';
 export interface ApprovalRequest {
   /** What the person asked for. */
   utterance: string;
-  macro: Macro;
+  /**
+   * The saved route this is about, when there is one.
+   *
+   * Absent while exploring, which is when approval matters most — a route that
+   * sends something has to be performed once before it can be saved, and the
+   * shape of this request originally assumed the saving had already happened.
+   */
+  macro?: Macro;
   /**
    * The controls that made this risky, named.
    *

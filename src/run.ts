@@ -108,8 +108,28 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
     };
   }
 
-  const explorer = new ExploreExecutor({ planner: opts.planner });
-  const claimed = await explorer.run(watched, taskFor(utterance, opts.app), trace);
+  // The gate goes to exploration too, not only to replay. A route that sends
+  // something is explored before it is ever saved, so guarding only the saved
+  // half guards only the half that already went through unguarded once.
+  const explorer = new ExploreExecutor({
+    planner: opts.planner,
+    gate: opts.gate ?? new DenyingGate(),
+  });
+  // A transport failure is a failed request, not a stack trace for whoever
+  // typed the sentence. A chat app's tree took 29 seconds to read and blew the
+  // request timeout; the error escaped the CLI and printed a Node traceback.
+  let claimed = false;
+  try {
+    claimed = await explorer.run(watched, taskFor(utterance, opts.app), trace);
+  } catch (err) {
+    trace.event(
+      'error',
+      'explore',
+      { error: err instanceof Error ? err.message : String(err) },
+      0,
+      true,
+    );
+  }
   const usd = () => costOf(trace.events).usd;
 
   // The executor's own word is not evidence (ADR 0009). Exploring "추천 노래

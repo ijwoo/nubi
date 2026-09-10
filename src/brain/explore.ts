@@ -1,6 +1,8 @@
 import type { Executor } from '../eval/executor.js';
 import type { Task } from '../eval/task.js';
+import { DenyingGate, type Gate } from '../gate/index.js';
 import type { Hands, Point } from '../hands/types.js';
+import { isIrreversible } from '../shared/risk.js';
 import type { Element, Screen, Selector } from '../shared/types.js';
 import type { Trace } from '../trace/index.js';
 import type { PlanResult, PlannedAction, Planner } from './planner.js';
@@ -16,6 +18,21 @@ import type { PlanResult, PlannedAction, Planner } from './planner.js';
 
 export interface ExploreOptions {
   planner: Planner;
+  /**
+   * Asked before an action that cannot be undone.
+   *
+   * The approval gate started out guarding replay, which is the half that
+   * cannot need it first: a saved route is only saved after some run performed
+   * it, and that run was an exploration. "카카오톡으로 메시지 보내줘" has no
+   * macro the first time and never will if the first time is refused — so
+   * without this, the gate is absent from the only moment it matters.
+   *
+   * Defaults to refusing, like every other caller of a gate. Exploration that
+   * has not been given one does not get to send anything.
+   */
+  gate?: Gate;
+  /** What the person asked for, shown to whoever approves. */
+  goal?: string;
   /** Hard ceiling on actions. A loop that has not finished by here will not. */
   maxSteps?: number;
   /** Wall-clock ceiling, since a step can block on a slow screen. */
@@ -28,6 +45,7 @@ export class ExploreExecutor implements Executor {
   readonly name = 'explore';
 
   private readonly planner: Planner;
+  private readonly gate: Gate;
   private readonly maxSteps: number;
   private readonly timeoutMs: number;
   private readonly maxConsecutiveFailures: number;
@@ -46,6 +64,7 @@ export class ExploreExecutor implements Executor {
 
   constructor(options: ExploreOptions) {
     this.planner = options.planner;
+    this.gate = options.gate ?? new DenyingGate();
     this.maxSteps = options.maxSteps ?? 25;
     this.timeoutMs = options.timeoutMs ?? 300_000;
     this.maxConsecutiveFailures = options.maxConsecutiveFailures ?? 3;
@@ -175,7 +194,7 @@ export class ExploreExecutor implements Executor {
         return false;
       }
 
-      const outcome = await this.act(hands, action, screen.elements);
+      const outcome = await this.act(hands, action, screen.elements, task.prompt);
       if (outcome.ok) {
         // Observed this iteration, so it is the screen this action acted on.
         this.beforeLast = screen;
@@ -216,10 +235,27 @@ export class ExploreExecutor implements Executor {
    * the caller is about to want exactly that, and asking the device for it
    * again is the single most expensive thing this loop does.
    */
+  /**
+   * Whether a control may be pressed, when pressing it cannot be undone.
+   *
+   * Judged from the control's own name rather than from the request, for the
+   * same reason macro extraction judges risk that way: what a step does is
+   * better evidenced by what it targets than by what someone said they wanted.
+   */
+  private async permitted(element: Element, goal: string): Promise<string | undefined> {
+    if (!isIrreversible(element.l, element.v, element.id)) return undefined;
+    const approval = await this.gate.ask({
+      utterance: goal,
+      reasons: [element.l ?? element.v ?? element.id ?? ''],
+    });
+    return approval.granted ? undefined : (approval.why ?? '승인되지 않음');
+  }
+
   private async act(
     hands: Hands,
     action: PlannedAction,
     elements: readonly Element[],
+    goal: string,
   ): Promise<{ ok: boolean; why?: string; selector?: Selector; screen?: Screen }> {
     switch (action.kind) {
       case 'tap': {
@@ -228,6 +264,8 @@ export class ExploreExecutor implements Executor {
           return { ok: false, why: `no element ${action.element} on screen` };
         }
         const selector = selectorFor(element, elements);
+        const refusal = await this.permitted(element, goal);
+        if (refusal) return { ok: false, why: refusal };
         const r = await hands.tap(selector);
         return r.ok ? { ok: true, selector, screen: r.screen } : { ok: false, why: r.reason };
       }

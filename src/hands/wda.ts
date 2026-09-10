@@ -27,6 +27,21 @@ export interface WdaOptions {
   bundleId?: string;
   /** Per-request ceiling. Source dumps on a busy screen are the slow case. */
   timeoutMs?: number;
+  /**
+   * How deep to walk the accessibility tree.
+   *
+   * WDA defaults to 50, which on a chat app is 3.4MB of JSON and 29 seconds
+   * for one reading — over the request timeout, so the app simply could not be
+   * driven. At 20 the same screen takes 1.4 seconds and compacts to *more*
+   * addressable elements, not fewer: the depth that was being paid for was
+   * layout scaffolding.
+   *
+   * The floor matters. At 12 the same app drops from 28 elements to 7, and
+   * that failure is quiet — a screen that looks sparse rather than one that
+   * errors. 20 is chosen with that margin in mind, and Settings is unchanged
+   * by it either way.
+   */
+  snapshotMaxDepth?: number;
 }
 
 /** WDA replied, and said no. Distinct from the transport failing. */
@@ -64,6 +79,7 @@ export class WdaHands implements Hands {
   private readonly baseUrl: string;
   private readonly bundleId: string | undefined;
   private readonly timeoutMs: number;
+  private readonly snapshotMaxDepth: number;
 
   private sessionId: string | undefined;
   private recoveries = 0;
@@ -75,6 +91,7 @@ export class WdaHands implements Hands {
     );
     this.bundleId = options.bundleId;
     this.timeoutMs = options.timeoutMs ?? 30_000;
+    this.snapshotMaxDepth = options.snapshotMaxDepth ?? 20;
   }
 
   /**
@@ -148,6 +165,11 @@ export class WdaHands implements Hands {
       capabilities: { alwaysMatch: sessionCapabilities(this.bundleId) },
     });
     this.sessionId = created.sessionId;
+    // Best effort: a session that will not take the setting still works, just
+    // slowly, and failing to open one over a tuning knob would be worse.
+    await this.request('POST', `/session/${created.sessionId}/appium/settings`, {
+      settings: { snapshotMaxDepth: this.snapshotMaxDepth },
+    }).catch(() => undefined);
     return created.sessionId;
   }
 
