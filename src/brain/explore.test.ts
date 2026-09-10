@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { loadTask } from '../eval/task.js';
+import { ScriptedGate } from '../gate/index.js';
 import { FakeHands } from '../hands/fake.js';
 import { Trace } from '../trace/index.js';
 import { ExploreExecutor, selectorFor } from './explore.js';
@@ -299,5 +300,52 @@ describe('explore — what the trace records', () => {
     // The fixture models navigation, not scrolling, so a swipe leaves the
     // screen as it was — and the next turn observes rather than trusting it.
     expect(hands.calls.filter((c) => c.action === 'screen').length).toBe(2);
+  });
+
+  it('asks before pressing something that cannot be undone', async () => {
+    // The gate guarded replay first, which is the half that cannot need it
+    // first: a route that sends is explored before it is ever saved.
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const screen = await hands.screen();
+    const idx = screen.elements.findIndex((e) => e.id === 'tab_search');
+    const gate = new ScriptedGate([false]);
+
+    // Rename the target so its label reads as irreversible, which is what the
+    // check reads — what a step does is evidenced by what it targets.
+    const sending = {
+      ...hands,
+      screen: async () => {
+        const s = await FakeHands.prototype.screen.call(hands);
+        const els = s.elements.map((e, i) => (i === idx ? { ...e, l: '전송' } : e));
+        return { ...s, elements: els };
+      },
+    } as unknown as typeof hands;
+
+    const executor = new ExploreExecutor({
+      planner: new ScriptedPlanner([{ kind: 'tap', element: idx, why: '' }]),
+      gate,
+      maxConsecutiveFailures: 1,
+    });
+    await executor.run(sending, task, Trace.start());
+
+    expect(gate.asked).toHaveLength(1);
+    expect(gate.asked[0]?.reasons).toEqual(['전송']);
+    // Refused, so nothing was tapped.
+    expect(hands.calls.filter((c) => c.action === 'tap')).toHaveLength(0);
+  });
+
+  it('does not ask about an ordinary control', async () => {
+    const hands = FakeHands.fromScenario(SCENARIO);
+    const idx = (await hands.screen()).elements.findIndex((e) => e.id === 'tab_search');
+    const gate = new ScriptedGate([true]);
+    const executor = new ExploreExecutor({
+      planner: new ScriptedPlanner([
+        { kind: 'tap', element: idx, why: '' },
+        { kind: 'done', why: '' },
+      ]),
+      gate,
+    });
+    await executor.run(hands, task, Trace.start());
+    expect(gate.asked).toHaveLength(0);
   });
 });

@@ -75,7 +75,8 @@ export function prompt(request: ApprovalRequest): string {
     '',
     '  ┌─ 승인이 필요합니다',
     `  │  요청: ${request.utterance}`,
-    `  │  경로: ${request.macro.id}`,
+    // Absent while exploring: the route is being found, not replayed.
+    ...(request.macro ? [`  │  경로: ${request.macro.id}`] : ['  │  경로: 탐색 중']),
   ];
   for (const reason of request.reasons) {
     lines.push(`  │  누릅니다: ${reason}`);
