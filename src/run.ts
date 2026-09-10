@@ -1,13 +1,14 @@
 import { ExploreExecutor } from './brain/explore.js';
 import type { Planner } from './brain/planner.js';
 import type { Task } from './eval/task.js';
+import { DenyingGate, type Gate, reasonsToAsk, verdictFor } from './gate/index.js';
 import type { Hands } from './hands/types.js';
 import { deriveAssertion, extractMacro } from './macro/extract.js';
 import { matchMacro } from './macro/match.js';
 import type { Repairer } from './macro/repair.js';
 import { ReplayExecutor } from './macro/replay.js';
 import type { MacroStore } from './macro/store.js';
-import { isDemoted } from './shared/types.js';
+import { type Macro, isDemoted } from './shared/types.js';
 import { costOf } from './trace/cost.js';
 import { Trace, traced } from './trace/index.js';
 
@@ -31,6 +32,14 @@ export interface RunOptions {
   store: MacroStore;
   planner: Planner;
   repairer: Repairer;
+  /**
+   * Who is asked before something irreversible runs.
+   *
+   * Defaults to refusing. A caller that has not thought about approval has
+   * not granted it, and the alternative default decides on someone's behalf
+   * exactly where it matters most.
+   */
+  gate?: Gate;
   /** The app to explore in when nothing matches. */
   app: string;
   /** Skip saving a newly found route. */
@@ -39,7 +48,9 @@ export interface RunOptions {
 
 export type RunOutcome =
   | { kind: 'replayed'; macroId: string; ok: boolean; repairs: number; usd: number; ms: number }
-  | { kind: 'explored'; ok: boolean; saved?: string; why?: string; usd: number; ms: number };
+  | { kind: 'explored'; ok: boolean; saved?: string; why?: string; usd: number; ms: number }
+  /** Nothing was run: the route needed approval and did not get it. */
+  | { kind: 'refused'; macroId: string; why: string; usd: number; ms: number };
 
 export async function run(utterance: string, opts: RunOptions): Promise<RunOutcome> {
   const trace = Trace.start();
@@ -53,6 +64,18 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
   trace.beginAttempt();
 
   if (match) {
+    const refusal = await clear(match.macro, utterance, opts, trace);
+    if (refusal) {
+      trace.end(false, { macro: match.macro.id, refused: refusal });
+      return {
+        kind: 'refused',
+        macroId: match.macro.id,
+        why: refusal,
+        usd: costOf(trace.events).usd,
+        ms: elapsed(trace),
+      };
+    }
+
     const executor = new ReplayExecutor({
       macro: match.macro,
       store: opts.store,
@@ -141,6 +164,42 @@ export async function run(utterance: string, opts: RunOptions): Promise<RunOutco
   opts.store.save(macro);
   trace.end(true, { goal: utterance, saved: macro.id });
   return { kind: 'explored', ok: true, saved: macro.id, usd: usd(), ms: elapsed(trace) };
+}
+
+/**
+ * Ask before anything irreversible, and return why not when the answer is no.
+ *
+ * `risk` was being computed and never read: `extractMacro` marked a route
+ * `confirm` when it pressed something that could not be undone, and `nubi run`
+ * replayed it without asking anyone. The repair path meanwhile refuses to
+ * *introduce* a dangerous control into a safe step — careful about acquiring
+ * the danger, indifferent to already having it.
+ */
+async function clear(
+  macro: Macro,
+  utterance: string,
+  opts: RunOptions,
+  trace: Trace,
+): Promise<string | undefined> {
+  const verdict = verdictFor(macro.risk);
+  if (verdict === 'run') return undefined;
+  if (verdict === 'refuse') {
+    trace.event('approve', 'route', { macro: macro.id, risk: macro.risk, granted: false }, 0, true);
+    return '이 경로는 자동 실행이 차단되어 있습니다';
+  }
+
+  const gate = opts.gate ?? new DenyingGate();
+  const started = Date.now();
+  const reasons = reasonsToAsk(macro);
+  const approval = await gate.ask({ utterance, macro, reasons });
+  trace.event(
+    'approve',
+    'route',
+    { macro: macro.id, risk: macro.risk, by: approval.by, granted: approval.granted, reasons },
+    Date.now() - started,
+    !approval.granted,
+  );
+  return approval.granted ? undefined : (approval.why ?? '승인되지 않음');
 }
 
 /**

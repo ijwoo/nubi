@@ -38,6 +38,7 @@ const EXPECTED_UNUSED = new Map([
   ['ScriptedPlanner', '테스트용 계획자 — 모델 없이 explore 루프를 돌린다'],
   ['ScriptedRepairer', '테스트용 복구자 — 모델 없이 복구 흐름을 돌린다'],
   ['CONTRACT', '두 백엔드에 같은 케이스를 돌리는 계약 목록'],
+  ['ScriptedGate', '테스트용 승인 게이트 — 사람 없이 승인 흐름을 돌린다'],
   ['goto', '가짜 백엔드를 특정 화면에 놓는다 — 테스트가 전환을 건너뛸 때 쓴다'],
   ['showAlert', '가짜 백엔드에 시스템 알림을 띄운다 — 실기에서는 재현이 어렵다'],
 ]);

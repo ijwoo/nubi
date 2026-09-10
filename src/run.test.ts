@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ScriptedPlanner } from './brain/planner.js';
+import { ScriptedGate } from './gate/index.js';
 import { FakeHands } from './hands/fake.js';
 import { ScriptedRepairer } from './macro/repair.js';
 import { MacroStore } from './macro/store.js';
@@ -66,8 +67,8 @@ describe('run — the loop', () => {
     const first = await run('손쉬운 사용 열어줘', opts(hands, idx));
 
     expect(first.kind).toBe('explored');
-    expect(first.ok).toBe(true);
     if (first.kind !== 'explored') throw new Error('unreachable');
+    expect(first.ok).toBe(true);
     expect(first.saved).toBeDefined();
 
     const saved = store.get(first.saved as string);
@@ -97,8 +98,8 @@ describe('run — the loop', () => {
     });
 
     expect(second.kind).toBe('replayed');
-    expect(second.ok).toBe(true);
     if (second.kind !== 'replayed') throw new Error('unreachable');
+    expect(second.ok).toBe(true);
     expect(second.usd).toBe(0);
   });
 
@@ -155,8 +156,76 @@ describe('run — what replay leaves behind', () => {
     store.save(broken);
 
     const out = await run('손쉬운 사용 열어줘', opts(FakeHands.fromScenario(SCENARIO), idx));
+    expect(out.kind).toBe('replayed');
+    if (out.kind !== 'replayed') throw new Error('unreachable');
     expect(out.ok).toBe(false);
     expect(store.get(first.saved).stats.fails).toBe(1);
+  });
+});
+
+describe('run — approval', () => {
+  /** Save the route the loop just learned, marked as needing approval. */
+  async function riskyRoute() {
+    const explore = FakeHands.fromScenario(SCENARIO);
+    const idx = await accessibilityIndex(explore);
+    const first = await run('손쉬운 사용 열어줘', opts(explore, idx));
+    if (first.kind !== 'explored' || !first.saved) throw new Error('unreachable');
+    const saved = store.get(first.saved);
+    saved.risk = 'confirm';
+    // A control whose name says what it does, so the request can name it too.
+    saved.steps[1] = { op: 'tap', sel: { label: '삭제' } };
+    store.save(saved);
+    return { id: first.saved, idx };
+  }
+
+  it('refuses to run a risky route when nobody has been asked', async () => {
+    // The gap this closes: `risk` was computed by extraction and read by
+    // nothing, so a route marked irreversible replayed like any other.
+    const { id, idx } = await riskyRoute();
+    const out = await run('손쉬운 사용 열어줘', opts(FakeHands.fromScenario(SCENARIO), idx));
+
+    expect(out.kind).toBe('refused');
+    if (out.kind !== 'refused') throw new Error('unreachable');
+    expect(out.macroId).toBe(id);
+    // Nothing ran, so nothing was counted.
+    expect(store.get(id).stats.runs).toBe(0);
+  });
+
+  it('names the control in the request, not just the risk', async () => {
+    const { idx } = await riskyRoute();
+    const gate = new ScriptedGate([false]);
+    await run('손쉬운 사용 열어줘', {
+      ...opts(FakeHands.fromScenario(SCENARIO), idx),
+      gate,
+    });
+    expect(gate.asked[0]?.reasons).toEqual(['삭제']);
+  });
+
+  it('runs it once a person says yes', async () => {
+    const { id, idx } = await riskyRoute();
+    const out = await run('손쉬운 사용 열어줘', {
+      ...opts(FakeHands.fromScenario(SCENARIO), idx),
+      gate: new ScriptedGate([true]),
+    });
+    expect(out.kind).toBe('replayed');
+    expect(store.get(id).stats.runs).toBe(1);
+  });
+
+  it('never asks about a blocked route', async () => {
+    // Someone already decided; asking per run would make that negotiable.
+    const { idx } = await riskyRoute();
+    const blocked = store.all()[0];
+    if (!blocked) throw new Error('unreachable');
+    blocked.risk = 'blocked';
+    store.save(blocked);
+
+    const gate = new ScriptedGate([true]);
+    const out = await run('손쉬운 사용 열어줘', {
+      ...opts(FakeHands.fromScenario(SCENARIO), idx),
+      gate,
+    });
+    expect(out.kind).toBe('refused');
+    expect(gate.asked).toHaveLength(0);
   });
 });
 

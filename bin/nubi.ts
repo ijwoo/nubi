@@ -6,6 +6,7 @@
  */
 import { fileURLToPath } from 'node:url';
 import { ClaudePlanner } from '../src/brain/index.js';
+import { TerminalGate } from '../src/gate/index.js';
 import { FakeHands, estimateTokens } from '../src/hands/index.js';
 import { WdaHands } from '../src/hands/wda.js';
 import { ClaudeRepairer, MacroStore, matchMacro } from '../src/macro/index.js';
@@ -171,11 +172,21 @@ async function request(args: string[]): Promise<void> {
     store,
     planner: new ClaudePlanner(),
     repairer: new ClaudeRepairer(),
+    // The Mac's terminal, not the phone's screen: the gate has to be
+    // somewhere the agent cannot press (ADR 0007). The relay and Live
+    // Activity are the real channel; this is the fallback that ADR names.
+    gate: new TerminalGate(),
     app: app ?? 'com.apple.Preferences',
   });
   await hands.close();
 
   const cost = `$${outcome.usd.toFixed(4)}`;
+  if (outcome.kind === 'refused') {
+    console.log(`⊘ 실행 안 함  ${outcome.macroId}`);
+    console.log(`  ${outcome.why}`);
+    process.exitCode = 1;
+    return;
+  }
   if (outcome.kind === 'replayed') {
     console.log(`${outcome.ok ? '✓' : '✗'} 재생  ${outcome.macroId}`);
     console.log(
