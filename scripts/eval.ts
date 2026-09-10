@@ -221,10 +221,8 @@ function report(rows: Aggregate[]): void {
     const attempts = rows.reduce((a, r) => a + r.attempts, 0);
     const wrong = rows.reduce((a, r) => a + r.judgeDisagreed, 0);
     const falseYes = rows.reduce((a, r) => a + r.judgeFalseYes, 0);
-    console.log(
-      `판정자: ${attempts - wrong}/${attempts} 일치` +
-        (wrong > 0 ? `  (불일치 ${wrong}건, 그중 잘못된 "됐다" ${falseYes}건)` : ''),
-    );
+    const detail = wrong > 0 ? `  (불일치 ${wrong}건, 그중 잘못된 "됐다" ${falseYes}건)` : '';
+    console.log(`판정자: ${attempts - wrong}/${attempts} 일치${detail}`);
   }
   if (recoveries > 0) console.log(`  ${recoveries} session recovery(ies) during the set`);
   if (!useFake) console.log('  traces: traces/');
