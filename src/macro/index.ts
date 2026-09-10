@@ -3,7 +3,7 @@
 export { ClaudeRepairer, type ClaudeRepairerOptions, renderRepair } from './claude-repairer.js';
 export { deriveAssertion, extractMacro, type ExtractOptions } from './extract.js';
 export { matchMacro, type Match } from './match.js';
-export { ReplayExecutor, type ReplayOptions } from './replay.js';
+export { ReplayExecutor, reachable, type ReplayOptions } from './replay.js';
 export {
   ScriptedRepairer,
   escalatesRisk,

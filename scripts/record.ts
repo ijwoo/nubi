@@ -21,6 +21,8 @@ interface Move {
   tap?: Selector;
   type?: string;
   back?: true;
+  /** Scroll rather than navigate. Short, so momentum does not skip rows. */
+  swipe?: true;
 }
 
 interface Recipe {
@@ -34,6 +36,26 @@ interface Recipe {
  * list-to-detail transition, and a back gesture — the shape most macros have.
  */
 const RECIPES: Record<string, Recipe> = {
+  /**
+   * A real iPhone's Settings, which does not fit on one screen.
+   *
+   * The simulator shows 일반 and 손쉬운 사용 immediately; a phone puts an Apple
+   * account, an update banner, cellular and hotspot above them, so a macro
+   * written against the simulator finds nothing. Recorded so that case has a
+   * fixture rather than needing a phone plugged in to reproduce.
+   */
+  'settings-device': {
+    bundleId: 'com.apple.Preferences',
+    start: 'top',
+    moves: [
+      // Two, not one. After the first the row is on screen at y=748 of 852 —
+      // reported visible, resolves, and a tap there does nothing. The second
+      // puts it at y=593, where the same tap works.
+      { screen: 'scrolled', swipe: true },
+      { screen: 'scrolled-more', swipe: true },
+      { screen: 'accessibility', tap: { id: 'com.apple.settings.accessibility' } },
+    ],
+  },
   settings: {
     bundleId: 'com.apple.Preferences',
     start: 'root',
@@ -106,6 +128,26 @@ async function capture(proposed: string): Promise<{ name: string; hash: string }
   return { name: proposed, hash: compacted.hash };
 }
 
+/**
+ * Wait for the screen to actually change, rather than for a fixed delay.
+ *
+ * The delay used to be 800ms, which is a simulator's idea of how long a push
+ * transition takes. A phone is slower, and the capture landed mid-animation on
+ * a screen that still hashed like the one before it — reported as "nothing
+ * moved" on a move that had worked.
+ */
+async function settled(before: string, timeoutMs = 6000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 400));
+    if ((await hands.screen()).hash !== before) {
+      // One more beat: the first frame that differs is often still animating.
+      await new Promise((r) => setTimeout(r, 400));
+      return;
+    }
+  }
+}
+
 console.log(`recording ${name} (${recipe.bundleId})\n`);
 await hands.launch({ bundleId: recipe.bundleId, restart: true });
 await new Promise((r) => setTimeout(r, 1500));
@@ -117,14 +159,16 @@ let hash = first.hash;
 for (const move of recipe.moves) {
   const result = move.back
     ? await hands.back()
-    : move.type !== undefined
-      ? await hands.type(move.type)
-      : await hands.tap(move.tap as Selector);
+    : move.swipe
+      ? await hands.swipe([0.5, 0.62], [0.5, 0.42], 900)
+      : move.type !== undefined
+        ? await hands.type(move.type)
+        : await hands.tap(move.tap as Selector);
   if (!result.ok) {
     console.error(`  ✗ move to ${move.screen} failed: ${result.reason}`);
     process.exit(1);
   }
-  await new Promise((r) => setTimeout(r, 800));
+  await settled(hash);
 
   const next = await capture(move.screen);
   const nextHash = next.hash;
@@ -148,14 +192,16 @@ for (const move of recipe.moves) {
    */
   const key = move.back
     ? { from: current, back: true }
-    : move.type !== undefined
-      ? { from: current, type: true as const }
-      : {
-          from: '*',
-          tap:
-            (move.tap as { id?: string; label?: string }).id ??
-            (move.tap as { label?: string }).label,
-        };
+    : move.swipe
+      ? { from: current, swipe: true as const }
+      : move.type !== undefined
+        ? { from: current, type: true as const }
+        : {
+            from: '*',
+            tap:
+              (move.tap as { id?: string; label?: string }).id ??
+              (move.tap as { label?: string }).label,
+          };
   const edge: Record<string, unknown> = { ...key, to: next.name };
   const clash = transitions.find(
     (t) => t.from === edge.from && t.tap !== undefined && t.tap === edge.tap && t.to !== edge.to,
