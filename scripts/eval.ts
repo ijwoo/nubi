@@ -28,6 +28,7 @@ import {
 import { FakeHands } from '../src/hands/fake.js';
 import type { Hands } from '../src/hands/types.js';
 import { WdaHands } from '../src/hands/wda.js';
+import { ClaudeJudge } from '../src/judge/index.js';
 import { MacroStore, ReplayExecutor, ScriptedRepairer } from '../src/macro/index.js';
 import { hasApiKey, loadEnv } from '../src/shared/env.js';
 import { MacroSchema } from '../src/shared/types.js';
@@ -70,6 +71,14 @@ function scratchLibrary(): MacroStore {
   }
   return new MacroStore(dir);
 }
+/**
+ * A model judge, scored against the task's written assertion.
+ *
+ * Off unless asked for: it is a model call per attempt, and the eval's whole
+ * value is that it has an answer written down by a person. `--judge` measures
+ * how often the cheap tier agrees with that answer.
+ */
+const judging = argv.includes('--judge');
 const model = flag('model');
 const effort = flag('effort');
 const only = flag('task');
@@ -161,6 +170,7 @@ for (const task of tasks) {
 
   for (const executor of executorsFor(task)) {
     const result = await runTask({
+      ...(judging ? { judge: new ClaudeJudge() } : {}),
       hands,
       task: shaped,
       executor,
@@ -207,6 +217,15 @@ function report(rows: Aggregate[]): void {
   const unclaimed = rows.reduce((a, r) => a + r.unclaimed, 0);
   if (unclaimed > 0)
     console.log(`⚠ ${unclaimed} attempt(s) reached the goal without the executor saying so`);
+  if (judging) {
+    const attempts = rows.reduce((a, r) => a + r.attempts, 0);
+    const wrong = rows.reduce((a, r) => a + r.judgeDisagreed, 0);
+    const falseYes = rows.reduce((a, r) => a + r.judgeFalseYes, 0);
+    console.log(
+      `판정자: ${attempts - wrong}/${attempts} 일치` +
+        (wrong > 0 ? `  (불일치 ${wrong}건, 그중 잘못된 "됐다" ${falseYes}건)` : ''),
+    );
+  }
   if (recoveries > 0) console.log(`  ${recoveries} session recovery(ies) during the set`);
   if (!useFake) console.log('  traces: traces/');
 

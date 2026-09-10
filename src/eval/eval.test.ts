@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { FakeHands } from '../hands/fake.js';
 import type { Hands } from '../hands/types.js';
+import { ScriptedJudge } from '../judge/index.js';
 import { MacroSchema } from '../shared/types.js';
 import { ScriptedExecutor } from './executor.js';
 import { aggregate, runTask } from './runner.js';
@@ -98,6 +99,31 @@ describe('runTask against the fake', () => {
     expect(agg.successRate).toBe(1);
     expect(agg.unclaimed).toBe(2);
     expect(agg.falseClaims).toBe(0);
+  });
+
+  it("scores a model judge against the task's own assertion", async () => {
+    // The eval is the one place with an answer written down by a person, so
+    // it is the one place a model judge can be measured rather than trusted.
+    //
+    // This is here because the wiring was silently missing once: a scripted
+    // edit failed partway, the type error went unread, and tsx does not check
+    // types — so a 45-run measurement ran to completion without ever asking
+    // the judge, reporting agreement as 0/0.
+    const judge = new ScriptedJudge([true, false]);
+    const result = await runTask({
+      hands: fake(),
+      task,
+      executor: new ScriptedExecutor(macro),
+      runs: 2,
+      judge,
+    });
+    const agg = aggregate(result);
+
+    expect(judge.asked).toHaveLength(2);
+    expect(agg.successes).toBe(2);
+    // The second attempt succeeded and the judge said it had not.
+    expect(agg.judgeDisagreed).toBe(1);
+    expect(agg.judgeFalseYes).toBe(0);
   });
 
   it('survives a judgement that cannot be made', async () => {
