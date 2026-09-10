@@ -9,6 +9,7 @@ import { ClaudePlanner } from '../src/brain/index.js';
 import { TerminalGate } from '../src/gate/index.js';
 import { FakeHands, estimateTokens } from '../src/hands/index.js';
 import { WdaHands } from '../src/hands/wda.js';
+import { ClaudeJudge } from '../src/judge/index.js';
 import { ClaudeRepairer, MacroStore, matchMacro } from '../src/macro/index.js';
 import { run as runRequest } from '../src/run.js';
 import { hasApiKey, loadEnv } from '../src/shared/env.js';
@@ -176,6 +177,10 @@ async function request(args: string[]): Promise<void> {
     // somewhere the agent cannot press (ADR 0007). The relay and Live
     // Activity are the real channel; this is the fallback that ADR names.
     gate: new TerminalGate(),
+    // Whether it worked is decided by reading the screen, not by asking the
+    // thing that just acted (ADR 0009). On the cheap tier — this is a
+    // classification, and it runs once per request (ADR 0006).
+    judge: new ClaudeJudge(),
     app: app ?? 'com.apple.Preferences',
   });
   await hands.close();

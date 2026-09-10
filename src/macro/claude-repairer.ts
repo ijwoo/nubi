@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { renderScreen } from '../brain/prompt.js';
+import { supportsEffort } from '../shared/model.js';
 import type { ModelUsage } from '../shared/types.js';
 import type { RepairContext, RepairResult, Repairer } from './repair.js';
 
@@ -21,9 +22,6 @@ export interface ClaudeRepairerOptions {
   maxTokens?: number;
   client?: Anthropic;
 }
-
-/** Haiku 4.5 rejects `output_config.effort` with a 400. */
-const NO_EFFORT = new Set(['claude-haiku-4-5', 'claude-haiku-4-5-20251001']);
 
 const TOOLS: Anthropic.Beta.BetaToolUnion[] = [
   {
@@ -90,7 +88,7 @@ export class ClaudeRepairer implements Repairer {
     const response = await this.client.beta.messages.create({
       model: this.model,
       max_tokens: this.maxTokens,
-      ...(NO_EFFORT.has(this.model) ? {} : { output_config: { effort: this.effort } }),
+      ...(supportsEffort(this.model) ? { output_config: { effort: this.effort } } : {}),
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       tools: TOOLS,
       // Prose here would be read as neither a repair nor a refusal.
