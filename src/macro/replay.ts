@@ -2,7 +2,7 @@ import { selectorFor } from '../brain/explore.js';
 import type { Executor } from '../eval/executor.js';
 import type { Task } from '../eval/task.js';
 import type { Hands } from '../hands/types.js';
-import type { Macro } from '../shared/types.js';
+import type { Element, Macro, Screen } from '../shared/types.js';
 import type { Trace } from '../trace/index.js';
 import { type Repairer, escalatesRisk, isWorthKeeping, repairedStep } from './repair.js';
 import type { MacroStore } from './store.js';
@@ -22,6 +22,14 @@ export interface ReplayOptions {
   repairer: Repairer;
   /** Repairs allowed per run. A route needing more has changed, not shifted. */
   maxRepairs?: number;
+  /**
+   * Swipes allowed while looking for a control that is off screen.
+   *
+   * A ceiling rather than a target — the search stops as soon as the list
+   * stops moving. This only bounds a list long enough to keep scrolling
+   * forever, which a settings screen is not but a feed is.
+   */
+  maxScrolls?: number;
 }
 
 export class ReplayExecutor implements Executor {
@@ -30,6 +38,7 @@ export class ReplayExecutor implements Executor {
   private readonly store: MacroStore;
   private readonly repairer: Repairer;
   private readonly maxRepairs: number;
+  private readonly maxScrolls: number;
   private macro: Macro;
 
   /** Repairs written into the macro during the last run. */
@@ -40,6 +49,7 @@ export class ReplayExecutor implements Executor {
     this.store = options.store;
     this.repairer = options.repairer;
     this.maxRepairs = options.maxRepairs ?? 2;
+    this.maxScrolls = options.maxScrolls ?? 6;
   }
 
   async run(hands: Hands, _task: Task, trace: Trace): Promise<boolean> {
@@ -50,6 +60,16 @@ export class ReplayExecutor implements Executor {
       if (!step) break;
 
       if (await this.perform(hands, step)) continue;
+
+      // Scrolling first, because it costs nothing. A control that is simply
+      // below the fold is not a broken selector, and the same route on a
+      // longer list is the common case rather than an odd one: real Settings
+      // puts an Apple account, an update banner and cellular above what a
+      // simulator shows first, and everything the macro wants moves down.
+      if (step.op === 'tap' && (await this.scrollTo(hands, trace, step, i))) {
+        i -= 1;
+        continue;
+      }
 
       // Only a tap carries a selector that repair can reason about. A launch
       // or a type failing means something other than a moved control.
@@ -65,6 +85,67 @@ export class ReplayExecutor implements Executor {
       i -= 1;
     }
     return true;
+  }
+
+  /**
+   * Scroll looking for a control that is not on screen, and stop when the
+   * screen stops changing.
+   *
+   * The stop condition is what keeps this honest. A bounded count alone would
+   * swipe the same number of times whether the list has more to show or ended
+   * three swipes ago; an unchanged screen means the end was reached, and then
+   * the control really is gone and repair is the right next step.
+   *
+   * Swipes are short on purpose. A long one carries momentum and skips:
+   * measuring this on a phone, one 0.7→0.3 swipe jumped from VPN straight to
+   * Sounds, hiding 일반 and 손쉬운 사용 and everything between them well
+   * enough that the list looked like it no longer had them.
+   */
+  private async scrollTo(
+    hands: Hands,
+    trace: Trace,
+    step: Extract<Macro['steps'][number], { op: 'tap' }>,
+    stepIndex: number,
+  ): Promise<boolean> {
+    const started = Date.now();
+    let before = (await hands.screen()).hash;
+
+    for (let swipe = 1; swipe <= this.maxScrolls; swipe++) {
+      const moved = await hands.swipe([0.5, 0.62], [0.5, 0.42], 900);
+      if (!moved.ok) return false;
+
+      const after = moved.screen;
+      if (after.hash === before) {
+        // The list did not move: this is the end of it, not a slow load.
+        trace.event(
+          'observe',
+          'replay',
+          { step: stepIndex, op: 'scroll', reason: 'list-ended', swipes: swipe },
+          Date.now() - started,
+        );
+        return false;
+      }
+      before = after.hash;
+
+      const found = await hands.find(step.sel, step.alt);
+      if (found.ok && reachable(found.element, after)) {
+        trace.event(
+          'recover',
+          'replay',
+          { step: stepIndex, op: 'scroll', sel: step.sel, swipes: swipe },
+          Date.now() - started,
+        );
+        return true;
+      }
+    }
+
+    trace.event(
+      'observe',
+      'replay',
+      { step: stepIndex, op: 'scroll', reason: 'not-found', swipes: this.maxScrolls },
+      Date.now() - started,
+    );
+    return false;
   }
 
   private async repair(hands: Hands, trace: Trace, stepIndex: number): Promise<boolean> {
@@ -191,4 +272,28 @@ export class ReplayExecutor implements Executor {
         return (await hands.assert(step.sel, step.timeout)).ok;
     }
   }
+}
+
+/**
+ * Whether a control is far enough from the edges to actually be tappable.
+ *
+ * Being on screen is not the same as being reachable. Measured on an iPhone 14
+ * Pro: 손쉬운 사용 sitting at y=748 of an 852pt screen is reported visible by
+ * WDA, resolves fine, and a tap at its centre does nothing at all — no
+ * navigation, no change of any kind. One more short scroll puts it at y=593
+ * and the same tap works. The bottom band belongs to the home indicator and
+ * the system's edge gestures, and a tap there is swallowed before the app sees
+ * it; the top band is under the navigation bar.
+ *
+ * The bounds are deliberately conservative, and they come from that one
+ * measured failure rather than from any documented number: 774/852 = 0.91 did
+ * not work, 619/852 = 0.73 did. Scrolling one row further costs a second and
+ * a tap that vanishes costs the run.
+ */
+export function reachable(element: Element, screen: Screen): boolean {
+  const centre = element.r[1] + element.r[3] / 2;
+  const height = screen.size.h;
+  if (height <= 0) return true;
+  const fraction = centre / height;
+  return fraction > 0.12 && fraction < 0.8;
 }

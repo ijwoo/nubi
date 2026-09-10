@@ -1,0 +1,30 @@
+{
+  "app": "com.apple.Preferences",
+  "start": "top",
+  "launch": {
+    "com.apple.Preferences": "top"
+  },
+  "screens": {
+    "top": "./top.json",
+    "scrolled": "./scrolled.json",
+    "scrolled-more": "./scrolled-more.json",
+    "accessibility": "./accessibility.json"
+  },
+  "transitions": [
+    {
+      "from": "top",
+      "swipe": true,
+      "to": "scrolled"
+    },
+    {
+      "from": "scrolled",
+      "swipe": true,
+      "to": "scrolled-more"
+    },
+    {
+      "from": "*",
+      "tap": "com.apple.settings.accessibility",
+      "to": "accessibility"
+    }
+  ]
+}

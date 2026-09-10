@@ -37,10 +37,12 @@ const TransitionSchema = z
     /** Matches any text entry. */
     type: z.literal(true).optional(),
     back: z.literal(true).optional(),
+    /** Matches any swipe. Recorded when a screen scrolls rather than navigates. */
+    swipe: z.literal(true).optional(),
     to: z.string(),
   })
-  .refine((t) => t.tap !== undefined || t.type === true || t.back === true, {
-    message: 'a transition must be triggered by tap, type, or back',
+  .refine((t) => t.tap !== undefined || t.type === true || t.back === true || t.swipe === true, {
+    message: 'a transition must be triggered by tap, type, swipe, or back',
   });
 
 export const ScenarioSchema = z.object({
@@ -177,11 +179,20 @@ export class FakeHands implements Hands {
     return { ok: true, screen: this.snapshot() };
   }
 
+  /**
+   * Scroll, if the recording has somewhere to scroll to.
+   *
+   * A scenario without a swipe transition leaves the screen exactly as it was,
+   * which is what a list that has reached its end does — and what most of
+   * these fixtures model, since they record navigation rather than scrolling.
+   */
   async swipe(from: Point, to: Point, durationMs?: number): Promise<ActResult> {
-    // No scenario transition fires on a swipe: the fixtures model navigation,
-    // not scrolling. Recording a scrolled screen and adding a transition is the
-    // way to cover a scroll-dependent macro.
-    this.log('swipe', this.current, { from, to, durationMs });
+    const injected = this.takeFailure();
+    if (injected) return this.fail(injected, 'swipe', { from, to });
+
+    const before = this.current;
+    this.move((t) => (t.from === before || t.from === '*') && t.swipe === true);
+    this.log('swipe', before, { from, to, durationMs });
     return { ok: true, screen: this.snapshot() };
   }
 
