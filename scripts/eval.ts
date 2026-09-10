@@ -12,9 +12,9 @@
  *   npm run eval -- --model claude-sonnet-5
  *   npm run eval -- --effort low
  */
-import { copyFileSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ClaudePlanner, ExploreExecutor } from '../src/brain/index.js';
 import {
@@ -33,8 +33,28 @@ import { MacroStore, ReplayExecutor, ScriptedRepairer } from '../src/macro/index
 import { hasApiKey, loadEnv } from '../src/shared/env.js';
 import { MacroSchema } from '../src/shared/types.js';
 
-const TASK_DIR = fileURLToPath(new URL('../src/eval/tasks/', import.meta.url));
-const MACRO_DIR = fileURLToPath(new URL('../macros/', import.meta.url));
+/**
+ * Where the set being measured lives.
+ *
+ * Defaults to this project's own tasks, and takes a path so another app can
+ * bring its own. The eval is a harness rather than a fixture: the thing it
+ * measures — a route through a screen, checked against an assertion someone
+ * wrote — is the same whether the app is Settings or one you are shipping.
+ *
+ *   npm run eval -- --tasks ../pip-any/uitests/tasks --macros ../pip-any/uitests/macros
+ */
+const dirArg = (name: string, fallback: string): string => {
+  const given = flag(name);
+  const path =
+    given === undefined ? fileURLToPath(new URL(fallback, import.meta.url)) : resolve(given);
+  // A mistyped path is the likely way this goes wrong, and it should read as a
+  // mistyped path rather than as a Node traceback from deep inside readdir.
+  if (given !== undefined && !existsSync(path)) {
+    console.error(`--${name} 경로가 없습니다: ${path}`);
+    process.exit(1);
+  }
+  return path.endsWith(sep) ? path : path + sep;
+};
 const TRACE_DIR = fileURLToPath(new URL('../traces/', import.meta.url));
 const SCENARIO = fileURLToPath(
   new URL('../src/hands/fixtures/settings/settings.scenario.json', import.meta.url),
@@ -43,6 +63,7 @@ const SCENARIO = fileURLToPath(
 loadEnv();
 
 const argv = process.argv.slice(2);
+// Read before the directories, which are flags themselves.
 const flag = (name: string): string | undefined => {
   const i = argv.indexOf(`--${name}`);
   return i === -1 ? undefined : argv[i + 1];
@@ -83,6 +104,8 @@ const model = flag('model');
 const effort = flag('effort');
 const only = flag('task');
 const runsOverride = flag('runs');
+const TASK_DIR = dirArg('tasks', '../src/eval/tasks/');
+const MACRO_DIR = dirArg('macros', '../macros/');
 
 const tasks = readdirSync(TASK_DIR)
   .filter((f) => f.endsWith('.yaml'))
