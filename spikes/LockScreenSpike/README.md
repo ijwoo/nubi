@@ -23,6 +23,8 @@ open LockScreenSpike.xcodeproj
 
 Xcode 에서 팀을 고르고 두 타깃(`LockScreenSpike`, `SpikeWidget`)을 실기기에 설치합니다. App Group `group.dev.jaewoo.nubispike` 이 두 타깃 모두에 붙어 있어야 합니다 — 기록을 공유하는 통로입니다.
 
+**또는 TestFlight 로 받습니다.** 잠금화면 동작을 보려면 케이블을 빼야 하고, 빼면 Xcode 콘솔이 없습니다. TestFlight 로 받으면 폰만 들고 확인할 수 있습니다 — 절차와 직접 해야 하는 단계는 [TestFlight 배포](../../docs/ops-testflight.md) 에 있습니다.
+
 **개인 폰(iPhone 18 Pro)에 넣습니다.** 이 스파이크는 다른 앱을 건드리지 않습니다. 미리알림을 하나 추가하는 것이 전부이고, 제목에 `스파이크 확인` 이 붙습니다. 끝나면 [치우기](#치우기) 절차로 되돌립니다.
 
 ### 환경 (실행 전에 적을 것)

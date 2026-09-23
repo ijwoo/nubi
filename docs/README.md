@@ -19,6 +19,7 @@
 | [ios-client-slices.md](ios-client-slices.md) | 폰 클라이언트 슬라이스 계획과 relay 설계 |
 | [target-apps.md](target-apps.md) | 조작 폰에 올릴 첫 대상 앱과 위험도 |
 | [ops-phone-setup.md](ops-phone-setup.md) | 조작 폰 준비 체크리스트와 분실 시 조치 |
+| [ops-testflight.md](ops-testflight.md) | 스파이크 TestFlight 배포 — 플레이북에 없던 것과 직접 해야 하는 단계 |
 
 ## 기록
 
