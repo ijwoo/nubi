@@ -1,6 +1,6 @@
 # 0007. 승인 게이트를 조작 대상 기기 바깥에
 
-**상태**: accepted
+**상태**: accepted. relay 의 출처는 [0011](0011-remote-engine-hybrid-client.md) 로 바뀜 (pip-any 아님)
 **날짜**: 2026-09-08
 
 ## 맥락
