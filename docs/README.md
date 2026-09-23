@@ -18,6 +18,7 @@
 | [ios-port-study.md](ios-port-study.md) | 맥 없이 아이폰 단독으로 옮길 수 있는가 — 조사 |
 | [ios-client-slices.md](ios-client-slices.md) | 폰 클라이언트 슬라이스 계획과 relay 설계 |
 | [target-apps.md](target-apps.md) | 조작 폰에 올릴 첫 대상 앱과 위험도 |
+| [ops-phone-setup.md](ops-phone-setup.md) | 조작 폰 준비 체크리스트와 분실 시 조치 |
 
 ## 기록
 

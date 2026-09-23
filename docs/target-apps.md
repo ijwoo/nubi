@@ -13,7 +13,7 @@
 | **미리 알림·캘린더** | 해당 없음 (iCloud 는 다중 기기) | 항목 추가·조회 | `safe` | 다만 **빠른 모드가 EventKit 으로 더 잘 합니다** — 조작 대상이 아니라 비교 대상 |
 | **시계** (`com.apple.mobiletimer`) | 해당 없음 | 타이머·스톱워치·알람 | `safe` | 계정 없음. 탐색이 17초에 경로를 찾은 기록이 있음 |
 | **지도** (`com.apple.Maps`) | 해당 없음 | 장소 검색, 경로 보기 | `safe` | 읽기 위주. 길안내 시작은 `confirm` 으로 따로 |
-| **YouTube Music** (`com.google.ios.youtubemusic`) | **확인 — 로그인은 최대 10대, 동시 스트리밍은 1대** | 추천 곡 재생, 검색 | `confirm` | [Premium 기기 한도](https://support.google.com/youtube/answer/6308288?hl=ko). 아래 참조 |
+| **YouTube Music** (`com.google.ios.youtubemusic`) | **확인 — 로그인은 최대 10대, 동시 스트리밍은 1대** | 추천 곡 재생, 검색 | `confirm` (개인) / `safe` (패밀리) — **미정** | [Premium 기기 한도](https://support.google.com/youtube/answer/6308288?hl=ko). 아래 참조 |
 | **카카오톡** (`com.iwilab.KakaoTalk`) | **확인 — 스마트폰 1대 원칙** | — | **제외** | 스마트폰 1대 + 태블릿/PC 1대 조합만 동시 사용. 조작 폰에 넣으면 개인 폰이 로그아웃됨 |
 
 ## YouTube Music 이 `confirm` 인 이유
@@ -34,11 +34,15 @@
 
 YouTube Music 은 **게이트가 실제로 도는 것을 확인한 뒤**에 넣습니다. 그게 `confirm` 등급이 처음으로 쓰이는 자리입니다.
 
+## 정해진 것
+
+**조작 폰은 별도 Apple 계정**을 씁니다. 같은 계정이면 iCloud 키체인의 모든 비밀번호와 iMessage 까지 동기화됩니다 — 준비 절차는 [조작 폰 설정](ops-phone-setup.md)에 있습니다.
+
+**설치 금지 목록**을 둡니다 — 은행·결제·증권, 메신저, 메일, 비밀번호 관리자. `blocked` 등급은 코드로 유지하되 **1차 방어선은 설치하지 않는 것**입니다.
+
 ## 확인이 더 필요한 것
 
-- **YouTube Music 의 요금제.** 개인이면 재생이 개인 폰을 끊습니다. 패밀리면 안 끊습니다.
-- **조작 폰의 Apple 계정을 개인 것과 같이 쓸지.** 같이 쓰면 iCloud 미리알림·캘린더·사진이 그 폰에도 내려옵니다. 조작 중 사고의 범위가 넓어집니다. 별도 계정이면 App Store 구매·구독이 분리됩니다.
-- **조작 폰에 어떤 앱을 아예 설치하지 않을지.** 은행·결제·메신저는 설치하지 않는 편이 `blocked` 등급을 코드로 강제하는 것보다 확실합니다.
+- **YouTube Music 의 요금제.** 아직 정해지지 않았습니다. 위 표의 `confirm` 은 개인 요금제를 가정한 값이고, 패밀리면 `safe` 로 내려갑니다.
 
 ## 아직 정하지 않은 것
 
