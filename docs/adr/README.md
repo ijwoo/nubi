@@ -14,5 +14,6 @@
 | [0008](0008-detect-alerts-never-answer-them.md) | 시스템 알림은 감지하되 자동으로 답하지 않는다 | accepted |
 | [0009](0009-runner-judges-not-executor.md) | 성공 판정은 러너가 하고 실행기는 하지 않는다 | accepted |
 | [0010](0010-planning-on-sonnet.md) | 탐색 계획을 Sonnet으로 내린다 | accepted |
+| [0011](0011-remote-engine-hybrid-client.md) | 엔진은 맥에 남기고, 폰은 독립 클라이언트로 | accepted |
 
 새로 쓸 때는 [template.md](template.md)를 복사하세요.

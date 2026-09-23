@@ -15,6 +15,8 @@
 | [selector-strategy.md](selector-strategy.md) | 요소를 찾는 방법과 우선순위 |
 | [eval-design.md](eval-design.md) | 무엇을 어떻게 측정하는가 |
 | [real-device.md](real-device.md) | 시뮬레이터가 아닌 진짜 아이폰에서 돌리기 |
+| [ios-port-study.md](ios-port-study.md) | 맥 없이 아이폰 단독으로 옮길 수 있는가 — 조사 |
+| [ios-client-slices.md](ios-client-slices.md) | 폰 클라이언트 슬라이스 계획과 relay 설계 |
 
 ## 기록
 
