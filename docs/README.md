@@ -17,6 +17,7 @@
 | [real-device.md](real-device.md) | 시뮬레이터가 아닌 진짜 아이폰에서 돌리기 |
 | [ios-port-study.md](ios-port-study.md) | 맥 없이 아이폰 단독으로 옮길 수 있는가 — 조사 |
 | [ios-client-slices.md](ios-client-slices.md) | 폰 클라이언트 슬라이스 계획과 relay 설계 |
+| [target-apps.md](target-apps.md) | 조작 폰에 올릴 첫 대상 앱과 위험도 |
 
 ## 기록
 

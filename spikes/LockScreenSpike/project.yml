@@ -1,0 +1,53 @@
+name: LockScreenSpike
+options:
+  bundleIdPrefix: dev.jaewoo.nubispike
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+# 버릴 코드입니다. 슬라이스 1 이 무엇을 할 수 있는지만 확인하고, 결과는
+# docs/ios-client-slices.md 로 옮긴 뒤 이 디렉터리는 지웁니다.
+
+targets:
+  LockScreenSpike:
+    type: application
+    platform: iOS
+    sources: [App, Shared]
+    dependencies:
+      - target: SpikeWidget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Spike
+        UILaunchScreen: {}
+        NSCalendarsFullAccessUsageDescription: 잠금화면에서 일정을 읽을 수 있는지 확인합니다.
+        NSRemindersFullAccessUsageDescription: 잠금화면에서 미리알림을 쓸 수 있는지 확인합니다.
+    entitlements:
+      path: App/Spike.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.jaewoo.nubispike
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: dev.jaewoo.nubispike
+      CODE_SIGN_STYLE: Automatic
+
+  SpikeWidget:
+    type: app-extension
+    platform: iOS
+    sources: [Widget, Shared]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: SpikeWidget
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSCalendarsFullAccessUsageDescription: 잠금화면에서 일정을 읽을 수 있는지 확인합니다.
+        NSRemindersFullAccessUsageDescription: 잠금화면에서 미리알림을 쓸 수 있는지 확인합니다.
+    entitlements:
+      path: Widget/SpikeWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.jaewoo.nubispike
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: dev.jaewoo.nubispike.widget
+      CODE_SIGN_STYLE: Automatic

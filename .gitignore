@@ -23,3 +23,7 @@ DerivedData/
 
 # Generated run report
 report.html
+
+# 스파이크는 버릴 코드다. 생성물과 빌드 산출물은 넣지 않는다.
+spikes/**/*.xcodeproj/
+spikes/**/build/
