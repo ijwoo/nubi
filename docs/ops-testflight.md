@@ -21,7 +21,7 @@ PiPAny 에도 위젯 확장이 있어서 **확장 타깃 자체는 새롭지 않
 | --- | --- | --- |
 | 1 | **App Group** — 두 타깃이 공유하는 컨테이너 | PiPAny 는 App Group 을 아예 쓰지 않습니다. 확인함: `bundleIdCapabilities` 에 `IN_APP_PURCHASE` 하나뿐 |
 | 2 | **자동 서명이 이 맥에서는 안 됨** | PiPAny 는 처음부터 이름 붙은 수동 프로파일을 씁니다 |
-| 3 | **배포 인증서가 두 장** | PiPAny 프로파일에는 쓰는 한 장이 들어 있습니다 |
+| 3 | **배포 인증서가 여러 장이고, 개인키가 잠긴 키체인에 있다** | PiPAny 프로파일에는 쓰는 한 장만 들어 있고, 키체인은 열려 있을 때 돌렸습니다 |
 
 ### 1. App Group 은 API 로 만들 수 없다
 
@@ -60,16 +60,42 @@ ASC API 키를 `-authenticationKeyPath` 로 넘겨도 `Authentication failed` �
 | Debug | Automatic | Xcode 에서 폰에 직접 설치 |
 | Release | Manual + 이름 붙은 프로파일 | archive → TestFlight |
 
-### 3. 배포 인증서가 두 장이다
+### 3. 인증서 이름이 같으면 Xcode 가 아무거나 고른다
 
-키체인에 `Apple Distribution: Jae Woo Im` 이 두 장 있습니다. `CODE_SIGN_IDENTITY` 가 이름만 가리키면 Xcode 는 **둘 중 하나를 고르고**, 프로파일에 그 장이 없으면 이렇게 됩니다.
+키체인에 `Apple Distribution: Jae Woo Im` 이 여러 장 있습니다. 이름이 전부 같습니다. `CODE_SIGN_IDENTITY` 를 이름으로 두면 Xcode 가 **둘 중 하나를 고르고**, 프로파일에 그 장이 없으면 이렇게 됩니다.
 
 ```
 error: Provisioning profile "NubiSpike_AppStore" doesn't include
        signing certificate "Apple Distribution: Jae Woo Im (…)".
 ```
 
-프로파일을 만들 때 **두 장을 다 넣습니다.** 프로파일은 수정이 안 되므로 지우고 다시 만듭니다 — 어차피 App Group 을 붙인 뒤 한 번 더 만들어야 합니다.
+프로파일에 두 장을 다 넣어 이 오류는 없앴는데, 그러자 다음이 나왔습니다.
+
+```
+/…/SpikeWidget.appex: errSecInternalComponent
+```
+
+**개인키가 잠긴 키체인 안에 있었습니다.** 배포 인증서가 든 키체인이 셋입니다.
+
+| 키체인 | 배포 인증서 | 상태 |
+| --- | --- | --- |
+| login | 없음 | 열림 |
+| `pipany.keychain-db` | `4DDDC2F0…` | 잠김 |
+| `.nunbody/build.keychain-db` | `4DDDC2F0…` (같은 장) | 잠김 |
+| `.cooltrek/build.keychain-db` | `0934F32C…` | 잠김 |
+
+Xcode 가 고른 것은 하필 cooltrek 쪽이었습니다. `errSecInternalComponent` 는 "키체인이 잠겨 있다" 를 이렇게 말합니다 — 서명이 깨졌다고도, 인증서가 없다고도 하지 않습니다. **오류 문구만 보고는 잠금이 원인인 줄 알 수 없습니다.**
+
+그래서 **지문으로 못 박습니다.** 두 군데입니다.
+
+| 어디 | 무엇 |
+| --- | --- |
+| `project.yml` Release 구성 | `CODE_SIGN_IDENTITY: ${NUBI_SIGN_ID}` — archive 용 |
+| `exportOptions-spike.plist` | `signingCertificate` 를 지문으로 — **export 가 다시 서명하므로 여기도 필요** |
+
+export 를 빠뜨리면 archive 는 통과하고 export 에서 같은 오류로 죽습니다. 재서명이 한 번 더 일어난다는 것을 그때 알았습니다.
+
+키체인은 릴리스 전에 열어둬야 합니다. nunbody 의 릴리스 스크립트가 같은 인증서를 든 전용 키체인을 고정 비밀번호로 여는 방식을 이미 쓰고 있어서, 그것을 그대로 빌렸습니다.
 
 ## 내가 한 것
 
@@ -78,15 +104,17 @@ error: Provisioning profile "NubiSpike_AppStore" doesn't include
 | 번들 ID `dev.jaewoo.nubispike` | 생성 |
 | 번들 ID `dev.jaewoo.nubispike.widget` | 생성 |
 | 두 번들 ID 에 `APP_GROUPS` 기능 | 켬 |
-| 프로파일 `NubiSpike_AppStore` / `NubiSpike_Widget_AppStore` | 생성 (App Group 이 빈 채) |
-| 프로파일 로컬 설치 | 완료 |
-| `project.yml` 구성별 서명 | 반영 |
+| 프로파일 `NubiSpike_AppStore` / `NubiSpike_Widget_AppStore` | 생성·설치 (App Group 포함) |
+| `project.yml` 구성별 서명 + 지문 고정 | 반영 |
 | `exportOptions-spike.plist` (pip-any) | 작성 |
 | `release.sh` 파라미터화 | 완료 |
+| archive | **성공** |
+| export (`LockScreenSpike.ipa`) | **성공** |
+| altool 업로드 | 앱 레코드 대기 |
 
 ## 내가 못 하는 것 — 직접 해야 하는 단계
 
-### 1. App Group 만들고 붙이기 (이게 막고 있는 것)
+### 1. App Group 만들고 붙이기 — 끝남
 
 [developer.apple.com/account/resources/identifiers](https://developer.apple.com/account/resources/identifiers/list/applicationGroup)
 
@@ -96,7 +124,7 @@ error: Provisioning profile "NubiSpike_AppStore" doesn't include
 
 2·3 번을 빠뜨리면 그룹은 있는데 프로파일은 여전히 빈 배열입니다. **기능을 켜는 것과 그룹을 고르는 것은 다른 동작입니다.**
 
-### 2. App Store Connect 앱 등록
+### 2. App Store Connect 앱 등록 (이게 막고 있는 것)
 
 `altool --upload-app` 은 앱 레코드가 없으면 거절합니다. 그리고 **앱 생성은 ASC API 에 없습니다** — 웹에서만 됩니다.
 
@@ -126,9 +154,9 @@ error: Provisioning profile "NubiSpike_AppStore" doesn't include
 3. [ ] [README 의 A / B 체크리스트](../spikes/LockScreenSpike/README.md) 진행
 4. [ ] 기록 화면에서 **전체 복사** 또는 **결과 내보내기**
 
-## 1 번이 끝나면 남는 일
+## 남은 일
 
-프로파일을 다시 만들고(그룹 + 인증서 두 장), 다시 설치하고, `release.sh` 를 돌리는 것까지입니다. 빌드 1 번으로 올립니다.
+`.ipa` 는 이미 나와 있습니다. 앱 레코드가 생기면 `altool --upload-app` 한 줄이면 끝납니다. 빌드 1 번으로 올립니다.
 
 ## 치운 뒤
 
