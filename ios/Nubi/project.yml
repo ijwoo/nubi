@@ -1,0 +1,88 @@
+name: Nubi
+options:
+  bundleIdPrefix: dev.jaewoo.nubi
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+
+# 폰 클라이언트 — 슬라이스 1(빠른 모드).
+#
+# 맥도 relay 도 없이 폰 혼자 돕니다. 엔진 코드에 의존하지 않습니다.
+# 서명 자료는 공개 저장소에 들어갈 수 없어 환경변수로 받습니다 (ADR 0001).
+#
+#   NUBI_TEAM_ID=... NUBI_BUILD=1 NUBI_SIGN_ID=... xcodegen generate
+
+targets:
+  Nubi:
+    type: application
+    platform: iOS
+    sources: [App, Shared]
+    dependencies:
+      - target: NubiWidget
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: 누비
+        CFBundleShortVersionString: "0.1"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen: {}
+        NSSupportsLiveActivities: true
+        ITSAppUsesNonExemptEncryption: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSCalendarsFullAccessUsageDescription: 일정을 읽어 물어본 것에 답합니다.
+        NSRemindersFullAccessUsageDescription: 말한 것을 미리알림으로 추가합니다.
+    entitlements:
+      path: App/Nubi.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.jaewoo.nubi
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.jaewoo.nubi
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEVELOPMENT_TEAM: ${NUBI_TEAM_ID}
+        CURRENT_PROJECT_VERSION: ${NUBI_BUILD}
+        MARKETING_VERSION: "0.1"
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: ${NUBI_SIGN_ID}
+          PROVISIONING_PROFILE_SPECIFIER: Nubi_AppStore
+
+  NubiWidget:
+    type: app-extension
+    platform: iOS
+    sources: [Widget, Shared]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: 누비
+        CFBundleShortVersionString: "0.1"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSCalendarsFullAccessUsageDescription: 일정을 읽어 물어본 것에 답합니다.
+        NSRemindersFullAccessUsageDescription: 말한 것을 미리알림으로 추가합니다.
+    entitlements:
+      path: Widget/NubiWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.dev.jaewoo.nubi
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.jaewoo.nubi.widget
+        TARGETED_DEVICE_FAMILY: "1"
+        DEVELOPMENT_TEAM: ${NUBI_TEAM_ID}
+        CURRENT_PROJECT_VERSION: ${NUBI_BUILD}
+        MARKETING_VERSION: "0.1"
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: ${NUBI_SIGN_ID}
+          PROVISIONING_PROFILE_SPECIFIER: Nubi_Widget_AppStore
