@@ -1,5 +1,6 @@
 import EventKit
 import SwiftUI
+import UIKit
 
 @main
 struct NubiApp: App {
@@ -90,6 +91,12 @@ struct SettingsView: View {
 
     var body: some View {
         List {
+            Section("환경") {
+                LabeledContent("빌드", value: Env.build)
+                LabeledContent("기기", value: Env.device)
+                LabeledContent("iOS", value: Env.system)
+            }
+
             Section {
                 LabeledContent("일정", value: eventAuth)
                 LabeledContent("미리알림", value: reminderAuth)
@@ -129,7 +136,7 @@ struct SettingsView: View {
                     Text("기록")
                     Spacer()
                     Button(copied ? "복사됨" : "전체 복사") {
-                        UIPasteboard.general.string = log
+                        UIPasteboard.general.string = report
                         copied = true
                         Task {
                             try? await Task.sleep(for: .seconds(2))
@@ -153,6 +160,18 @@ struct SettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    /// 기록만 보내면 어느 빌드에서 난 일인지 알 수 없습니다. 빌드 2 를 올려두고
+    /// 빌드 1 의 기록을 읽느라 한 번 헛돌았습니다 — 환경이 기록과 같이 가야 합니다.
+    private var report: String {
+        """
+        빌드: \(Env.build)
+        기기: \(Env.device)
+        iOS: \(Env.system)
+
+        \(log)
+        """
+    }
+
     private func refresh() {
         eventAuth = Self.auth(.event)
         reminderAuth = Self.auth(.reminder)
@@ -168,6 +187,27 @@ struct SettingsView: View {
         case .fullAccess: "허용"
         case .writeOnly: "쓰기만"
         @unknown default: "알 수 없음"
+        }
+    }
+}
+
+/// 기록과 같이 보내야 하는 것들.
+enum Env {
+    static var system: String { UIDevice.current.systemVersion }
+
+    static var build: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let number = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(short) (\(number))"
+    }
+
+    /// `iPhone19,2` 같은 식별자. 마케팅 이름보다 기종을 정확히 가릅니다.
+    static var device: String {
+        var info = utsname()
+        uname(&info)
+        return withUnsafeBytes(of: &info.machine) { raw in
+            String(decoding: raw.prefix { $0 != 0 }, as: UTF8.self)
         }
     }
 }
