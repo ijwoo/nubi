@@ -22,6 +22,7 @@
 | 확장은 권한을 요청하지 않는다 — 요청하면 대화상자 없이 거부로 굳는다 | `Shared/Events.swift` |
 | 권한은 앱이 받는다 | `App/NubiApp.swift` 의 설정 화면 |
 | 확장이 잠금 상태에서 EventKit 에 닿는다 | `Shared/TodayIntent.swift` |
+| 되는데 안 보이면 사람은 다시 누른다 | 활동 갱신이 실패하면 기록에 남긴다 |
 | TestFlight 에는 콘솔이 없다 — App Group 기록이 유일한 출구다 | `Shared/NubiLog.swift` |
 
 그 기록이 빌드 1 에서 바로 값을 했습니다. 잠금화면 버튼이 일정은 읽는데 화면에는
