@@ -123,7 +123,7 @@ Live Activity 갱신은 **기기 토큰이 아니라 활동마다 발급되는 p
 
 ## 확인한 것 — 스파이크 결과
 
-[`spikes/LockScreenSpike/`](../spikes/LockScreenSpike/README.md) 를 iPhone 18 Pro (iOS 27.0) 에 TestFlight 로 넣고 잠금 상태에서 잰 것입니다. 원문과 절차는 거기 있습니다.
+iPhone 18 Pro (iOS 27.0) 에 TestFlight 로 넣고 잠금 상태에서 잰 것입니다. 측정용 프로젝트는 답을 얻고 지웠고, **숫자와 원문은 [벤치마크](benchmarks/2026-09-24-lockscreen-spike.md)에 있습니다.**
 
 | 미확인이었던 것 | 답 |
 | --- | --- |

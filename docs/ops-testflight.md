@@ -1,6 +1,6 @@
 # 스파이크를 TestFlight 로 올리기
 
-스파이크는 **잠금화면**에서만 답이 나옵니다. 그런데 잠금화면 동작을 보려면 Xcode 를 떼야 하고, Xcode 를 떼면 콘솔이 없습니다. TestFlight 로 받으면 케이블도 콘솔도 없이 폰만 들고 확인할 수 있습니다 — 그래서 앱 안의 [기록 화면](../spikes/LockScreenSpike/README.md)이 유일한 출구입니다.
+스파이크는 **잠금화면**에서만 답이 나옵니다. 그런데 잠금화면 동작을 보려면 Xcode 를 떼야 하고, Xcode 를 떼면 콘솔이 없습니다. TestFlight 로 받으면 케이블도 콘솔도 없이 폰만 들고 확인할 수 있습니다 — 그래서 앱 안의 기록 화면이 유일한 출구였습니다.
 
 업로드 자체는 **새로 만들지 않았습니다.** pip-any 의 `scripts/release.sh` 가 xcodegen → archive → export → altool 을 이미 합니다. 거기에 `APP` / `PROJECT_DIR` / `EXPORT_PLIST` / `BUILD` 만 붙여 다른 프로젝트도 태울 수 있게 했고, 인자를 안 주면 PiPAny 는 이전과 한 바이트도 다르지 않습니다.
 
@@ -190,7 +190,7 @@ internalBuildState: MISSING_EXPORT_COMPLIANCE
 
 1. [ ] iPhone 18 Pro 에 **TestFlight** 설치, 같은 Apple 계정으로 로그인
 2. [ ] 초대 메일의 링크로 Spike 설치
-3. [ ] [README 의 A / B 체크리스트](../spikes/LockScreenSpike/README.md) 진행
+3. [ ] A / B 체크리스트 진행 — [결과](benchmarks/2026-09-24-lockscreen-spike.md)
 4. [ ] 기록 화면에서 **전체 복사** 또는 **결과 내보내기**
 
 ## 남은 일
@@ -199,11 +199,11 @@ internalBuildState: MISSING_EXPORT_COMPLIANCE
 
 ## 치운 뒤
 
-스파이크가 끝나면 [치우기 절차](../spikes/LockScreenSpike/README.md#치우기) 와 함께 **계정에서도 지웁니다.**
+스파이크가 끝나면 폰에서 걷어내는 것과 함께 **계정에서도 지웁니다.**
 
 1. [ ] ASC 에서 `Nubi Spike` 앱 삭제
 2. [ ] 프로파일 둘 삭제
 3. [ ] 번들 ID 둘 삭제
 4. [ ] App Group `group.dev.jaewoo.nubispike` 삭제
 
-**여기 적힌 세 가지 발견은 남깁니다.** 슬라이스 1 이 실기기로 나갈 때 같은 벽을 다시 만납니다 — 그때는 App Group 도 확장도 진짜입니다.
+**여기 적힌 발견들은 남깁니다.** 슬라이스 1 이 실기기로 나갈 때 같은 벽을 다시 만납니다 — 그때는 App Group 도 확장도 진짜입니다.
