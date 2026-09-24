@@ -1,4 +1,5 @@
 import ActivityKit
+import EventKit
 import Foundation
 import SwiftUI
 import UIKit
@@ -18,6 +19,8 @@ struct ContentView: View {
     @State private var log = SpikeLog.read()
     @State private var activityState = "없음"
     @State private var copied = false
+    @State private var eventAuth = spikeAuthLabel(EKEventStore.authorizationStatus(for: .event))
+    @State private var reminderAuth = spikeAuthLabel(EKEventStore.authorizationStatus(for: .reminder))
 
     var body: some View {
         NavigationStack {
@@ -40,6 +43,17 @@ struct ContentView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
+                // 빌드 1 에서 확장이 권한 거부로 떨어졌는데, 앱이 권한을 물은 적이
+                // 없었다. "확장이 못 받는다" 와 "아무도 준 적이 없다" 가 구별되지
+                // 않는 상태였다. 여기서 먼저 허용하고 2 를 다시 돌려야 갈린다.
+                Section("3. 권한 (2 보다 먼저)") {
+                    LabeledContent("일정", value: eventAuth)
+                    LabeledContent("미리알림", value: reminderAuth)
+                    Button("권한 요청") { requestAccess() }
+                    Text("여기서 허용한 뒤에 2 를 다시 해야 답이 갈립니다.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+
                 Section {
                     Text(log)
                         .font(.system(.caption, design: .monospaced))
@@ -55,7 +69,11 @@ struct ContentView: View {
                 }
 
                 Section {
-                    Button("새로고침") { log = SpikeLog.read() }
+                    Button("새로고침") {
+                        log = SpikeLog.read()
+                        eventAuth = spikeAuthLabel(EKEventStore.authorizationStatus(for: .event))
+                        reminderAuth = spikeAuthLabel(EKEventStore.authorizationStatus(for: .reminder))
+                    }
                     ShareLink(item: report) { Text("결과 내보내기") }
                     Button("기록 지우기", role: .destructive) {
                         SpikeLog.clear()
@@ -78,9 +96,33 @@ struct ContentView: View {
         기기: \(SpikeEnvironment.device)
         iOS: \(SpikeEnvironment.system)
         빌드: \(SpikeEnvironment.build)
+        권한: 일정 \(eventAuth), 미리알림 \(reminderAuth)
 
         \(log)
         """
+    }
+
+    /// 앱에서 권한을 받아둔다. 대화상자는 앱만 띄울 수 있다 — 확장은 못 띄운다는
+    /// 것이 빌드 1 의 관찰이고, 이 버튼이 그 관찰을 확정하기 위한 대조군이다.
+    private func requestAccess() {
+        let store = EKEventStore()
+        Task {
+            do {
+                let ok = try await store.requestFullAccessToEvents()
+                SpikeLog.write("[앱] 일정 권한 요청 → \(ok ? "허용" : "거부")")
+            } catch {
+                SpikeLog.write("[앱] 일정 권한 요청 실패 \(error.localizedDescription)")
+            }
+            do {
+                let ok = try await store.requestFullAccessToReminders()
+                SpikeLog.write("[앱] 미리알림 권한 요청 → \(ok ? "허용" : "거부")")
+            } catch {
+                SpikeLog.write("[앱] 미리알림 권한 요청 실패 \(error.localizedDescription)")
+            }
+            eventAuth = spikeAuthLabel(EKEventStore.authorizationStatus(for: .event))
+            reminderAuth = spikeAuthLabel(EKEventStore.authorizationStatus(for: .reminder))
+            log = SpikeLog.read()
+        }
     }
 
     private func copy() {
