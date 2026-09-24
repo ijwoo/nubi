@@ -22,6 +22,7 @@ PiPAny 에도 위젯 확장이 있어서 **확장 타깃 자체는 새롭지 않
 | 1 | **App Group** — 두 타깃이 공유하는 컨테이너 | PiPAny 는 App Group 을 아예 쓰지 않습니다. 확인함: `bundleIdCapabilities` 에 `IN_APP_PURCHASE` 하나뿐 |
 | 2 | **자동 서명이 이 맥에서는 안 됨** | PiPAny 는 처음부터 이름 붙은 수동 프로파일을 씁니다 |
 | 3 | **배포 인증서가 여러 장이고, 개인키가 잠긴 키체인에 있다** | PiPAny 프로파일에는 쓰는 한 장만 들어 있고, 키체인은 열려 있을 때 돌렸습니다 |
+| 4 | **아이콘·방향이 없으면 업로드에서 거절된다** | 진짜 앱이라 처음부터 있었습니다 |
 
 ### 1. App Group 은 API 로 만들 수 없다
 
@@ -97,6 +98,26 @@ export 를 빠뜨리면 archive 는 통과하고 export 에서 같은 오류로 
 
 키체인은 릴리스 전에 열어둬야 합니다. nunbody 의 릴리스 스크립트가 같은 인증서를 든 전용 키체인을 고정 비밀번호로 여는 방식을 이미 쓰고 있어서, 그것을 그대로 빌렸습니다.
 
+### 4. 빈 프로젝트는 업로드 검사에서 걸린다
+
+archive 와 export 는 아이콘이 없어도 통과합니다. **거절은 altool 에서 납니다.**
+
+```
+90713  CFBundleIconName 이 없음
+90023  iPad 용 152x152 아이콘이 없음
+90474  UISupportedInterfaceOrientations 가 없음
+```
+
+셋 다 "버릴 스파이크라 안 만든 것" 들입니다. 최소로 채웠습니다.
+
+| 무엇 | 어떻게 |
+| --- | --- |
+| 아이콘 | 1024 PNG 한 장을 에셋 카탈로그에 넣고 `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` |
+| iPad 요구 | `TARGETED_DEVICE_FAMILY: "1"` — 아이폰만으로 줄이면 152x152 요구가 사라집니다 |
+| 방향 | `UISupportedInterfaceOrientations` 를 세로 하나로. 조작 폰이 세로 고정이라 조건도 맞습니다 |
+
+`ASSETCATALOG_COMPILER_APPICON_NAME` 이 핵심입니다. **`CFBundleIconName` 을 Info.plist 에 직접 적는 게 아니라, 이 빌드 설정이 있어야 생깁니다.**
+
 ## 내가 한 것
 
 | | 상태 |
@@ -108,9 +129,7 @@ export 를 빠뜨리면 archive 는 통과하고 export 에서 같은 오류로 
 | `project.yml` 구성별 서명 + 지문 고정 | 반영 |
 | `exportOptions-spike.plist` (pip-any) | 작성 |
 | `release.sh` 파라미터화 | 완료 |
-| archive | **성공** |
-| export (`LockScreenSpike.ipa`) | **성공** |
-| altool 업로드 | 앱 레코드 대기 |
+| archive · export · 업로드 | **완료 — 빌드 1** |
 
 ## 내가 못 하는 것 — 직접 해야 하는 단계
 
@@ -124,7 +143,7 @@ export 를 빠뜨리면 archive 는 통과하고 export 에서 같은 오류로 
 
 2·3 번을 빠뜨리면 그룹은 있는데 프로파일은 여전히 빈 배열입니다. **기능을 켜는 것과 그룹을 고르는 것은 다른 동작입니다.**
 
-### 2. App Store Connect 앱 등록 (이게 막고 있는 것)
+### 2. App Store Connect 앱 등록 — 끝남
 
 `altool --upload-app` 은 앱 레코드가 없으면 거절합니다. 그리고 **앱 생성은 ASC API 에 없습니다** — 웹에서만 됩니다.
 
