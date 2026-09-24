@@ -41,7 +41,10 @@ enum Nubi {
 }
 
 /// 음성과 Spotlight 로 부르는 것.
-struct AskNubiIntent: AppIntent {
+///
+/// 답을 잠금화면에도 올리므로 `LiveActivityIntent` 입니다 — 음성으로 물으면 앱은
+/// 배경이고, 배경에서 활동을 시작하려면 이 종류여야 합니다.
+struct AskNubiIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "누비에게 묻기"
     static let description = IntentDescription("일정을 묻거나, 미리알림을 넣거나, 그냥 물어봅니다.")
     static let openAppWhenRun = false
