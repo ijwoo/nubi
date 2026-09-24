@@ -1,0 +1,509 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0070F80511BB2ED8DE6A7807 /* TodayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2F88853B7D797478C4DE6A /* TodayIntent.swift */; };
+		05E4D5AAB6195D76F53896F6 /* NubiLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8022C1BA164C96691288B821 /* NubiLog.swift */; };
+		067DAFEC52953E42CE39CD84 /* NubiControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF16C77452B7A625FB1CAC5 /* NubiControl.swift */; };
+		248776525A64E2A55F6D56DB /* TodayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2F88853B7D797478C4DE6A /* TodayIntent.swift */; };
+		3FC9B47ED41D90C7EC7572AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */; };
+		3FE562F76FE1E3A2382F8B69 /* Answer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913D2FA0CD3AB7D5171F9F15 /* Answer.swift */; };
+		458D5070925AFFE506E8C362 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9605B696A0CAA173365B098C /* Intent.swift */; };
+		51E76C10A666AE88B8DAA678 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4736FAC0E5D10F3CF15F9195 /* Secrets.swift */; };
+		5800F6932601D69B9C006785 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96636170659ECF143081C77D /* Model.swift */; };
+		5E0B62C5C7B3DD40FD3C80AB /* NubiActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */; };
+		6AADD63BA1F8EE10F44CD8DA /* AskIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969ACD30FAE97203AD6CE395 /* AskIntent.swift */; };
+		6F709CE0EDB3DB9F3CAF69AC /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9605B696A0CAA173365B098C /* Intent.swift */; };
+		86BBB69A005D34B8C2552AFB /* NubiWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D1B9F03A6425F50B4D2ED25B /* NubiWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8778F0A476A2E4E84A802AF8 /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F32EF390B68B28BEE766616 /* Events.swift */; };
+		87ED10537F88A2F16C7A2DA4 /* Answer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913D2FA0CD3AB7D5171F9F15 /* Answer.swift */; };
+		8DC14FE3683FBCB33C6591CB /* Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F32EF390B68B28BEE766616 /* Events.swift */; };
+		9B47E9EFDCE28613D36082D3 /* NubiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B6454CB77CA45258A5A76AE /* NubiApp.swift */; };
+		CD372470BA96FD17C70BBB28 /* NubiWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7189A7386B2A2CD3FC0DEC2A /* NubiWidgetBundle.swift */; };
+		DC1EED99BEEE8B4CC00CA1E4 /* NubiLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8022C1BA164C96691288B821 /* NubiLog.swift */; };
+		DCA531E8FBA71F9DAAAABEE5 /* NubiLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 788D1D53B323752F6AE729DE /* NubiLiveActivity.swift */; };
+		F3A7BAB398E64E390A5745B6 /* NubiActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5FF1BA40BA5CF386200165A4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F9F1DDF1DC134A91DA8C2F9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 12E2C24F98468A4C52DFCCB8;
+			remoteInfo = NubiWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E114172F24E052BF45B26D2C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				86BBB69A005D34B8C2552AFB /* NubiWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		3B6454CB77CA45258A5A76AE /* NubiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiApp.swift; sourceTree = "<group>"; };
+		3F32EF390B68B28BEE766616 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
+		42A301C044F573CFE8DA01DB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4736FAC0E5D10F3CF15F9195 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		64F94A5D3A1930D477BCE21A /* NubiWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NubiWidget.entitlements; sourceTree = "<group>"; };
+		7189A7386B2A2CD3FC0DEC2A /* NubiWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiWidgetBundle.swift; sourceTree = "<group>"; };
+		748C47388596864ABCC19257 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		788D1D53B323752F6AE729DE /* NubiLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiLiveActivity.swift; sourceTree = "<group>"; };
+		7DF16C77452B7A625FB1CAC5 /* NubiControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiControl.swift; sourceTree = "<group>"; };
+		8022C1BA164C96691288B821 /* NubiLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiLog.swift; sourceTree = "<group>"; };
+		913D2FA0CD3AB7D5171F9F15 /* Answer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Answer.swift; sourceTree = "<group>"; };
+		9605B696A0CAA173365B098C /* Intent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intent.swift; sourceTree = "<group>"; };
+		96636170659ECF143081C77D /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
+		969ACD30FAE97203AD6CE395 /* AskIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AskIntent.swift; sourceTree = "<group>"; };
+		A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiActivity.swift; sourceTree = "<group>"; };
+		AF2F88853B7D797478C4DE6A /* TodayIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayIntent.swift; sourceTree = "<group>"; };
+		D1B9F03A6425F50B4D2ED25B /* NubiWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = NubiWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D2664AF5C4C38CF8EB670E96 /* Nubi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Nubi.entitlements; sourceTree = "<group>"; };
+		E3646FB2F5E07CB94B2899EA /* Nubi.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Nubi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		002AEF810BB36378393BC3C0 /* Widget */ = {
+			isa = PBXGroup;
+			children = (
+				748C47388596864ABCC19257 /* Info.plist */,
+				7DF16C77452B7A625FB1CAC5 /* NubiControl.swift */,
+				788D1D53B323752F6AE729DE /* NubiLiveActivity.swift */,
+				64F94A5D3A1930D477BCE21A /* NubiWidget.entitlements */,
+				7189A7386B2A2CD3FC0DEC2A /* NubiWidgetBundle.swift */,
+			);
+			path = Widget;
+			sourceTree = "<group>";
+		};
+		29ACB87087D7914D7A6E4CB7 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				969ACD30FAE97203AD6CE395 /* AskIntent.swift */,
+				E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */,
+				42A301C044F573CFE8DA01DB /* Info.plist */,
+				96636170659ECF143081C77D /* Model.swift */,
+				D2664AF5C4C38CF8EB670E96 /* Nubi.entitlements */,
+				3B6454CB77CA45258A5A76AE /* NubiApp.swift */,
+				4736FAC0E5D10F3CF15F9195 /* Secrets.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		46CC05E5E3F0C24DF887E026 = {
+			isa = PBXGroup;
+			children = (
+				29ACB87087D7914D7A6E4CB7 /* App */,
+				C37569AFEE275526B4149563 /* Shared */,
+				002AEF810BB36378393BC3C0 /* Widget */,
+				478756BF8AA8F3752A19D7E5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		478756BF8AA8F3752A19D7E5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E3646FB2F5E07CB94B2899EA /* Nubi.app */,
+				D1B9F03A6425F50B4D2ED25B /* NubiWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C37569AFEE275526B4149563 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				913D2FA0CD3AB7D5171F9F15 /* Answer.swift */,
+				3F32EF390B68B28BEE766616 /* Events.swift */,
+				9605B696A0CAA173365B098C /* Intent.swift */,
+				A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */,
+				8022C1BA164C96691288B821 /* NubiLog.swift */,
+				AF2F88853B7D797478C4DE6A /* TodayIntent.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		12E2C24F98468A4C52DFCCB8 /* NubiWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 466166B11F0DF8CF3FBEBD4C /* Build configuration list for PBXNativeTarget "NubiWidget" */;
+			buildPhases = (
+				D8D9A56602CCE11B7520D1EB /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NubiWidget;
+			packageProductDependencies = (
+			);
+			productName = NubiWidget;
+			productReference = D1B9F03A6425F50B4D2ED25B /* NubiWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		659A823A0C3B48750245681F /* Nubi */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0FE085E12DEB9FA670F4C49E /* Build configuration list for PBXNativeTarget "Nubi" */;
+			buildPhases = (
+				ABB64BE376CB4C5F54D13037 /* Sources */,
+				822F9CF865BE0B431A73C621 /* Resources */,
+				E114172F24E052BF45B26D2C /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2D0EDB359644CE4907B9A708 /* PBXTargetDependency */,
+			);
+			name = Nubi;
+			packageProductDependencies = (
+			);
+			productName = Nubi;
+			productReference = E3646FB2F5E07CB94B2899EA /* Nubi.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5F9F1DDF1DC134A91DA8C2F9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					12E2C24F98468A4C52DFCCB8 = {
+						DevelopmentTeam = 7R5DW7P6PP;
+					};
+					659A823A0C3B48750245681F = {
+						DevelopmentTeam = 7R5DW7P6PP;
+					};
+				};
+			};
+			buildConfigurationList = F9F8026335F96B5253B33625 /* Build configuration list for PBXProject "Nubi" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 46CC05E5E3F0C24DF887E026;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 478756BF8AA8F3752A19D7E5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				659A823A0C3B48750245681F /* Nubi */,
+				12E2C24F98468A4C52DFCCB8 /* NubiWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		822F9CF865BE0B431A73C621 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3FC9B47ED41D90C7EC7572AF /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		ABB64BE376CB4C5F54D13037 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				87ED10537F88A2F16C7A2DA4 /* Answer.swift in Sources */,
+				6AADD63BA1F8EE10F44CD8DA /* AskIntent.swift in Sources */,
+				8DC14FE3683FBCB33C6591CB /* Events.swift in Sources */,
+				458D5070925AFFE506E8C362 /* Intent.swift in Sources */,
+				5800F6932601D69B9C006785 /* Model.swift in Sources */,
+				F3A7BAB398E64E390A5745B6 /* NubiActivity.swift in Sources */,
+				9B47E9EFDCE28613D36082D3 /* NubiApp.swift in Sources */,
+				DC1EED99BEEE8B4CC00CA1E4 /* NubiLog.swift in Sources */,
+				51E76C10A666AE88B8DAA678 /* Secrets.swift in Sources */,
+				0070F80511BB2ED8DE6A7807 /* TodayIntent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D8D9A56602CCE11B7520D1EB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3FE562F76FE1E3A2382F8B69 /* Answer.swift in Sources */,
+				8778F0A476A2E4E84A802AF8 /* Events.swift in Sources */,
+				6F709CE0EDB3DB9F3CAF69AC /* Intent.swift in Sources */,
+				5E0B62C5C7B3DD40FD3C80AB /* NubiActivity.swift in Sources */,
+				067DAFEC52953E42CE39CD84 /* NubiControl.swift in Sources */,
+				DCA531E8FBA71F9DAAAABEE5 /* NubiLiveActivity.swift in Sources */,
+				05E4D5AAB6195D76F53896F6 /* NubiLog.swift in Sources */,
+				CD372470BA96FD17C70BBB28 /* NubiWidgetBundle.swift in Sources */,
+				248776525A64E2A55F6D56DB /* TodayIntent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2D0EDB359644CE4907B9A708 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 12E2C24F98468A4C52DFCCB8 /* NubiWidget */;
+			targetProxy = 5FF1BA40BA5CF386200165A4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		12CF3F360C74C694AC52EEFC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
+				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R5DW7P6PP;
+				INFOPLIST_FILE = Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.jaewoo.nubi.widget;
+				PROVISIONING_PROFILE_SPECIFIER = Nubi_Widget_AppStore;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		2E06AD8E86B9C2AA193AAB3E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
+				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R5DW7P6PP;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.jaewoo.nubi;
+				PROVISIONING_PROFILE_SPECIFIER = Nubi_AppStore;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		39ECED75FD8C3D2CA2D9E6FE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		8589213121DAB1B9B612984E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R5DW7P6PP;
+				INFOPLIST_FILE = Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.jaewoo.nubi.widget;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B0FE38FAD7333AF3AA7F7AB1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B5487D6565512D4826913E12 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R5DW7P6PP;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.jaewoo.nubi;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0FE085E12DEB9FA670F4C49E /* Build configuration list for PBXNativeTarget "Nubi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5487D6565512D4826913E12 /* Debug */,
+				2E06AD8E86B9C2AA193AAB3E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		466166B11F0DF8CF3FBEBD4C /* Build configuration list for PBXNativeTarget "NubiWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8589213121DAB1B9B612984E /* Debug */,
+				12CF3F360C74C694AC52EEFC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F9F8026335F96B5253B33625 /* Build configuration list for PBXProject "Nubi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				39ECED75FD8C3D2CA2D9E6FE /* Debug */,
+				B0FE38FAD7333AF3AA7F7AB1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5F9F1DDF1DC134A91DA8C2F9 /* Project object */;
+}
