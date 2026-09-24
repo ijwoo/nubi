@@ -24,6 +24,18 @@
 | 확장이 잠금 상태에서 EventKit 에 닿는다 | `Shared/TodayIntent.swift` |
 | TestFlight 에는 콘솔이 없다 — App Group 기록이 유일한 출구다 | `Shared/NubiLog.swift` |
 
+그 기록이 빌드 1 에서 바로 값을 했습니다. 잠금화면 버튼이 일정은 읽는데 화면에는
+아무것도 안 떴고, 기록에만 이유가 있었습니다.
+
+```
+[활동] 시작 실패 … Target does not include NSSupportsLiveActivities plist key
+[오늘] 오늘 추석 (종일) — 42ms
+```
+
+**`NSSupportsLiveActivities` 는 앱에만 두면 부족합니다.** 잠금화면 버튼은 확장
+프로세스에서 `Activity.request` 를 부르고, 그 타깃의 Info.plist 를 봅니다. 앱에서
+띄울 때는 멀쩡하기 때문에 앱만 써보면 드러나지 않습니다.
+
 ## API 키
 
 **저장소에 들어가지 않습니다.** 앱 설정 화면에서 붙여넣으면 키체인에 저장됩니다 ([ADR 0001](../docs/adr/0001-separate-public-repo.md)). 빌드에 넣으면 `.ipa` 안에 들어갑니다.

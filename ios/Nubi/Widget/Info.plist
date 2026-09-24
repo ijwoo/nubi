@@ -29,5 +29,7 @@
 	</dict>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>말한 것을 미리알림으로 추가합니다.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 </dict>
 </plist>

@@ -65,6 +65,10 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        # 앱에만 두면 부족합니다. 잠금화면 버튼은 확장 안에서 Activity.request 를
+        # 부르고, 그 프로세스의 Info.plist 에 이 키가 없으면
+        # "Target does not include NSSupportsLiveActivities plist key" 로 죽습니다.
+        NSSupportsLiveActivities: true
         NSCalendarsFullAccessUsageDescription: 일정을 읽어 물어본 것에 답합니다.
         NSRemindersFullAccessUsageDescription: 말한 것을 미리알림으로 추가합니다.
     entitlements:
