@@ -28,10 +28,13 @@ enum Format {
         let lines = items.map { item in
             item.allDay ? "· \(item.title) (종일)" : "· \(time(item.start)) \(item.title)"
         }
-        let headline = items.count == 1
-            ? "\(label) \(lines[0].dropFirst(2))"
-            : "\(label) 일정 \(items.count)건"
-        return NubiAnswer(headline: headline, detail: lines.joined(separator: "\n"))
+        // 하나뿐이면 제목이 곧 전부입니다. 상세에 같은 줄을 또 두면 잠금화면에서
+        // 같은 말이 두 번 보입니다.
+        guard items.count > 1 else {
+            return NubiAnswer(headline: "\(label) \(lines[0].dropFirst(2))")
+        }
+        return NubiAnswer(headline: "\(label) 일정 \(items.count)건",
+                          detail: lines.joined(separator: "\n"))
     }
 
     static func time(_ date: Date) -> String {
