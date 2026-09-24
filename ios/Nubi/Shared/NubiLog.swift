@@ -17,8 +17,30 @@ enum NubiLog {
             .appendingPathComponent("nubi.log")
     }
 
+    /// 어느 프로세스가, 어느 빌드에서 쓴 줄인지.
+    ///
+    /// 업데이트해도 기록 파일은 남습니다. 빌드 1 의 줄과 빌드 3 의 줄이 같은
+    /// 파일에 섞여 있으면 고친 것이 먹었는지 알 수 없습니다 — 실제로 그래서
+    /// 한 번 헛돌았습니다. 프로세스마다 첫 줄에 표시를 답니다.
+    nonisolated(unsafe) private static var marked = false
+
+    private static var processLabel: String {
+        let isExtension = Bundle.main.bundleURL.pathExtension == "appex"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        let live = Bundle.main.infoDictionary?["NSSupportsLiveActivities"] as? Bool ?? false
+        return "[프로세스] \(isExtension ? "확장" : "앱") 빌드 \(build), 실시간활동키 \(live ? "있음" : "없음")"
+    }
+
     static func write(_ line: String) {
         guard let url else { return }
+        if !marked {
+            marked = true
+            append(processLabel, to: url)
+        }
+        append(line, to: url)
+    }
+
+    private static func append(_ line: String, to url: URL) {
         let stamped = "\(Self.stamp(Date()))  \(line)\n"
         if let handle = try? FileHandle(forWritingTo: url) {
             defer { try? handle.close() }
