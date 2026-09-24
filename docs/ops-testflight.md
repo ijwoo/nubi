@@ -118,6 +118,28 @@ archive 와 export 는 아이콘이 없어도 통과합니다. **거절은 altoo
 
 `ASSETCATALOG_COMPILER_APPICON_NAME` 이 핵심입니다. **`CFBundleIconName` 을 Info.plist 에 직접 적는 게 아니라, 이 빌드 설정이 있어야 생깁니다.**
 
+### 5. 업로드가 끝나도 TestFlight 앱에는 안 뜬다
+
+`UPLOAD SUCCEEDED` 를 보고 끝났다고 생각했는데 폰에 아무것도 없었습니다. 빌드는 `VALID` 인데 그 아래가 막혀 있었습니다.
+
+```
+internalBuildState: MISSING_EXPORT_COMPLIANCE
+```
+
+**암호화 수출 규정 답변이 비어 있으면 빌드가 테스터에게 가지 않습니다.** 업로드 로그에는 이 얘기가 한 줄도 없습니다.
+
+| 무엇 | 어떻게 |
+| --- | --- |
+| 이미 올라간 빌드 | `PATCH /v1/builds/{id}` 로 `usesNonExemptEncryption: false` |
+| 다음 빌드부터 | Info.plist 에 `ITSAppUsesNonExemptEncryption: false` — 물어보지 않게 됩니다 |
+
+그 다음은 내부 테스터 그룹입니다. 그룹이 없으면 빌드가 어디에도 붙지 않습니다. **이건 API 로 됩니다** — 앱 등록과 App Group 만 웹 전용입니다.
+
+- `POST /v1/betaGroups` — `isInternalGroup: true`, `hasAccessToAllBuilds: true`. 이 옵션이면 빌드가 자동으로 붙습니다
+- `POST /v1/betaTesters` — 이메일과 `betaGroups` 관계를 같이 보냅니다. `relationships/betaTesters` 로 기존 사용자 id 를 붙이는 쪽은 `Tester(s) cannot be assigned` 로 거절됩니다
+
+여기까지 하면 `internalBuildState` 가 `IN_BETA_TESTING` 이 되고 초대가 나갑니다.
+
 ## 내가 한 것
 
 | | 상태 |
@@ -130,6 +152,8 @@ archive 와 export 는 아이콘이 없어도 통과합니다. **거절은 altoo
 | `exportOptions-spike.plist` (pip-any) | 작성 |
 | `release.sh` 파라미터화 | 완료 |
 | archive · export · 업로드 | **완료 — 빌드 1** |
+| 수출 규정 답변 | 빌드에 반영 + Info.plist 에 고정 |
+| 내부 테스터 그룹 `내부` | 생성, 빌드 1 붙음, 초대 발송 |
 
 ## 내가 못 하는 것 — 직접 해야 하는 단계
 
@@ -160,11 +184,7 @@ archive 와 export 는 아이콘이 없어도 통과합니다. **거절은 altoo
 
 **심사에 제출하지 않습니다.** 내부 테스트는 심사 없이 바로 설치됩니다.
 
-### 3. 내부 테스터 그룹
-
-1. [ ] TestFlight 탭 → **내부 테스팅 › +** → 그룹 이름 `내부`
-2. [ ] 본인 계정을 테스터로 추가
-3. [ ] 빌드가 처리되면(보통 5~15 분) 그 그룹에 붙이기
+### 3. 내부 테스터 그룹 — 끝남 (API 로 됩니다)
 
 ### 4. 폰에서
 
