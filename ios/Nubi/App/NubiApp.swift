@@ -56,6 +56,15 @@ struct HomeView: View {
                     }
                 }
 
+                Section {
+                    Button("잠금화면에 대화 띄우기") {
+                        Task { await Nubi.turn("오늘 일정") }
+                    }
+                    Button("잠금화면에서 내리기") { LiveAnswer.dismissAll() }
+                } footer: {
+                    Text("띄운 뒤에는 폰을 잠근 채로 묻기 버튼을 눌러 이어서 물을 수 있습니다.")
+                }
+
                 NavigationLink("설정과 기록") { SettingsView() }
             }
             .navigationTitle("누비")
@@ -68,9 +77,7 @@ struct HomeView: View {
         typing = false
         busy = true
         Task {
-            let result = await Nubi.respond(to: text)
-            answer = result
-            LiveAnswer.show(asked: text, result)
+            answer = await Nubi.turn(text)
             busy = false
         }
     }
@@ -149,7 +156,6 @@ struct SettingsView: View {
 
             Section {
                 Button("새로고침") { refresh() }
-                Button("잠금화면에서 내리기") { LiveAnswer.dismissAll() }
                 Button("기록 지우기", role: .destructive) {
                     NubiLog.clear()
                     log = NubiLog.read()

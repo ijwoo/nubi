@@ -1,7 +1,7 @@
 import AppIntents
 import Foundation
 
-/// 한 번의 요청을 끝까지 끌고 갑니다. 화면도 음성도 이 함수를 부릅니다.
+/// 한 번의 요청을 끝까지 끌고 갑니다. 화면도 음성도 잠금화면도 이 함수를 부릅니다.
 ///
 /// 라우팅은 코드가 합니다. 일정 조회와 미리알림 추가는 **모델도 네트워크도 없이**
 /// 끝나고, 나머지만 모델로 갑니다.
@@ -38,26 +38,61 @@ enum Nubi {
         NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(Date().timeIntervalSince(started) * 1000))ms)")
         return answer
     }
+
+    /// 잠금화면 대화의 한 턴. **표시를 먼저 바꾸고 답을 만듭니다.**
+    static func turn(_ utterance: String) async -> NubiAnswer {
+        await LiveAnswer.thinking(about: utterance)
+        let answer = await respond(to: utterance)
+        await LiveAnswer.show(asked: utterance, answer)
+        return answer
+    }
 }
 
-/// 음성과 Spotlight 로 부르는 것.
+/// 잠금화면 대화의 입력 버튼.
 ///
-/// 답을 잠금화면에도 올리므로 `LiveActivityIntent` 입니다 — 음성으로 물으면 앱은
-/// 배경이고, 배경에서 활동을 시작하려면 이 종류여야 합니다.
+/// 누르면 시스템이 글자를 받는 창을 띄웁니다 — 인텐트에 값 없는 매개변수가 있으면
+/// `requestValue` 가 그 창을 부릅니다. 잠금을 풀지 않고 묻는 경로가 이것뿐입니다.
+///
+/// `LiveActivityIntent` 여야 합니다. 평범한 `AppIntent` 는 확장이나 배경 앱에서
+/// 돌고, 거기서는 활동을 시작할 수도 갱신할 수도 없습니다.
 struct AskNubiIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "누비에게 묻기"
     static let description = IntentDescription("일정을 묻거나, 미리알림을 넣거나, 그냥 물어봅니다.")
     static let openAppWhenRun = false
 
-    @Parameter(title: "무엇을", requestValueDialog: "무엇을 도와드릴까요")
-    var utterance: String
+    @Parameter(title: "무엇을")
+    var utterance: String?
+
+    init() {}
+    init(utterance: String?) { self.utterance = utterance }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let answer = await Nubi.respond(to: utterance)
-        // 잠금화면에도 남깁니다. 말로 물었어도 답은 눈으로 다시 보게 됩니다.
-        LiveAnswer.show(asked: utterance, answer)
+        let text: String
+        if let given = utterance?.trimmingCharacters(in: .whitespacesAndNewlines), !given.isEmpty {
+            text = given
+        } else {
+            text = try await $utterance.requestValue("무엇을 물어볼까요")
+        }
+        let answer = await Nubi.turn(text)
         let spoken = answer.detail.isEmpty ? answer.headline : "\(answer.headline). \(answer.detail)"
         return .result(dialog: IntentDialog(stringLiteral: spoken))
+    }
+}
+
+/// 잠금화면에 미리 놓는 한 마디. 글자를 치지 않고 누르기만 합니다.
+struct QuickAskIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "미리 정한 질문"
+    static let openAppWhenRun = false
+
+    @Parameter(title: "무엇을")
+    var utterance: String
+
+    init() { utterance = "오늘 일정" }
+    init(_ utterance: String) { self.utterance = utterance }
+
+    func perform() async throws -> some IntentResult {
+        _ = await Nubi.turn(utterance)
+        return .result()
     }
 }
 
@@ -66,19 +101,12 @@ struct NubiShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AskNubiIntent(),
-            phrases: [
-                "\(.applicationName)에게 묻기",
-                "\(.applicationName)한테 물어봐",
-                "\(.applicationName)",
-            ],
+            phrases: ["\(.applicationName)에게 묻기", "\(.applicationName)한테 물어봐", "\(.applicationName)"],
             shortTitle: "묻기",
             systemImageName: "bubble.left.and.text.bubble.right")
         AppShortcut(
             intent: TodayEventsIntent(),
-            phrases: [
-                "\(.applicationName) 오늘 일정",
-                "\(.applicationName)로 오늘 일정 보기",
-            ],
+            phrases: ["\(.applicationName) 오늘 일정", "\(.applicationName)로 오늘 일정 보기"],
             shortTitle: "오늘 일정",
             systemImageName: "calendar")
     }
