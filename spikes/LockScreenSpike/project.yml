@@ -49,7 +49,10 @@ targets:
         # 자동 서명이 안 됩니다 — PiPAny 와 같은 수동 프로파일을 씁니다.
         Release:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Distribution
+          # 키체인에 Apple Distribution 이 여러 장이다. 이름만 쓰면 Xcode 가
+          # 아무거나 고르고, 잠긴 키체인의 것을 고르면 errSecInternalComponent 다.
+          # 지문으로 못 박는다 — 팀 ID 와 같은 이유로 환경변수다.
+          CODE_SIGN_IDENTITY: ${NUBI_SIGN_ID}
           PROVISIONING_PROFILE_SPECIFIER: NubiSpike_AppStore
 
   SpikeWidget:
@@ -82,5 +85,8 @@ targets:
           CODE_SIGN_STYLE: Automatic
         Release:
           CODE_SIGN_STYLE: Manual
-          CODE_SIGN_IDENTITY: Apple Distribution
+          # 키체인에 Apple Distribution 이 여러 장이다. 이름만 쓰면 Xcode 가
+          # 아무거나 고르고, 잠긴 키체인의 것을 고르면 errSecInternalComponent 다.
+          # 지문으로 못 박는다 — 팀 ID 와 같은 이유로 환경변수다.
+          CODE_SIGN_IDENTITY: ${NUBI_SIGN_ID}
           PROVISIONING_PROFILE_SPECIFIER: NubiSpike_Widget_AppStore
