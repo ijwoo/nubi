@@ -66,16 +66,20 @@ struct AskNubiIntent: LiveActivityIntent {
     init() {}
     init(utterance: String?) { self.utterance = utterance }
 
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    /// 답을 말로 되돌려주지 않습니다.
+    ///
+    /// `ProvidesDialog` 를 쓰면 답이 끝난 자리에 확인 배너가 뜨고, 잠금화면에서는
+    /// 그게 시계를 덮습니다. 같은 답이 두 군데 있는 셈이라 지웠습니다 —
+    /// **답이 보이는 자리는 대화창 하나입니다.**
+    func perform() async throws -> some IntentResult {
         let text: String
         if let given = utterance?.trimmingCharacters(in: .whitespacesAndNewlines), !given.isEmpty {
             text = given
         } else {
             text = try await $utterance.requestValue("무엇을 물어볼까요")
         }
-        let answer = await Nubi.turn(text)
-        let spoken = answer.detail.isEmpty ? answer.headline : "\(answer.headline). \(answer.detail)"
-        return .result(dialog: IntentDialog(stringLiteral: spoken))
+        _ = await Nubi.turn(text)
+        return .result()
     }
 }
 
@@ -84,11 +88,14 @@ struct QuickAskIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "미리 정한 질문"
     static let openAppWhenRun = false
 
+    /// 버튼에는 "오늘" 이라고만 쓰지만 묻는 말은 "오늘 일정" 입니다.
+    /// 잠금화면이 좁아 표시를 줄인 것이고, 라우터에 가는 말까지 줄이면
+    /// 무엇을 묻는지가 흐려집니다.
     @Parameter(title: "무엇을")
     var utterance: String
 
     init() { utterance = "오늘 일정" }
-    init(_ utterance: String) { self.utterance = utterance }
+    init(_ label: String) { utterance = "\(label) 일정" }
 
     func perform() async throws -> some IntentResult {
         _ = await Nubi.turn(utterance)
