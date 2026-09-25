@@ -29,6 +29,14 @@ struct Turn: Codable, Identifiable, Hashable {
     var viaIntent: Bool
 
     var full: String { detail.isEmpty ? headline : "\(headline)\n\(detail)" }
+
+    /// 잠금화면 오른쪽 위 작은 줄. 출처와 시각.
+    var meta: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ko_KR")
+        f.dateFormat = "a h:mm"
+        return [source.label, f.string(from: at)].compactMap { $0 }.joined(separator: " · ")
+    }
 }
 
 /// 대화 하나. **앱과 잠금화면이 같이 씁니다.**

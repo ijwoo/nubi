@@ -5,8 +5,8 @@ import WidgetKit
 
 /// 잠금화면 위의 대화창.
 ///
-/// **대화의 마지막 한 턴을 비추는 창입니다.** 전문은 앱에 있습니다. 여기는 한 문장
-/// 요약과 그 아래 두어 줄까지입니다 — 잠금화면은 그 이상 안 들어갑니다.
+/// 상태마다 모양이 다릅니다. **기다릴 때는 무엇을 하고 있는지**, 끝나면 **결론
+/// 한 줄과 다음 손길**을 보여줍니다. 전문은 앱에 있습니다.
 struct NubiLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: NubiAttributes.self) { context in
@@ -16,34 +16,91 @@ struct NubiLiveActivity: Widget {
                 .activityBackgroundTint(nil)
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.center) { Reply(state: context.state) }
-                DynamicIslandExpandedRegion(.bottom) { Actions(state: context.state) }
-            } compactLeading: {
-                Mark(size: 18, state: .idle)
-            } compactTrailing: {
-                if context.state.thinking {
-                    ProgressView().progressViewStyle(.circular).scaleEffect(0.6)
+                DynamicIslandExpandedRegion(.center) {
+                    HStack(alignment: .top, spacing: 11) {
+                        Orb(size: 30, state: .of(context.state))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(context.state.headline)
+                                .font(.headline).lineLimit(2)
+                            if !context.state.meta.isEmpty {
+                                Text(context.state.meta)
+                                    .font(.caption2).foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }
                 }
+                DynamicIslandExpandedRegion(.bottom) {
+                    Actions(state: context.state)
+                }
+            } compactLeading: {
+                Orb(size: 18, state: .of(context.state))
+            } compactTrailing: {
+                Text(badge(context.state))
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Tone.of(context.state).color)
             } minimal: {
-                Mark(size: 18, state: .idle)
+                Orb(size: 18, state: .of(context.state))
             }
         }
     }
+
+    /// 오브 하나로 상태를 전합니다. 옆의 글자는 그 상태를 한 마디로 굳힙니다.
+    private func badge(_ state: NubiAttributes.ContentState) -> String {
+        if state.failed { return "확인" }
+        if state.thinking {
+            let done = state.steps.filter(\.done).count
+            return state.steps.isEmpty ? "…" : "\(done)/\(state.steps.count)"
+        }
+        return ""
+    }
 }
+
+// MARK: - 색
+
+/// 상태마다 쓰는 색. **하나의 상태에 하나의 색입니다.**
+enum Tone {
+    case working, done, warning
+
+    static func of(_ state: NubiAttributes.ContentState) -> Tone {
+        if state.failed { return .warning }
+        if state.thinking { return .working }
+        return .done
+    }
+
+    var color: Color {
+        switch self {
+        case .working: Color(red: 0.36, green: 0.35, blue: 0.85)
+        case .done: Color(red: 0.06, green: 0.71, blue: 0.51)
+        case .warning: Color(red: 0.96, green: 0.62, blue: 0.07)
+        }
+    }
+
+    var gradient: LinearGradient {
+        LinearGradient(colors: [color, color.opacity(0.72)],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
+// MARK: - 잠금화면 카드
 
 private struct Card: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if !state.asked.isEmpty { Asked(text: state.asked).padding(.bottom, 11) }
-            Reply(state: state)
-            Actions(state: state).padding(.top, 14)
+            if state.thinking { Asked(text: state.asked).padding(.bottom, 11) } else { Header(state: state) }
+            Reply(state: state).padding(.top, state.thinking ? 0 : 9)
+            if state.thinking {
+                Bar(value: state.progress).padding(.top, 12)
+            } else {
+                Actions(state: state).padding(.top, 13)
+            }
         }
     }
 }
 
-/// 물은 말. 오른쪽에 붙어 대화라는 것을 말없이 알립니다.
+/// 기다리는 동안은 물은 말이 오른쪽에 붙습니다. 대화라는 것을 말없이 알립니다.
 private struct Asked: View {
     let text: String
 
@@ -67,35 +124,89 @@ private struct Asked: View {
     }
 }
 
+/// 답이 오면 물은 말은 한 줄로 줄고, 오른쪽에 출처와 시각이 붙습니다.
+private struct Header: View {
+    let state: NubiAttributes.ContentState
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if !state.asked.isEmpty {
+                Text("Q. \(state.asked)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            if !state.meta.isEmpty {
+                Text(state.meta)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+
 private struct Reply: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
         HStack(alignment: .top, spacing: 11) {
-            Mark(size: 30, state: mark)
-            VStack(alignment: .leading, spacing: 4) {
+            Orb(size: state.thinking ? 30 : 34, state: .of(state))
+            VStack(alignment: .leading, spacing: state.thinking ? 6 : 3) {
                 Text(state.headline)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(state.failed ? Color.orange : .primary)
-                    .lineLimit(3)
+                    .font(state.thinking ? .subheadline.weight(.semibold) : .title3.weight(.bold))
+                    .foregroundStyle(state.failed ? Tone.warning.color : .primary)
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                if !state.detail.isEmpty {
+                if state.thinking {
+                    ForEach(state.steps, id: \.self) { StepRow(step: $0) }
+                } else if !state.detail.isEmpty {
                     Text(state.detail)
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(.top, 2)
+            .padding(.top, state.thinking ? 2 : 0)
             Spacer(minLength: 0)
         }
     }
+}
 
-    private var mark: Mark.State {
-        if state.failed { return .warning }
-        if state.thinking { return .thinking }
-        return .idle
+/// 한 단계. **실제로 한 일만 여기 옵니다.**
+private struct StepRow: View {
+    let step: NubiAttributes.StepLine
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: step.done ? "checkmark.circle.fill" : "circle.dotted")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(step.done ? Tone.done.color : Tone.working.color)
+            Text(step.label)
+                .font(.caption2.weight(.semibold))
+                .frame(width: 30, alignment: .leading)
+            Text(step.detail)
+                .font(.caption2)
+                .foregroundStyle(step.done ? .secondary : Tone.working.color)
+                .lineLimit(1)
+        }
+    }
+}
+
+private struct Bar: View {
+    let value: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(.primary.opacity(0.1))
+                Capsule().fill(Tone.working.gradient)
+                    .frame(width: max(18, geo.size.width * value))
+            }
+        }
+        .frame(height: 4)
     }
 }
 
@@ -109,19 +220,30 @@ private struct Actions: View {
 
     var body: some View {
         HStack(spacing: 7) {
+            // 어떤 답에도 붙는 다음 손길. 답 한 줄을 한 시간 뒤 미리알림으로 넣습니다.
+            Button(intent: RemindLaterIntent(state.headline, stamp: state.stamp)) {
+                Label("1시간 뒤", systemImage: "bell")
+                    .font(.caption2.weight(.bold))
+                    .frame(maxWidth: .infinity, minHeight: 16)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Tone.done.color)
+
             ForEach(Quick.all, id: \.self) { phrase in
                 Button(intent: QuickAskIntent(phrase, stamp: state.stamp)) {
                     Text(phrase)
-                        .font(.caption2.weight(.bold))
+                        .font(.caption2.weight(.semibold))
                         .frame(maxWidth: .infinity, minHeight: 16)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.teal)
+                .buttonStyle(.bordered)
+                .tint(.primary)
             }
+
             Button(intent: OpenNubiIntent()) {
-                Label("전문", systemImage: "arrow.up.forward")
-                    .font(.caption2.weight(.semibold))
-                    .frame(maxWidth: .infinity, minHeight: 16)
+                Image(systemName: "arrow.up.forward")
+                    .font(.caption2.weight(.bold))
+                    .frame(minHeight: 16)
+                    .padding(.horizontal, 2)
             }
             .buttonStyle(.bordered)
             .tint(.primary)
@@ -133,37 +255,31 @@ private struct Actions: View {
     }
 }
 
-private struct Mark: View {
-    enum State { case idle, thinking, warning }
-
+/// 상태를 전하는 오브 하나.
+struct Orb: View {
     var size: CGFloat
-    var state: State
+    var state: Tone
 
     var body: some View {
         ZStack {
-            Circle().fill(fill)
-            if state == .thinking {
-                ProgressView().progressViewStyle(.circular).tint(.white).scaleEffect(size / 52)
-            } else {
-                Image(systemName: state == .warning ? "exclamationmark" : "sparkle")
-                    .font(.system(size: size * 0.46, weight: .bold))
+            Circle().fill(state.gradient)
+            switch state {
+            case .working:
+                Circle()
+                    .fill(.white)
+                    .frame(width: size * 0.3, height: size * 0.3)
+                    .offset(y: -size * 0.1)
+            case .done:
+                Image(systemName: "checkmark")
+                    .font(.system(size: size * 0.44, weight: .heavy))
+                    .foregroundStyle(.white)
+            case .warning:
+                Image(systemName: "exclamationmark")
+                    .font(.system(size: size * 0.46, weight: .heavy))
                     .foregroundStyle(.white)
             }
         }
         .frame(width: size, height: size)
-    }
-
-    private var fill: AnyShapeStyle {
-        switch state {
-        case .warning:
-            AnyShapeStyle(LinearGradient(colors: [.orange, .yellow],
-                                         startPoint: .top, endPoint: .bottom))
-        case .thinking:
-            AnyShapeStyle(Color.secondary.opacity(0.45))
-        case .idle:
-            AnyShapeStyle(LinearGradient(colors: [.teal, .mint],
-                                         startPoint: .topLeading, endPoint: .bottomTrailing))
-        }
     }
 }
 

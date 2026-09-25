@@ -23,7 +23,7 @@ enum Model {
     ///
     /// 잠금화면은 그 줄만 보여주고 앱이 전문을 보여줍니다. 길이를 `max_tokens`
     /// 로만 묶으면 문장이 중간에서 잘립니다.
-    private static let system = """
+    private static let base = """
     너는 사용자의 아이폰에서 도는 비서다. 한국어로 답한다.
     첫 줄은 한 문장 요약이다. 그 줄만 읽어도 답이 되어야 한다.
     그다음 줄부터 필요한 만큼 자세히 쓴다. 세 문단을 넘기지 않는다.
@@ -35,7 +35,37 @@ enum Model {
     했다고 말하지 않는다.
     """
 
-    static func answer(to question: String) async throws -> NubiAnswer {
+    /// 지금이 언제이고 오늘 무엇이 있는지.
+    ///
+    /// **모델은 오늘이 며칠인지도 모릅니다.** 그래서 "오늘 저녁 추천" 에 일반론만
+    /// 답했습니다. 토큰 몇십 개로 답이 구체적으로 바뀝니다.
+    private static func system(now: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ko_KR")
+        f.dateFormat = "yyyy년 M월 d일 EEEE a h시 m분"
+        var text = base + "\n\n지금은 \(f.string(from: now))이다."
+        let brief = Events.todayBrief()
+        if !brief.isEmpty { text += "\n사용자의 오늘 일정: \(brief)" }
+        return text
+    }
+
+    /// 앞의 말을 같이 보냅니다.
+    ///
+    /// 없으면 "영화 추천" 다음의 "액션으로" 가 무슨 말인지 모릅니다. 대화 화면을
+    /// 만들어 놓고 정작 대화가 안 되던 자리입니다. 여섯 턴이면 충분하고,
+    /// 그보다 길면 잠금화면 한 마디에 붙는 값이 커집니다.
+    private static func messages(_ history: [Turn], _ question: String) -> [[String: String]] {
+        var list: [[String: String]] = []
+        for turn in history.suffix(6) {
+            list.append(["role": "user", "content": String(turn.asked.prefix(400))])
+            list.append(["role": "assistant", "content": String(turn.full.prefix(800))])
+        }
+        list.append(["role": "user", "content": question])
+        return list
+    }
+
+    static func answer(to question: String, history: [Turn] = [],
+                       now: Date = Date()) async throws -> NubiAnswer {
         guard let key = Secrets.apiKey else { throw Failure.noKey }
 
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
@@ -47,8 +77,8 @@ enum Model {
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "model": id,
             "max_tokens": 700,
-            "system": system,
-            "messages": [["role": "user", "content": question]],
+            "system": system(now: now),
+            "messages": messages(history, question),
         ])
 
         let (data, response) = try await URLSession.shared.data(for: request)

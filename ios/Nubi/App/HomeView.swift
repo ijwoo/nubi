@@ -63,13 +63,13 @@ struct HomeView: View {
 
     private var drawers: some View {
         VStack(spacing: 10) {
-            DrawerRow(icon: "calendar", tint: .teal, title: "일정",
+            DrawerRow(icon: "calendar", tint: Ink.accent, title: "일정",
                       note: eventsNote) { go(.events) }
-            DrawerRow(icon: "checklist", tint: .mint, title: "미리알림",
+            DrawerRow(icon: "checklist", tint: Ink.done, title: "미리알림",
                       note: open.isEmpty ? "안 끝난 것이 없습니다" : "안 끝난 것 \(open.count)개") { go(.reminders) }
-            DrawerRow(icon: "bubble.left.and.text.bubble.right", tint: .cyan, title: "대화",
+            DrawerRow(icon: "bubble.left.and.text.bubble.right", tint: Ink.accent.opacity(0.75), title: "대화",
                       note: store.turns.last?.headline ?? "아직 없습니다") { go(.chat) }
-            DrawerRow(icon: "lock.display", tint: store.liveIsOn ? .teal : .secondary,
+            DrawerRow(icon: "lock.display", tint: store.liveIsOn ? Ink.accent : .secondary,
                       title: "잠금화면",
                       note: store.liveIsOn ? "대화창이 떠 있습니다" : "대화창이 꺼져 있습니다") { go(.lock) }
         }

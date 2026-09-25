@@ -68,7 +68,7 @@ struct RemindersView: View {
                 Button(action: toggle) {
                     Image(systemName: done ? "checkmark.circle.fill" : "circle")
                         .font(.title3)
-                        .foregroundStyle(done ? Ink.accent : .secondary)
+                        .foregroundStyle(done ? Ink.done : .secondary)
                         .scaleEffect(done ? 1.15 : 1)
                 }
                 .buttonStyle(.plain)
