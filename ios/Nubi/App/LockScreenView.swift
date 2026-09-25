@@ -1,5 +1,11 @@
 import SwiftUI
 
+enum Moods {
+    static let all: [(mood: Malpoongi.Mood, label: String)] = [
+        (.listening, "듣는 중"), (.thinking, "생각 중"), (.done, "완료"), (.waiting, "확인 필요"),
+    ]
+}
+
 /// 잠금화면 서랍. 대화창을 켜고 끄고, 단축어 만드는 법을 봅니다.
 struct LockScreenView: View {
     @Environment(Store.self) private var store
@@ -41,6 +47,23 @@ struct LockScreenView: View {
                 Text("글자로 묻기")
             } footer: {
                 Text("잠금을 풀지 않고 묻는 길은 단축어 하나입니다. 대화창 안의 버튼으로는 글자를 넣을 수 없습니다.")
+            }
+
+            Section {
+                HStack(spacing: 0) {
+                    ForEach(Moods.all, id: \.label) { item in
+                        VStack(spacing: 7) {
+                            Malpoongi(size: 42, mood: item.mood)
+                            Text(item.label).font(.caption2).foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.vertical, 6)
+            } header: {
+                Text("말풍이")
+            } footer: {
+                Text("잠금화면 대화창에서 지금 무엇을 하고 있는지 표정으로 말합니다.")
             }
 
             Section {

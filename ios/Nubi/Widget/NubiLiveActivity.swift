@@ -18,7 +18,7 @@ struct NubiLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
                     HStack(alignment: .top, spacing: 11) {
-                        Orb(size: 30, state: .of(context.state))
+                        Malpoongi(size: 30, mood: .of(context.state))
                         VStack(alignment: .leading, spacing: 2) {
                             Text(context.state.headline)
                                 .font(.headline).lineLimit(2)
@@ -34,13 +34,13 @@ struct NubiLiveActivity: Widget {
                     Actions(state: context.state)
                 }
             } compactLeading: {
-                Orb(size: 18, state: .of(context.state))
+                Malpoongi(size: 18, mood: .of(context.state))
             } compactTrailing: {
                 Text(badge(context.state))
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(Tone.of(context.state).color)
             } minimal: {
-                Orb(size: 18, state: .of(context.state))
+                Malpoongi(size: 18, mood: .of(context.state))
             }
         }
     }
@@ -152,7 +152,7 @@ private struct Reply: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 11) {
-            Orb(size: state.thinking ? 30 : 34, state: .of(state))
+            Malpoongi(size: state.thinking ? 32 : 36, mood: .of(state))
             VStack(alignment: .leading, spacing: state.thinking ? 6 : 3) {
                 Text(state.headline)
                     .font(state.thinking ? .subheadline.weight(.semibold) : .title3.weight(.bold))
@@ -255,31 +255,13 @@ private struct Actions: View {
     }
 }
 
-/// 상태를 전하는 오브 하나.
-struct Orb: View {
-    var size: CGFloat
-    var state: Tone
-
-    var body: some View {
-        ZStack {
-            Circle().fill(state.gradient)
-            switch state {
-            case .working:
-                Circle()
-                    .fill(.white)
-                    .frame(width: size * 0.3, height: size * 0.3)
-                    .offset(y: -size * 0.1)
-            case .done:
-                Image(systemName: "checkmark")
-                    .font(.system(size: size * 0.44, weight: .heavy))
-                    .foregroundStyle(.white)
-            case .warning:
-                Image(systemName: "exclamationmark")
-                    .font(.system(size: size * 0.46, weight: .heavy))
-                    .foregroundStyle(.white)
-            }
-        }
-        .frame(width: size, height: size)
+extension Malpoongi.Mood {
+    /// 아직 아무것도 안 물었으면 듣는 얼굴입니다. 색만으로는 "듣는 중" 과
+    /// "생각 중" 이 구별되지 않아서 표정이 그 일을 합니다.
+    static func of(_ state: NubiAttributes.ContentState) -> Malpoongi.Mood {
+        if state.failed { return .waiting }
+        if state.thinking { return .thinking }
+        return state.asked.isEmpty ? .listening : .done
     }
 }
 
