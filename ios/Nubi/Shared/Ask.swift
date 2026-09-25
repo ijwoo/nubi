@@ -89,8 +89,16 @@ struct AskNubiIntent: LiveActivityIntent {
             do {
                 text = try await $utterance.requestValue("무엇을 물어볼까요")
             } catch {
-                // 취소도 정상입니다. 대화창은 건드리지 않고 그대로 둡니다.
                 NubiLog.write("[묻기] 입력 없이 끝남 \(error.localizedDescription)")
+                // 잠긴 화면에서는 입력창을 띄우는 시스템 도우미가 붙지 않습니다.
+                // 그냥 끝내면 고장난 버튼처럼 보이고, 실제로 열한 번 연달아
+                // 눌렸습니다. 무엇이 필요한지 대화창에 적고 끝냅니다.
+                if "\(error)".contains("helper application") {
+                    await LiveAnswer.show(asked: "", NubiAnswer(
+                        headline: "잠금을 풀고 눌러주세요",
+                        detail: "글자 입력창은 잠긴 화면에서 열리지 않습니다. 아래 버튼은 잠긴 채로도 됩니다.",
+                        failed: true))
+                }
                 throw error
             }
         }
