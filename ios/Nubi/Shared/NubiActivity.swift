@@ -3,23 +3,37 @@ import Foundation
 
 /// 잠금화면 위의 대화창.
 ///
-/// **대화의 마지막 한 턴을 비추는 창입니다.** 전체는 앱에 있습니다
-/// ([`Thread`](Thread.swift)). 활동 하나가 대화 하나이고, 물을 때마다 새로
-/// 만들지 않고 갱신합니다.
+/// **대화의 마지막 한 턴을 비추는 창입니다.** 전문은 앱에 있습니다.
 struct NubiAttributes: ActivityAttributes {
+    /// 답을 만드는 동안 보여주는 한 줄. **실제로 한 일만 적습니다.**
+    ///
+    /// 하지도 않은 단계를 그려 넣으면 화면은 그럴듯해지고 사람은 속습니다.
+    /// 일정을 읽었으면 읽었다고, 모델에 물었으면 물었다고만 적습니다.
+    struct StepLine: Codable, Hashable {
+        var label: String
+        var detail: String
+        var done: Bool
+    }
+
     struct ContentState: Codable, Hashable {
         var asked: String
         var headline: String
         var detail: String
+        /// 오른쪽 위 작은 줄. 출처와 시각입니다.
+        var meta: String
+        var steps: [StepLine]
         /// 답을 기다리는 중. **네트워크보다 먼저 이걸 켭니다.**
-        ///
-        /// 왕복이 0.8~2.5초인데 그동안 화면이 그대로면 사람이 다시 누릅니다.
         var thinking: Bool
         var failed: Bool
         /// 턴마다 달라지는 값. 같은 매개변수의 인텐트를 다시 누르면 시스템이
         /// 이미 처리한 것으로 보고 무시합니다.
         var stamp: Int
         var at: Date
+
+        var progress: Double {
+            guard !steps.isEmpty else { return thinking ? 0.35 : 1 }
+            return Double(steps.filter(\.done).count) / Double(steps.count)
+        }
     }
 
     var started: Date
@@ -32,7 +46,6 @@ enum LiveAnswer {
     ///
     /// **새로 만들 수 있는 것은 앞에 떠 있는 앱뿐입니다.** 확장도 배경의 앱도
     /// 갱신만 됩니다 — 배경에서 만들려 하면 "Target is not foreground" 입니다.
-    /// 그래서 앱이 열릴 때 자리를 만들어 둡니다.
     @discardableResult
     static func push(_ state: NubiAttributes.ContentState) async -> Bool {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
@@ -55,26 +68,21 @@ enum LiveAnswer {
         }
     }
 
-    static func thinking(about question: String) async {
-        await push(.init(asked: question, headline: "생각하는 중…", detail: "",
-                         thinking: true, failed: false, stamp: now(), at: Date()))
+    /// 아직 아무것도 묻지 않았을 때의 대화창. 자리만 만들어 둡니다.
+    static func welcome() async {
+        await push(.init(asked: "", headline: "무엇이든 물어보세요", detail: "", meta: "",
+                         steps: [], thinking: false, failed: false, stamp: now(), at: Date()))
     }
 
-    /// 아직 아무것도 묻지 않았을 때의 대화창.
-    ///
-    /// 자리만 만들어 둡니다. **대화창을 새로 만들 수 있는 것은 앞에 떠 있는
-    /// 앱뿐**이라, 여기서 안 만들면 잠금화면 버튼이 답을 놓을 곳이 없습니다.
-    /// 예전에는 이 자리에서 "오늘 일정" 을 대신 물었는데, 권한이 없으면 아무것도
-    /// 안 한 사람에게 실패 말풍선부터 보여주게 됩니다.
-    static func welcome() async {
-        await push(.init(asked: "", headline: "무엇이든 물어보세요", detail: "",
-                         thinking: false, failed: false, stamp: Int(Date().timeIntervalSince1970),
-                         at: Date()))
+    static func thinking(about question: String, steps: [NubiAttributes.StepLine]) async {
+        await push(.init(asked: question, headline: "확인하는 중", detail: "", meta: "",
+                         steps: steps, thinking: true, failed: false, stamp: now(), at: Date()))
     }
 
     static func show(_ turn: Turn) async {
         await push(.init(asked: turn.asked, headline: turn.headline, detail: turn.detail,
-                         thinking: false, failed: turn.failed, stamp: now(), at: turn.at))
+                         meta: turn.meta, steps: [], thinking: false, failed: turn.failed,
+                         stamp: now(), at: turn.at))
     }
 
     static func dismissAll() {

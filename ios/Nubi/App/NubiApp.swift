@@ -52,10 +52,12 @@ final class Store {
 /// 아이콘과 잠금화면 대화창이 이미 청록이라 앱까지 같이 갑니다. 강조가 둘이면
 /// 무엇이 중요한지 말하지 못합니다.
 enum Ink {
-    static let accent = Color.teal
-    static let mine = Color.teal.opacity(0.16)
+    /// 잠금화면 대화창의 오브와 같은 색입니다. 두 화면이 한 물건으로 보여야 합니다.
+    static let accent = Color(red: 0.36, green: 0.35, blue: 0.85)
+    static let done = Color(red: 0.06, green: 0.71, blue: 0.51)
+    static let warn = Color(red: 0.96, green: 0.62, blue: 0.07)
+    static let mine = Color(red: 0.36, green: 0.35, blue: 0.85).opacity(0.14)
     static let surface = Color.primary.opacity(0.06)
-    static let warn = Color.orange
 }
 
 /// 말풍선 모양. 말하는 쪽 아래 모서리만 눌러 방향을 줍니다.

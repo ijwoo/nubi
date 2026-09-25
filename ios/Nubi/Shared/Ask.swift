@@ -9,9 +9,12 @@ enum Nubi {
     /// 표시를 먼저 바꾸고 답을 만들고 대화에 쌓습니다.
     @discardableResult
     static func turn(_ utterance: String, viaIntent: Bool) async -> Turn {
-        await LiveAnswer.thinking(about: utterance)
+        let route = Router.route(utterance)
+        await LiveAnswer.thinking(about: utterance, steps: steps(for: route))
         let started = Date()
-        let answer = await respond(to: utterance)
+        // 앞의 말을 같이 보냅니다. 없으면 "액션으로" 같은 말이 통하지 않습니다.
+        let history = Array(Thread.load().suffix(6))
+        let answer = await respond(route, history: history)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
                         viaIntent: viaIntent)
@@ -21,8 +24,27 @@ enum Nubi {
         return turn
     }
 
-    static func respond(to utterance: String) async -> NubiAnswer {
-        switch Router.route(utterance) {
+    /// 답을 만드는 동안 보여줄 줄. **실제로 하는 일만 적습니다.**
+    ///
+    /// 일정 조회나 추가는 두 자리 밀리초에 끝나서 보여줄 단계가 없습니다.
+    /// 모델에 가는 것만 기다릴 만합니다.
+    private static func steps(for route: NubiIntent) -> [NubiAttributes.StepLine] {
+        guard case .ask = route else { return [] }
+        var lines: [NubiAttributes.StepLine] = []
+        if Events.canReadEvents {
+            let brief = Events.todayBrief()
+            lines.append(.init(label: "일정", detail: brief.isEmpty ? "오늘 없음" : brief, done: true))
+        }
+        lines.append(.init(label: "답", detail: "만드는 중…", done: false))
+        return lines
+    }
+
+    static func respond(to utterance: String, history: [Turn] = []) async -> NubiAnswer {
+        await respond(Router.route(utterance), history: history)
+    }
+
+    static func respond(_ route: NubiIntent, history: [Turn] = []) async -> NubiAnswer {
+        switch route {
         case let .events(offset, span, label):
             do {
                 let base = Calendar.current.date(byAdding: .day, value: offset, to: Date()) ?? Date()
@@ -41,17 +63,29 @@ enum Nubi {
                 return NubiAnswer(headline: "일정을 넣을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
             }
-        case let .addReminder(title):
+        case let .addReminder(spoken):
             do {
-                try Events.addReminder(title)
-                return NubiAnswer(headline: "미리알림에 넣었습니다", detail: title, source: .reminders)
+                // 시각을 말했으면 그때, 날짜만 말했으면 그날 아침 9시, 둘 다 없으면
+                // 마감 없이. 마감이 없으면 울리지 않으므로 답에도 그렇게 적습니다.
+                let due: Date? = spoken.hasClock ? spoken.start
+                    : spoken.hasDay ? Calendar.current.date(byAdding: .hour, value: 9, to: spoken.start)
+                    : nil
+                try Events.addReminder(spoken.title, due: due)
+                let when = spoken.hasClock ? spoken.spoken
+                    : spoken.hasDay ? "\(spoken.spoken.replacingOccurrences(of: " 종일", with: "")) 오전 9:00"
+                    : nil
+                return NubiAnswer(
+                    headline: when.map { "\($0) \(spoken.title)" } ?? spoken.title,
+                    detail: when == nil ? "미리알림에 넣었습니다. 시각을 말하면 그때 알려드립니다."
+                                        : "미리알림에 넣었습니다.",
+                    source: .reminders)
             } catch {
                 return NubiAnswer(headline: "미리알림을 추가할 수 없습니다",
                                   detail: error.localizedDescription, source: .reminders, failed: true)
             }
         case let .ask(question):
             do {
-                return try await Model.answer(to: question)
+                return try await Model.answer(to: question, history: history)
             } catch {
                 return NubiAnswer(headline: "답하지 못했습니다",
                                   detail: error.localizedDescription, source: .model, failed: true)
@@ -117,6 +151,46 @@ struct QuickAskIntent: LiveActivityIntent {
 
     func perform() async throws -> some IntentResult {
         await Nubi.turn(utterance, viaIntent: true)
+        return .result()
+    }
+}
+
+/// 답 한 줄을 한 시간 뒤 미리알림으로 넣습니다.
+///
+/// **어떤 답에도 붙는 다음 손길입니다.** 잠금화면에서 답을 읽고 나서 "이따 다시"
+/// 를 누를 자리가 없었습니다. 길찾기 같은 것은 답이 무엇을 가리키는지 알아야
+/// 하지만 이건 몰라도 됩니다.
+struct RemindLaterIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "한 시간 뒤 알림"
+    static let openAppWhenRun = false
+
+    @Parameter(title: "무엇을")
+    var what: String
+
+    @Parameter(title: "턴")
+    var stamp: Int
+
+    init() { what = ""; stamp = 0 }
+    init(_ what: String, stamp: Int) {
+        self.what = String(what.prefix(80))
+        self.stamp = stamp
+    }
+
+    func perform() async throws -> some IntentResult {
+        let due = Date().addingTimeInterval(3600)
+        let answer: NubiAnswer
+        do {
+            try Events.addReminder(what, due: due)
+            answer = NubiAnswer(headline: "\(Format.time(due)) 알림", detail: what, source: .reminders)
+        } catch {
+            answer = NubiAnswer(headline: "알림을 넣을 수 없습니다",
+                                detail: error.localizedDescription, source: .reminders, failed: true)
+        }
+        let turn = Turn(asked: "한 시간 뒤 알림", headline: answer.headline, detail: answer.detail,
+                        source: answer.source, failed: answer.failed, at: Date(), viaIntent: true)
+        Thread.append(turn)
+        await LiveAnswer.show(turn)
+        NubiLog.write("[알림] \(answer.headline)")
         return .result()
     }
 }

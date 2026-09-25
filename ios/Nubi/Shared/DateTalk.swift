@@ -14,6 +14,10 @@ struct Spoken {
     var title: String
     /// 사람이 읽는 말로 되돌린 것. 답에 그대로 실어 **틀렸으면 바로 보이게** 합니다.
     var spoken: String
+    /// 날짜를 말했는가. 안 말했으면 `start` 는 오늘이라는 기본값일 뿐입니다.
+    var hasDay: Bool
+    /// 시각을 말했는가.
+    var hasClock: Bool
 }
 
 enum DateTalk {
@@ -48,21 +52,23 @@ enum DateTalk {
 
         var offset = 0
         var dayLabel = "오늘"
+        var hasDay = false
         if let day = days.first(where: { text.contains($0.key) }) {
             offset = day.offset
             dayLabel = day.label
+            hasDay = true
             rest = rest.replacingOccurrences(of: day.key, with: " ")
         }
 
         let base = calendar.startOfDay(for: calendar.date(byAdding: .day, value: offset, to: now) ?? now)
         guard let clock = time(in: rest) else {
             return Spoken(start: base, allDay: true, title: clean(rest),
-                          spoken: "\(dayLabel) 종일")
+                          spoken: "\(dayLabel) 종일", hasDay: hasDay, hasClock: false)
         }
         rest = rest.replacingOccurrences(of: clock.matched, with: " ")
         let start = calendar.date(byAdding: .minute, value: clock.hour * 60 + clock.minute, to: base) ?? base
         return Spoken(start: start, allDay: false, title: clean(rest),
-                      spoken: "\(dayLabel) \(Format.time(start))")
+                      spoken: "\(dayLabel) \(Format.time(start))", hasDay: hasDay, hasClock: true)
     }
 
     private struct Clock {

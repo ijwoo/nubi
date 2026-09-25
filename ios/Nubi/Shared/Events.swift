@@ -109,14 +109,32 @@ enum Events {
         try store.save(reminder, commit: true)
     }
 
+    /// 미리알림을 넣습니다.
+    ///
+    /// **마감만 적으면 울리지 않습니다.** 알람을 따로 붙여야 알림이 옵니다 —
+    /// 미리알림 앱에서 손으로 시각을 넣으면 앱이 대신 해주는 일입니다.
+    /// 넣었다고 답해놓고 아무 소리도 안 나던 자리입니다.
     @discardableResult
-    static func addReminder(_ title: String) throws -> String {
+    static func addReminder(_ title: String, due: Date? = nil) throws -> String {
         guard canWriteReminders else { throw Failure.needsPermission("미리알림") }
         let store = EKEventStore()
         let reminder = EKReminder(eventStore: store)
         reminder.title = title
         reminder.calendar = store.defaultCalendarForNewReminders()
+        if let due {
+            reminder.dueDateComponents = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute], from: due)
+            reminder.addAlarm(EKAlarm(absoluteDate: due))
+        }
         try store.save(reminder, commit: true)
         return title
+    }
+
+    /// 모델에게 넘길 오늘 요약. 없으면 빈 문자열입니다.
+    static func todayBrief() -> String {
+        guard canReadEvents, let items = try? upcoming(days: 1), !items.isEmpty else { return "" }
+        return items.prefix(5).map {
+            $0.allDay ? "\($0.title)(종일)" : "\(Format.time($0.start)) \($0.title)"
+        }.joined(separator: ", ")
     }
 }
