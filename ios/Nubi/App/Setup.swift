@@ -46,7 +46,7 @@ struct SetupCard: View {
                  action: "방법 보기") { showHow = true }
         }
         .padding(16)
-        .background(Ink.theirs, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background(Ink.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .sheet(isPresented: $showHow) {
             NavigationStack { ShortcutGuide(onDone: onChange) }
         }

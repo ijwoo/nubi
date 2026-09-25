@@ -30,6 +30,16 @@ enum Nubi {
                 return NubiAnswer(headline: "일정을 읽을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
             }
+        case let .addEvent(spoken):
+            do {
+                try Events.addEvent(title: spoken.title, start: spoken.start, allDay: spoken.allDay)
+                // 해석한 시각을 되돌려줍니다. **틀렸으면 여기서 바로 보입니다.**
+                return NubiAnswer(headline: "\(spoken.spoken) \(spoken.title)",
+                                  detail: "일정에 넣었습니다.", source: .events)
+            } catch {
+                return NubiAnswer(headline: "일정을 넣을 수 없습니다",
+                                  detail: error.localizedDescription, source: .events, failed: true)
+            }
         case let .addReminder(title):
             do {
                 try Events.addReminder(title)
