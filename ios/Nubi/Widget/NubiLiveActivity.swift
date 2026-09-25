@@ -106,32 +106,25 @@ private struct Answer: View {
 
 /// 묻는 자리.
 ///
-/// 글자를 치는 쪽 하나, 안 치는 쪽 둘, 앱을 여는 쪽 하나.
-/// **잠금화면 입력창은 앱 프로세스가 막 떴을 때만 열립니다.** 그래서 마지막
-/// 화살표가 필요합니다 — 느리지만 언제나 되는 길입니다.
+/// **글자를 치는 버튼은 여기 없습니다.** 인텐트가 직접 값을 요구하는 길은 첫 번만
+/// 열리고 막힙니다. 잠금화면에서 글자를 받는 길은 단축어 앱의 "텍스트 입력 요청"
+/// 하나이고, 그 버튼은 잠금화면 아래 손전등 자리에 놓입니다.
+///
+/// 여기 남는 것은 글자 없이 누르는 것들과 앱을 여는 화살표입니다.
 private struct Actions: View {
     let thinking: Bool
     let stamp: Int
 
     var body: some View {
         HStack(spacing: 6) {
-            Button(intent: AskNubiIntent(stamp: stamp)) {
-                Label("묻기", systemImage: "keyboard")
-                    .font(.caption2.weight(.bold))
-                    .frame(maxWidth: .infinity, minHeight: 15)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.teal)
-
             ForEach(Quick.all, id: \.self) { phrase in
                 Button(intent: QuickAskIntent(phrase, stamp: stamp)) {
                     Text(phrase)
-                        .font(.caption2.weight(.medium))
-                        .frame(minHeight: 15)
-                        .padding(.horizontal, 2)
+                        .font(.caption2.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 15)
                 }
-                .buttonStyle(.bordered)
-                .tint(.primary)
+                .buttonStyle(.borderedProminent)
+                .tint(.teal)
             }
 
             Button(intent: OpenNubiIntent()) {
