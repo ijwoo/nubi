@@ -15,14 +15,17 @@ enum NubiIntent: Equatable {
 }
 
 enum Router {
-    /// 일정 조회로 읽는 말. 앞의 것이 먼저 걸립니다 — "내일" 이 "일정" 보다 먼저여야
-    /// "내일 일정" 이 오늘로 새지 않습니다.
-    private static let eventPhrases: [(keys: [String], days: Int, label: String)] = [
-        (["모레"], 3, "모레"),
-        (["내일"], 2, "내일"),
-        (["이번 주", "이번주", "주간"], 7, "이번 주"),
-        (["오늘", "일정", "스케줄", "약속"], 1, "오늘"),
+    /// 날을 가리키는 말. 긴 것이 먼저여야 "이번 주" 가 쪼개지지 않습니다.
+    private static let days: [(key: String, days: Int, label: String)] = [
+        ("이번 주", 7, "이번 주"), ("이번주", 7, "이번 주"),
+        ("모레", 3, "모레"), ("내일", 2, "내일"), ("오늘", 1, "오늘"),
     ]
+
+    /// 일정을 묻는다는 것을 확실히 하는 말.
+    ///
+    /// **날짜 낱말만으로는 부족합니다.** "오늘 저녁 메뉴 추천" 이 일정 조회로
+    /// 샜습니다 — "오늘" 하나에 걸린 것입니다. 실기기에서 그렇게 답했습니다.
+    private static let calendarWords = ["일정", "스케줄", "약속", "캘린더", "뭐 있"]
 
     /// 미리알림으로 읽는 말. 문장에서 이 말을 덜어낸 나머지가 제목이 됩니다.
     private static let reminderPhrases = [
@@ -40,9 +43,17 @@ enum Router {
         if let phrase = reminderPhrases.first(where: { text.contains($0) }) {
             return .addReminder(title: title(from: text, removing: phrase))
         }
-        for phrase in eventPhrases where phrase.keys.contains(where: { text.contains($0) }) {
-            return .events(days: phrase.days, label: phrase.label)
+
+        let day = days.first { text.contains($0.key) }
+        // 날짜 낱말이 문장 전부인 경우(버튼이 보내는 "오늘 일정" 같은 것 포함) 또는
+        // 일정을 묻는 낱말이 같이 있는 경우에만 조회입니다. 나머지는 모델에 갑니다.
+        let asksCalendar = calendarWords.contains { text.contains($0) }
+        if let day, asksCalendar || text == day.key {
+            return .events(days: day.days, label: day.label)
         }
+        // 날짜 없이 "일정" 만 물으면 오늘로 봅니다.
+        if asksCalendar { return .events(days: 1, label: "오늘") }
+
         return .ask(text)
     }
 
