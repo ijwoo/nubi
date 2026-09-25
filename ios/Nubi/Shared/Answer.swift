@@ -37,6 +37,28 @@ enum Format {
                           detail: lines.joined(separator: "\n"), source: .events)
     }
 
+    static func reminders(_ items: [Events.ReminderItem]) -> NubiAnswer {
+        guard !items.isEmpty else {
+            return NubiAnswer(headline: "안 끝난 미리알림이 없습니다", source: .reminders)
+        }
+        let lines = items.prefix(8).map { item in
+            item.due.map { "· \(short($0)) \(item.title)" } ?? "· \(item.title)"
+        }
+        guard items.count > 1 else {
+            return NubiAnswer(headline: String(lines[0].dropFirst(2)), source: .reminders)
+        }
+        return NubiAnswer(headline: "안 끝난 것 \(items.count)개",
+                          detail: lines.joined(separator: "\n"), source: .reminders)
+    }
+
+    /// 오늘이면 시각만, 아니면 날짜까지.
+    static func short(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ko_KR")
+        f.dateFormat = Calendar.current.isDateInToday(date) ? "a h:mm" : "M/d a h:mm"
+        return f.string(from: date)
+    }
+
     static func time(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")

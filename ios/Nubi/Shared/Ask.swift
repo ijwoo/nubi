@@ -63,6 +63,13 @@ enum Nubi {
                 return NubiAnswer(headline: "일정을 넣을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
             }
+        case .reminders:
+            do {
+                return Format.reminders(try await Events.openReminders())
+            } catch {
+                return NubiAnswer(headline: "미리알림을 읽을 수 없습니다",
+                                  detail: error.localizedDescription, source: .reminders, failed: true)
+            }
         case let .addReminder(spoken):
             do {
                 // 시각을 말했으면 그때, 날짜만 말했으면 그날 아침 9시, 둘 다 없으면
@@ -164,24 +171,34 @@ struct RemindLaterIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "한 시간 뒤 알림"
     static let openAppWhenRun = false
 
+    /// **물은 말이 제목입니다.** 답이 아니라.
+    ///
+    /// 답을 제목으로 넣었더니 미리알림 목록에 문단이 통째로 박혔습니다. 한 시간
+    /// 뒤에 보고 싶은 것은 "무엇을 물었는가" 이고, 답은 메모로 따라갑니다.
     @Parameter(title: "무엇을")
     var what: String
+
+    @Parameter(title: "메모")
+    var note: String
 
     @Parameter(title: "턴")
     var stamp: Int
 
-    init() { what = ""; stamp = 0 }
-    init(_ what: String, stamp: Int) {
-        self.what = String(what.prefix(80))
+    init() { what = ""; note = ""; stamp = 0 }
+    init(_ what: String, note: String, stamp: Int) {
+        self.what = String(what.prefix(60))
+        self.note = String(note.prefix(400))
         self.stamp = stamp
     }
 
     func perform() async throws -> some IntentResult {
         let due = Date().addingTimeInterval(3600)
+        let title = what.isEmpty ? String(note.prefix(30)) : what
         let answer: NubiAnswer
         do {
-            try Events.addReminder(what, due: due)
-            answer = NubiAnswer(headline: "\(Format.time(due)) 알림", detail: what, source: .reminders)
+            try Events.addReminder(title, due: due, note: note)
+            answer = NubiAnswer(headline: "\(Format.time(due)) \(title)",
+                                detail: "미리알림에 넣었습니다.", source: .reminders)
         } catch {
             answer = NubiAnswer(headline: "알림을 넣을 수 없습니다",
                                 detail: error.localizedDescription, source: .reminders, failed: true)

@@ -17,6 +17,11 @@ struct RemindersView: View {
                 List {
                     ForEach(items) { item in
                         Row(item: item, done: going.contains(item.id)) { complete(item) }
+                            .swipeActions(edge: .trailing) {
+                                Button("삭제", systemImage: "trash", role: .destructive) {
+                                    remove(item)
+                                }
+                            }
                     }
                 }
                 .listStyle(.plain)
@@ -33,6 +38,12 @@ struct RemindersView: View {
         }
         .sheet(isPresented: $adding) { AddReminder { Task { await load() } } }
         .task { await load() }
+    }
+
+    private func remove(_ item: Events.ReminderItem) {
+        Haptic.tap()
+        try? Events.remove(item)
+        withAnimation(.easeOut(duration: 0.22)) { items.removeAll { $0.id == item.id } }
     }
 
     private func load() async {
