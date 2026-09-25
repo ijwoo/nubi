@@ -63,8 +63,15 @@ struct AskNubiIntent: LiveActivityIntent {
     @Parameter(title: "무엇을")
     var utterance: String?
 
-    init() {}
-    init(utterance: String?) { self.utterance = utterance }
+    /// 턴마다 달라지는 값. 같은 인텐트를 다시 눌러도 새 요청으로 보이게 합니다.
+    @Parameter(title: "턴")
+    var stamp: Int
+
+    init() { stamp = 0 }
+    init(utterance: String?, stamp: Int) {
+        self.utterance = utterance
+        self.stamp = stamp
+    }
 
     /// 답을 말로도 되돌려줍니다 — **짧게.**
     ///
@@ -103,8 +110,15 @@ struct QuickAskIntent: LiveActivityIntent {
     @Parameter(title: "무엇을")
     var utterance: String
 
-    init() { utterance = "오늘 일정" }
-    init(_ label: String) { utterance = "\(label) 일정" }
+    /// 턴마다 달라지는 값. 이유는 `AskNubiIntent` 와 같습니다.
+    @Parameter(title: "턴")
+    var stamp: Int
+
+    init() { utterance = "오늘 일정"; stamp = 0 }
+    init(_ label: String, stamp: Int) {
+        utterance = "\(label) 일정"
+        self.stamp = stamp
+    }
 
     func perform() async throws -> some IntentResult {
         _ = await Nubi.turn(utterance)

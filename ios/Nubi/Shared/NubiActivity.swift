@@ -17,6 +17,13 @@ struct NubiAttributes: ActivityAttributes {
         /// 누릅니다. 실제로 네 번 눌렸고 인텐트 둘이 같은 초에 겹쳤습니다.
         var thinking: Bool
         var failed: Bool
+        /// 이 턴의 표시.
+        ///
+        /// **버튼을 구별하기 위한 것입니다.** 같은 매개변수를 가진 인텐트를 다시
+        /// 누르면 시스템이 이미 처리한 것으로 보고 무시합니다. 첫 물음은 되는데
+        /// 두 번째가 아무 반응이 없던 이유가 이것입니다. 턴마다 값이 달라지면
+        /// 버튼도 다른 것이 됩니다.
+        var stamp: Int
     }
 
     /// 대화가 시작된 시각. 상태가 아니라 속성이라 바뀌지 않습니다.
@@ -54,13 +61,16 @@ enum LiveAnswer {
     /// 묻는 순간. 답이 오기 전에 화면이 먼저 움직입니다.
     static func thinking(about question: String) async {
         await push(.init(asked: question, headline: "생각하는 중…", detail: "",
-                         thinking: true, failed: false))
+                         thinking: true, failed: false, stamp: now()))
     }
 
     static func show(asked: String, _ answer: NubiAnswer) async {
         await push(.init(asked: asked, headline: answer.headline, detail: answer.detail,
-                         thinking: false, failed: answer.failed))
+                         thinking: false, failed: answer.failed, stamp: now()))
     }
+
+    /// 초 단위면 충분합니다. 같은 초에 두 번 누르는 것은 막고 싶은 쪽입니다.
+    private static func now() -> Int { Int(Date().timeIntervalSince1970) }
 
     static func dismissAll() {
         for activity in Activity<NubiAttributes>.activities {
