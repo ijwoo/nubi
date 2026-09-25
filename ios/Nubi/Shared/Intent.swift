@@ -6,7 +6,8 @@ import Foundation
 /// 의도 판별에 모델을 부르면 "내일 일정 뭐야" 한 마디에 왕복이 두 번 붙고,
 /// 빠른 모드의 목표가 수 초인데 그 절반을 여기서 씁니다.
 enum NubiIntent: Equatable {
-    case events(days: Int, label: String)
+    /// `offset` 일 뒤부터 `span` 날만큼.
+    case events(offset: Int, span: Int, label: String)
     /// 캘린더에 일정을 넣습니다.
     case addEvent(Spoken)
     /// 미리알림 추가. 되돌릴 수 있고 상대가 없으므로 묻지 않고 실행합니다.
@@ -22,9 +23,13 @@ extension Spoken: Equatable {
 }
 
 enum Router {
-    private static let days: [(key: String, days: Int, label: String)] = [
-        ("이번 주", 7, "이번 주"), ("이번주", 7, "이번 주"),
-        ("모레", 3, "모레"), ("내일", 2, "내일"), ("오늘", 1, "오늘"),
+    /// **기준일과 길이를 따로 듭니다.**
+    ///
+    /// 전에는 "오늘부터 N 날" 하나로 뒀는데, 그러면 "내일 일정" 이 오늘 것까지
+    /// 읽습니다. 실기기에서 오늘 있는 추석 연휴가 내일 일정으로 나왔습니다.
+    private static let days: [(key: String, offset: Int, span: Int, label: String)] = [
+        ("이번 주", 0, 7, "이번 주"), ("이번주", 0, 7, "이번 주"),
+        ("모레", 2, 1, "모레"), ("내일", 1, 1, "내일"), ("오늘", 0, 1, "오늘"),
     ]
 
     /// 일정을 묻는다는 것을 확실히 하는 말.
@@ -55,18 +60,19 @@ enum Router {
 
         let asksCalendar = calendarWords.contains { text.contains($0) }
         let asksAdd = addWords.contains { text.contains($0) }
+        let day = days.first { text.contains($0.key) }
+        let hasClock = text.range(of: #"\d{1,2}\s*시"#, options: .regularExpression) != nil
 
-        // "내일 등운동 일정 추가해줘 오후 1시쯤" 이 조회로 샜던 자리입니다.
-        // 넣으라는 말이 같이 있으면 추가입니다.
-        if asksCalendar && asksAdd {
+        // "내일 오후 1시에 운동하기 추가해줘" 가 모델로 샜던 자리입니다.
+        // **"일정" 이라는 말이 없어도** 날짜나 시각이 있으면 캘린더 일입니다.
+        if asksAdd, asksCalendar || day != nil || hasClock {
             return .addEvent(DateTalk.parse(text))
         }
 
-        let day = days.first { text.contains($0.key) }
         if let day, asksCalendar || text == day.key {
-            return .events(days: day.days, label: day.label)
+            return .events(offset: day.offset, span: day.span, label: day.label)
         }
-        if asksCalendar { return .events(days: 1, label: "오늘") }
+        if asksCalendar { return .events(offset: 0, span: 1, label: "오늘") }
 
         return .ask(text)
     }

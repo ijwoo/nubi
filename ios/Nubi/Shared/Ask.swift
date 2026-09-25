@@ -23,9 +23,10 @@ enum Nubi {
 
     static func respond(to utterance: String) async -> NubiAnswer {
         switch Router.route(utterance) {
-        case let .events(days, label):
+        case let .events(offset, span, label):
             do {
-                return Format.events(try Events.upcoming(days: days), label: label)
+                let base = Calendar.current.date(byAdding: .day, value: offset, to: Date()) ?? Date()
+                return Format.events(try Events.upcoming(days: span, from: base), label: label)
             } catch {
                 return NubiAnswer(headline: "일정을 읽을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
