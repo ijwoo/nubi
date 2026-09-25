@@ -17,15 +17,29 @@ struct Spoken {
 }
 
 enum DateTalk {
+    /// 긴 것이 먼저여야 "다음 주" 가 쪼개지지 않습니다.
     private static let days: [(key: String, offset: Int, label: String)] = [
+        ("다음 주", 7, "다음 주"), ("다음주", 7, "다음 주"),
         ("글피", 3, "글피"), ("모레", 2, "모레"), ("내일", 1, "내일"), ("오늘", 0, "오늘"),
     ]
 
     /// 명령어와 군더더기. 제목에서 덜어냅니다.
+    /// **긴 것부터입니다.** "일정 추가" 를 먼저 지우면 "추가해줘" 의 "해줘" 가
+    /// 남아서 제목이 "등운동 해줘" 가 됩니다.
     private static let noise = [
+        "추가해줘", "추가해 줘", "등록해줘", "등록해 줘", "저장해줘",
+        "잡아줘", "잡아 줘", "넣어줘", "넣어 줘", "만들어줘", "만들어 줘",
         "일정에 추가", "일정 추가", "일정 등록", "일정 잡아", "일정 넣어",
-        "추가해줘", "추가해 줘", "등록해줘", "잡아줘", "넣어줘", "만들어줘",
-        "추가", "등록", "일정", "캘린더", "쯤", "에",
+        "추가", "등록", "일정", "캘린더",
+    ]
+
+    /// 혼자 남으면 떼는 조사.
+    ///
+    /// **문자열로 지우면 안 됩니다.** "에" 를 지우면 "에어컨" 이 "어컨" 이 됩니다.
+    /// 낱말 단위로 보고 통째로 같을 때만 뗍니다.
+    private static let particles: Set<String> = [
+        "에", "에서", "쯤", "정도", "로", "으로", "부터", "까지",
+        "해줘", "해 줘", "줘", "해", "좀",
     ]
 
     static func parse(_ text: String, now: Date = Date()) -> Spoken {
@@ -90,6 +104,8 @@ enum DateTalk {
         for word in noise { rest = rest.replacingOccurrences(of: word, with: " ") }
         let title = rest
             .split(separator: " ", omittingEmptySubsequences: true)
+            .map(String.init)
+            .filter { !particles.contains($0) }
             .joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return title.isEmpty ? "새 일정" : title
