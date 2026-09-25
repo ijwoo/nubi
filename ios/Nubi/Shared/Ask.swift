@@ -66,20 +66,29 @@ struct AskNubiIntent: LiveActivityIntent {
     init() {}
     init(utterance: String?) { self.utterance = utterance }
 
-    /// 답을 말로 되돌려주지 않습니다.
+    /// 답을 말로도 되돌려줍니다 — **짧게.**
     ///
-    /// `ProvidesDialog` 를 쓰면 답이 끝난 자리에 확인 배너가 뜨고, 잠금화면에서는
-    /// 그게 시계를 덮습니다. 같은 답이 두 군데 있는 셈이라 지웠습니다 —
-    /// **답이 보이는 자리는 대화창 하나입니다.**
-    func perform() async throws -> some IntentResult {
+    /// `ProvidesDialog` 를 뺐더니 묻기 버튼이 아무 반응 없이 화면만 꺼졌습니다.
+    /// 값 요청 창은 인텐트가 대화를 이어받을 수 있을 때만 뜹니다. 빌드 7 에서는
+    /// 됐고 8 에서 안 됐는데, 그 사이에 바꾼 것이 이것뿐이었습니다.
+    ///
+    /// 다만 답 전체를 돌려주면 확인 배너가 잠금화면의 시계를 덮습니다. 그래서
+    /// **한 줄만** 돌려줍니다. 자세한 것은 대화창에 있습니다.
+    func perform() async throws -> some IntentResult & ProvidesDialog {
         let text: String
         if let given = utterance?.trimmingCharacters(in: .whitespacesAndNewlines), !given.isEmpty {
             text = given
         } else {
-            text = try await $utterance.requestValue("무엇을 물어볼까요")
+            do {
+                text = try await $utterance.requestValue("무엇을 물어볼까요")
+            } catch {
+                // 취소도 정상입니다. 대화창은 건드리지 않고 그대로 둡니다.
+                NubiLog.write("[묻기] 입력 없이 끝남 \(error.localizedDescription)")
+                throw error
+            }
         }
-        _ = await Nubi.turn(text)
-        return .result()
+        let answer = await Nubi.turn(text)
+        return .result(dialog: IntentDialog(stringLiteral: answer.headline))
     }
 }
 
