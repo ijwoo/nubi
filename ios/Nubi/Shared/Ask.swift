@@ -50,12 +50,23 @@ enum Nubi {
 
 /// 잠금화면 대화의 입력 버튼.
 ///
-/// 누르면 시스템이 글자를 받는 창을 띄웁니다 — 인텐트에 값 없는 매개변수가 있으면
+/// 누르면 시스템이 글자를 받는 창을 띄웁니다 — 값 없는 매개변수가 있으면
 /// `requestValue` 가 그 창을 부릅니다. 잠금을 풀지 않고 묻는 경로가 이것뿐입니다.
 ///
-/// `LiveActivityIntent` 여야 합니다. 평범한 `AppIntent` 는 확장이나 배경 앱에서
-/// 돌고, 거기서는 활동을 시작할 수도 갱신할 수도 없습니다.
-struct AskNubiIntent: LiveActivityIntent {
+/// **평범한 `AppIntent` 입니다.** `LiveActivityIntent` 로 두면 앱 프로세스에서
+/// 도는데, 그 프로세스가 살아 있는 동안 입력창이 열리지 않습니다. 14분을 기다려도
+/// 같았고, 그때 기록에 새 프로세스 줄이 없었습니다 — 시스템이 안 거둡니다.
+///
+/// ```
+/// 18:18:20  [프로세스] 앱 빌드 14 …
+/// 18:18:20  [요청] 사시미 어때 → …        성공
+/// 18:18:30  [묻기] … helper application    실패
+/// 18:32:43  [묻기] … helper application    14분 뒤, 새 프로세스 줄 없음
+/// ```
+///
+/// 확장 프로세스는 누를 때마다 새로 뜹니다. 대신 활동을 **시작**할 수는 없으니,
+/// 이 버튼은 이미 떠 있는 대화창을 갱신하기만 합니다.
+struct AskNubiIntent: AppIntent {
     static let title: LocalizedStringResource = "누비에게 묻기"
     static let description = IntentDescription("일정을 묻거나, 미리알림을 넣거나, 그냥 물어봅니다.")
     static let openAppWhenRun = false

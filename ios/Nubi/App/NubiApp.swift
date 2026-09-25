@@ -4,6 +4,8 @@ import UIKit
 
 @main
 struct NubiApp: App {
+    init() { Secrets.migrateFromKeychain() }
+
     var body: some Scene {
         WindowGroup { HomeView() }
     }
