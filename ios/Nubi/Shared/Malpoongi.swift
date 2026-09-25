@@ -2,6 +2,12 @@ import SwiftUI
 
 /// 말풍이. 잠금화면에서 상태를 전하는 얼굴.
 ///
+/// **바탕 표정은 하나입니다.** 동그란 눈과 볼터치. 상태는 입과 눈썹과 색으로만
+/// 갈립니다. 얼굴을 통째로 바꾸면 같은 캐릭터로 안 보입니다.
+///
+/// 듣는 얼굴에 소리 물결을 달아봤다가 뺐습니다. 물결은 마이크로 듣는다는
+/// 뜻인데 누비는 소리를 듣지 않습니다. **하지 않는 일을 그리면 안 됩니다.**
+///
 /// **오브 하나로는 무슨 일이 일어나는지 말할 수 없었습니다.** 색만으로는
 /// "듣는 중" 과 "생각 중" 이 구별되지 않습니다. 표정이 그 일을 합니다.
 ///
@@ -38,13 +44,6 @@ struct Malpoongi: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             ZStack {
-                if mood == .listening {
-                    // 듣는 중에는 테두리 바깥에 옅은 고리가 하나 더 돕니다.
-                    BubbleShape()
-                        .stroke(Color(red: 0.36, green: 0.35, blue: 0.85).opacity(0.45),
-                                lineWidth: size * 0.05)
-                        .scaleEffect(1.1)
-                }
                 BubbleShape().fill(mood.fill)
                 BubbleShape().stroke(ink, lineWidth: size * 0.055)
                 Face(mood: mood, ink: ink, detailed: detailed)
@@ -90,7 +89,10 @@ private struct BubbleShape: Shape {
     }
 }
 
-/// 표정. 상태마다 눈과 입이 다릅니다.
+/// 표정.
+///
+/// **바탕은 하나입니다** — 동그란 눈과 볼터치. 상태는 입과 눈썹으로만 갈립니다.
+/// 얼굴을 통째로 바꾸면 같은 캐릭터로 안 보입니다.
 private struct Face: View {
     let mood: Malpoongi.Mood
     let ink: Color
@@ -99,36 +101,52 @@ private struct Face: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
-            let eyeY = h * 0.38
+            // 생각할 때는 눈이 조금 올라갑니다. 위를 보는 얼굴입니다.
+            let eyeY = h * (mood == .thinking ? 0.33 : 0.38)
             ZStack {
-                if detailed && mood != .thinking {
-                    cheek(at: CGPoint(x: w * 0.20, y: h * 0.50), w: w)
-                    cheek(at: CGPoint(x: w * 0.80, y: h * 0.50), w: w)
+                if detailed {
+                    cheek(at: CGPoint(x: w * 0.19, y: h * 0.50), w: w)
+                    cheek(at: CGPoint(x: w * 0.81, y: h * 0.50), w: w)
                 }
-                switch mood {
-                case .thinking:
-                    // 말을 고르는 중. 점 셋이 그 자리를 대신합니다.
-                    ForEach(0..<3, id: \.self) { i in
-                        Circle().fill(ink)
-                            .frame(width: w * 0.1, height: w * 0.1)
-                            .position(x: w * (0.32 + 0.18 * Double(i)), y: eyeY + h * 0.04)
-                    }
-                case .done:
-                    arcEye(at: CGPoint(x: w * 0.34, y: eyeY), w: w, up: true)
-                    arcEye(at: CGPoint(x: w * 0.66, y: eyeY), w: w, up: true)
-                    smile(w: w, h: h, wide: true)
-                case .waiting:
-                    slantEye(at: CGPoint(x: w * 0.34, y: eyeY), w: w, mirrored: false)
-                    slantEye(at: CGPoint(x: w * 0.66, y: eyeY), w: w, mirrored: true)
-                    Capsule().fill(ink)
-                        .frame(width: w * 0.16, height: w * 0.055)
-                        .position(x: w * 0.5, y: h * 0.56)
-                case .listening:
+
+                if mood == .done {
+                    arcEye(at: CGPoint(x: w * 0.34, y: eyeY), w: w)
+                    arcEye(at: CGPoint(x: w * 0.66, y: eyeY), w: w)
+                } else {
                     roundEye(at: CGPoint(x: w * 0.34, y: eyeY), w: w)
                     roundEye(at: CGPoint(x: w * 0.66, y: eyeY), w: w)
-                    smile(w: w, h: h, wide: false)
+                }
+
+                if mood == .waiting {
+                    // 살짝 긴장한 눈썹. 안쪽 끝이 내려옵니다.
+                    brow(at: CGPoint(x: w * 0.33, y: eyeY - h * 0.15), w: w, mirrored: false)
+                    brow(at: CGPoint(x: w * 0.67, y: eyeY - h * 0.15), w: w, mirrored: true)
+                }
+
+                mouth(w: w, h: h)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func mouth(w: CGFloat, h: CGFloat) -> some View {
+        switch mood {
+        case .thinking:
+            // 말을 고르는 중. 입 자리에 점 셋이 옵니다.
+            HStack(spacing: w * 0.055) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Circle().fill(ink).frame(width: w * 0.075, height: w * 0.075)
                 }
             }
+            .position(x: w * 0.5, y: h * 0.57)
+        case .done:
+            smile(w: w, h: h, wide: true)
+        case .waiting:
+            Capsule().fill(ink)
+                .frame(width: w * 0.15, height: w * 0.05)
+                .position(x: w * 0.5, y: h * 0.56)
+        case .listening:
+            smile(w: w, h: h, wide: false)
         }
     }
 
@@ -144,21 +162,21 @@ private struct Face: View {
         .position(point)
     }
 
-    private func arcEye(at point: CGPoint, w: CGFloat, up: Bool) -> some View {
+    private func arcEye(at point: CGPoint, w: CGFloat) -> some View {
         Path { p in
             p.move(to: CGPoint(x: 0, y: w * 0.07))
             p.addQuadCurve(to: CGPoint(x: w * 0.17, y: w * 0.07),
-                           control: CGPoint(x: w * 0.085, y: up ? -w * 0.06 : w * 0.2))
+                           control: CGPoint(x: w * 0.085, y: -w * 0.06))
         }
         .stroke(ink, style: StrokeStyle(lineWidth: w * 0.055, lineCap: .round))
         .frame(width: w * 0.17, height: w * 0.14)
         .position(point)
     }
 
-    private func slantEye(at point: CGPoint, w: CGFloat, mirrored: Bool) -> some View {
+    private func brow(at point: CGPoint, w: CGFloat, mirrored: Bool) -> some View {
         Capsule().fill(ink)
-            .frame(width: w * 0.17, height: w * 0.055)
-            .rotationEffect(.degrees(mirrored ? -18 : 18))
+            .frame(width: w * 0.15, height: w * 0.042)
+            .rotationEffect(.degrees(mirrored ? -13 : 13))
             .position(point)
     }
 

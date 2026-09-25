@@ -53,6 +53,13 @@ enum Router {
     /// 묻는 말. 넣으라는 말과 가릅니다.
     private static let queryWords = ["뭐", "무엇", "있어", "있나", "보여", "알려", "뭔가", "목록", "리스트"]
 
+    /// 물음표를 붙이는 말. **날짜와 시각이 있어도 이게 있으면 묻는 것입니다.**
+    ///
+    /// "내일 오후 4시에 뭐 먹을까" 를 일정으로 넣으면 안 됩니다.
+    private static let questionWords = [
+        "뭐", "무엇", "어때", "어떨", "추천", "할까", "좋을까", "어디", "언제", "왜", "어떻게", "얼마",
+    ]
+
     /// 날짜 낱말과 의문사를 걷어내고 알맹이가 남는가.
     private static func isSubstantive(_ text: String) -> Bool {
         var rest = text
@@ -90,6 +97,14 @@ enum Router {
         // "내일 오후 1시에 운동하기 추가해줘" 가 모델로 샜던 자리입니다.
         // **"일정" 이라는 말이 없어도** 날짜나 시각이 있으면 캘린더 일입니다.
         if asksAdd, asksCalendar || day != nil || hasClock {
+            return .addEvent(DateTalk.parse(text))
+        }
+
+        // "내일 헬스장가야돼 오후 4시에" — 넣으라는 말이 없어도 날짜와 시각이
+        // 같이 있으면 일정입니다. **묻는 말이 아니어야 합니다** — "내일 오후 4시에
+        // 뭐 먹을까" 를 일정으로 넣으면 안 됩니다.
+        let asksQuestion = questionWords.contains { text.contains($0) } || text.hasSuffix("?")
+        if !asksQuestion, day != nil, hasClock {
             return .addEvent(DateTalk.parse(text))
         }
 
