@@ -66,57 +66,34 @@ enum Nubi {
 ///
 /// 확장 프로세스는 누를 때마다 새로 뜹니다. 대신 활동을 **시작**할 수는 없으니,
 /// 이 버튼은 이미 떠 있는 대화창을 갱신하기만 합니다.
-struct AskNubiIntent: AppIntent {
+struct AskNubiIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "누비에게 묻기"
     static let description = IntentDescription("일정을 묻거나, 미리알림을 넣거나, 그냥 물어봅니다.")
     static let openAppWhenRun = false
 
-    @Parameter(title: "무엇을")
-    var utterance: String?
+    /// **비워둔 채로 넘깁니다.**
+    ///
+    /// 지금까지는 `perform()` 안에서 `requestValue` 로 직접 물었습니다. 첫 번에만
+    /// 되고 그 뒤로 막혔습니다 — 확장에서는 `LNActionExecutor 2010`, 배경의
+    /// 앱에서는 `helper application` 이었습니다.
+    ///
+    /// 애플이 안내하는 길은 값을 비워두고 **시스템이 `perform()` 전에 묻게**
+    /// 하는 것입니다. 거치는 곳이 다릅니다. 그래서 이번에는 그 길로 갑니다.
+    @Parameter(title: "무엇을", requestValueDialog: IntentDialog("무엇을 물어볼까요"))
+    var utterance: String
 
     /// 턴마다 달라지는 값. 같은 인텐트를 다시 눌러도 새 요청으로 보이게 합니다.
     @Parameter(title: "턴")
     var stamp: Int
 
     init() { stamp = 0 }
-    init(utterance: String?, stamp: Int) {
-        self.utterance = utterance
-        self.stamp = stamp
-    }
+    init(stamp: Int) { self.stamp = stamp }
 
-    /// 답을 돌려주지 않습니다.
-    ///
-    /// `ProvidesDialog` 를 쓰면 답이 끝난 자리에 확인 배너가 뜨고, **그 배너를
-    /// 닫기 전에는 다음 입력창이 열리지 않습니다.** 실기기에서 배너가 떠 있는
-    /// 동안 묻기가 17번 연속 실패했습니다.
-    ///
-    /// ```
-    /// [묻기] 입력 없이 끝남 Couldn't communicate with a helper application.
-    /// ```
-    ///
-    /// 빌드 8 에서 한 번 뺐다가 되돌린 적이 있는데, 그때 안 됐던 이유는 배너가
-    /// 아니라 턴 표시가 없어서 같은 버튼이 무시된 것이었습니다. 둘은 다른
-    /// 문제였고, 한 번에 하나씩만 바꿨어야 했습니다.
     func perform() async throws -> some IntentResult {
-        let text: String
-        if let given = utterance?.trimmingCharacters(in: .whitespacesAndNewlines), !given.isEmpty {
-            text = given
-        } else {
-            do {
-                text = try await $utterance.requestValue("무엇을 물어볼까요")
-            } catch {
-                let reason = error.localizedDescription
-                NubiLog.write("[묻기] 입력 없이 끝남 \(reason)")
-                // 취소는 정상입니다. 그 밖의 실패는 고장난 버튼처럼 보이므로
-                // 무엇이 막고 있는지 대화창에 적습니다.
-                if reason.contains("helper") {
-                    await LiveAnswer.show(asked: "", NubiAnswer(
-                        headline: "여기서는 글자를 못 넣습니다",
-                        detail: "오른쪽 화살표로 앱에서 물어보세요. 오늘·내일 버튼은 잠긴 채로도 됩니다.",
-                        failed: true))
-                }
-                throw error
-            }
+        let text = utterance.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            NubiLog.write("[묻기] 빈 입력")
+            return .result()
         }
         _ = await Nubi.turn(text)
         return .result()

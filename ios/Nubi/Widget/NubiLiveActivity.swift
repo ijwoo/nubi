@@ -115,7 +115,7 @@ private struct Actions: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Button(intent: AskNubiIntent(utterance: nil, stamp: stamp)) {
+            Button(intent: AskNubiIntent(stamp: stamp)) {
                 Label("묻기", systemImage: "keyboard")
                     .font(.caption2.weight(.bold))
                     .frame(maxWidth: .infinity, minHeight: 15)
