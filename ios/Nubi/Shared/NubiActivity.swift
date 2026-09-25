@@ -1,110 +1,88 @@
 import ActivityKit
 import Foundation
 
-/// 잠금화면 위의 대화.
+/// 잠금화면 위의 대화창.
 ///
-/// 활동 하나가 대화 하나입니다. 물을 때마다 새로 만들지 않고 같은 활동을 갱신합니다 —
-/// 물음마다 활동이 쌓이면 잠금화면이 답으로 덮입니다.
+/// **대화의 마지막 한 턴을 비추는 창입니다.** 전체는 앱에 있습니다
+/// ([`Thread`](Thread.swift)). 활동 하나가 대화 하나이고, 물을 때마다 새로
+/// 만들지 않고 갱신합니다.
 struct NubiAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
-        /// 마지막으로 물은 것. 대화라서 매번 바뀌므로 상태에 있습니다.
         var asked: String
         var headline: String
         var detail: String
         /// 답을 기다리는 중. **네트워크보다 먼저 이걸 켭니다.**
         ///
-        /// 스파이크에서 잰 왕복이 0.8~2초였고, 그동안 화면이 그대로면 사람이 다시
-        /// 누릅니다. 실제로 네 번 눌렸고 인텐트 둘이 같은 초에 겹쳤습니다.
+        /// 왕복이 0.8~2.5초인데 그동안 화면이 그대로면 사람이 다시 누릅니다.
         var thinking: Bool
         var failed: Bool
-        /// 이 턴의 표시.
-        ///
-        /// **버튼을 구별하기 위한 것입니다.** 같은 매개변수를 가진 인텐트를 다시
-        /// 누르면 시스템이 이미 처리한 것으로 보고 무시합니다. 첫 물음은 되는데
-        /// 두 번째가 아무 반응이 없던 이유가 이것입니다. 턴마다 값이 달라지면
-        /// 버튼도 다른 것이 됩니다.
+        /// 턴마다 달라지는 값. 같은 매개변수의 인텐트를 다시 누르면 시스템이
+        /// 이미 처리한 것으로 보고 무시합니다.
         var stamp: Int
+        var at: Date
     }
 
-    /// 대화가 시작된 시각. 상태가 아니라 속성이라 바뀌지 않습니다.
     var started: Date
 }
 
 enum LiveAnswer {
-    /// 대화를 잠금화면에 올리거나 갱신합니다.
+    static var isRunning: Bool { !Activity<NubiAttributes>.activities.isEmpty }
+
+    /// 대화창을 올리거나 갱신합니다.
     ///
-    /// 이미 떠 있으면 갱신합니다. 없으면 만듭니다. 만드는 쪽은 **앱 프로세스에서만**
-    /// 됩니다 — 확장에서 부르면 "Target does not include NSSupportsLiveActivities"
-    /// 로 죽습니다. 키가 있는데도 그렇습니다. 그래서 이걸 부르는 인텐트는 전부
-    /// `LiveActivityIntent` 입니다.
+    /// **새로 만들 수 있는 것은 앞에 떠 있는 앱뿐입니다.** 확장도 배경의 앱도
+    /// 갱신만 됩니다 — 배경에서 만들려 하면 "Target is not foreground" 입니다.
+    /// 그래서 앱이 열릴 때 자리를 만들어 둡니다.
     @discardableResult
     static func push(_ state: NubiAttributes.ContentState) async -> Bool {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            NubiLog.write("[활동] 꺼져 있음 — 설정 › 누비 › 실시간 활동을 켜야 합니다")
+            NubiLog.write("[활동] 꺼져 있음 — 설정 › 누비 › 실시간 활동")
             return false
         }
         if let running = Activity<NubiAttributes>.activities.first {
             await running.update(ActivityContent(state: state, staleDate: nil))
             return true
         }
-        NubiLog.write("[활동] 떠 있는 대화창이 없어 새로 만듭니다")
         do {
             _ = try Activity.request(
                 attributes: NubiAttributes(started: Date()),
                 content: .init(state: state, staleDate: nil))
             return true
         } catch {
-            // 확장과 배경의 앱은 대화창을 **새로 만들 수 없습니다.** 갱신만 됩니다.
-            // 답을 버리지 않고 적어둡니다 — 앱을 열면 거기 있습니다.
+            // 답은 이미 대화에 쌓였습니다. 앱을 열면 거기 있습니다.
             NubiLog.write("[활동] 시작 실패 \(error.localizedDescription)")
-            Parked.save(state)
             return false
         }
     }
 
-    /// 묻는 순간. 답이 오기 전에 화면이 먼저 움직입니다.
     static func thinking(about question: String) async {
         await push(.init(asked: question, headline: "생각하는 중…", detail: "",
-                         thinking: true, failed: false, stamp: now()))
+                         thinking: true, failed: false, stamp: now(), at: Date()))
     }
 
-    static func show(asked: String, _ answer: NubiAnswer) async {
-        await push(.init(asked: asked, headline: answer.headline, detail: answer.detail,
-                         thinking: false, failed: answer.failed, stamp: now()))
+    /// 아직 아무것도 묻지 않았을 때의 대화창.
+    ///
+    /// 자리만 만들어 둡니다. **대화창을 새로 만들 수 있는 것은 앞에 떠 있는
+    /// 앱뿐**이라, 여기서 안 만들면 잠금화면 버튼이 답을 놓을 곳이 없습니다.
+    /// 예전에는 이 자리에서 "오늘 일정" 을 대신 물었는데, 권한이 없으면 아무것도
+    /// 안 한 사람에게 실패 말풍선부터 보여주게 됩니다.
+    static func welcome() async {
+        await push(.init(asked: "", headline: "무엇이든 물어보세요", detail: "",
+                         thinking: false, failed: false, stamp: Int(Date().timeIntervalSince1970),
+                         at: Date()))
     }
 
-    /// 초 단위면 충분합니다. 같은 초에 두 번 누르는 것은 막고 싶은 쪽입니다.
-    private static func now() -> Int { Int(Date().timeIntervalSince1970) }
+    static func show(_ turn: Turn) async {
+        await push(.init(asked: turn.asked, headline: turn.headline, detail: turn.detail,
+                         thinking: false, failed: turn.failed, stamp: now(), at: turn.at))
+    }
 
     static func dismissAll() {
         for activity in Activity<NubiAttributes>.activities {
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }
     }
-}
 
-
-/// 띄울 자리가 없어 못 보여준 답.
-///
-/// 대화창이 닫혀 있으면 잠금화면 입력은 되는데 답을 놓을 곳이 없습니다.
-/// 버리지 않고 App Group 에 적어두고, 앱을 열면 거기 있습니다.
-enum Parked {
-    private static var url: URL? {
-        FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: NubiLog.group)?
-            .appendingPathComponent("parked.json")
-    }
-
-    static func save(_ state: NubiAttributes.ContentState) {
-        guard let url, let data = try? JSONEncoder().encode(state) else { return }
-        try? data.write(to: url, options: .atomic)
-    }
-
-    static func take() -> NubiAttributes.ContentState? {
-        guard let url, let data = try? Data(contentsOf: url),
-              let state = try? JSONDecoder().decode(NubiAttributes.ContentState.self, from: data)
-        else { return nil }
-        try? FileManager.default.removeItem(at: url)
-        return state
-    }
+    /// 초 단위면 충분합니다. 같은 초에 두 번 누르는 것은 막고 싶은 쪽입니다.
+    private static func now() -> Int { Int(Date().timeIntervalSince1970) }
 }
