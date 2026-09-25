@@ -19,7 +19,7 @@ struct NubiLiveActivity: Widget {
                     AnswerBubble(state: context.state)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ActionRow(thinking: context.state.thinking)
+                    ActionRow(thinking: context.state.thinking, stamp: context.state.stamp)
                 }
             } compactLeading: {
                 Mark(size: 18)
@@ -54,7 +54,7 @@ private struct LockScreenChat: View {
                 }
             }
             AnswerBubble(state: state)
-            ActionRow(thinking: state.thinking)
+            ActionRow(thinking: state.thinking, stamp: state.stamp)
         }
     }
 }
@@ -98,10 +98,11 @@ private struct AnswerBubble: View {
 /// 물어볼 것의 대부분은 정해져 있습니다.
 private struct ActionRow: View {
     let thinking: Bool
+    let stamp: Int
 
     var body: some View {
         HStack(spacing: 7) {
-            Button(intent: AskNubiIntent(utterance: nil)) {
+            Button(intent: AskNubiIntent(utterance: nil, stamp: stamp)) {
                 Label("묻기", systemImage: "keyboard")
                     .font(.caption.weight(.semibold))
                     .frame(maxWidth: .infinity)
@@ -111,7 +112,7 @@ private struct ActionRow: View {
             .tint(.teal)
 
             ForEach(Quick.all, id: \.self) { phrase in
-                Button(intent: QuickAskIntent(phrase)) {
+                Button(intent: QuickAskIntent(phrase, stamp: stamp)) {
                     Text(phrase)
                         .font(.caption)
                         .padding(.vertical, 2)
