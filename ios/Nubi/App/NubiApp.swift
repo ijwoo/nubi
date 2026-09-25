@@ -21,6 +21,21 @@ struct HomeView: View {
     @State private var busy = false
     @FocusState private var typing: Bool
 
+    /// 앱이 열릴 때 대화창을 살립니다.
+    ///
+    /// **대화창을 새로 만들 수 있는 것은 앞에 떠 있는 앱뿐입니다.** 잠금화면의
+    /// 묻기 버튼은 확장에서 돌아서 갱신만 합니다 — 대화창이 닫혀 있으면 답을
+    /// 만들고도 놓을 자리가 없습니다. 그래서 여기서 자리를 만들어 둡니다.
+    private func reviveActivity() async {
+        if let parked = Parked.take() {
+            answer = NubiAnswer(headline: parked.headline, detail: parked.detail,
+                                failed: parked.failed)
+            await LiveAnswer.push(parked)
+            return
+        }
+        await Nubi.turn("오늘 일정")
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -64,13 +79,14 @@ struct HomeView: View {
                     }
                     Button("잠금화면에서 내리기") { LiveAnswer.dismissAll() }
                 } footer: {
-                    Text("띄운 뒤에는 폰을 잠근 채로 묻기 버튼을 눌러 이어서 물을 수 있습니다.")
+                    Text("잠근 채로 묻기 버튼을 눌러 이어서 물을 수 있습니다. 내리면 잠금화면에서 다시 못 띄웁니다 — 앱을 열거나 제어 센터의 누비 버튼을 눌러야 돌아옵니다.")
                 }
 
                 NavigationLink("설정과 기록") { SettingsView() }
             }
             .navigationTitle("누비")
         }
+        .task { await reviveActivity() }
     }
 
     private func ask() {
