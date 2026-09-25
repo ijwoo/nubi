@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var copied = false
     @State private var showDiagnostics = false
     @State private var confirmClear = false
+    @State private var keySaved = false
 
     var body: some View {
         NavigationStack {
@@ -64,11 +65,17 @@ struct SettingsView: View {
         Section {
             LabeledContent("저장된 키", value: savedKey)
             SecureField("sk-ant-…", text: $key)
-            Button("저장") {
+            Button(keySaved ? "저장됨" : "저장") {
                 Secrets.apiKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
                 key = ""
                 savedKey = Secrets.masked
+                keySaved = true
+                Haptic.done()
                 onChange()
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    keySaved = false
+                }
             }
             .disabled(key.isEmpty)
             LabeledContent("모델", value: Model.id)
@@ -85,6 +92,7 @@ struct SettingsView: View {
                 .confirmationDialog("대화를 전부 지울까요", isPresented: $confirmClear) {
                     Button("지우기", role: .destructive) {
                         Thread.clear()
+                        Task { await LiveAnswer.welcome() }
                         onChange()
                     }
                 } message: {

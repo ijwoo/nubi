@@ -33,8 +33,7 @@ struct HomeView: View {
                     .padding(.bottom, 16)
                 }
                 Composer(draft: $draft, busy: store.busy, typing: $typing,
-                         suggestions: store.turns.isEmpty ? Suggestion.all : [],
-                         send: send)
+                         suggestions: Suggestion.all, send: send)
             }
             .navigationTitle("누비")
             .navigationBarTitleDisplayMode(.large)
@@ -109,7 +108,7 @@ struct HomeView: View {
 }
 
 enum Suggestion {
-    static let all = ["오늘 일정", "내일 3시 회의 일정 추가", "우유 사기 미리알림"]
+    static let all = ["오늘 일정", "오늘 할일", "내일 3시 회의 일정 추가", "우유 사기 미리알림"]
 }
 
 /// 서랍 한 칸.

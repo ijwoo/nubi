@@ -29,7 +29,18 @@ struct EventsView: View {
                 Empty(text: "\(span.rawValue) 일정이 없습니다", icon: "calendar")
             } else {
                 List {
-                    ForEach(items) { EventRow(item: $0) }
+                    ForEach(items) { item in
+                        EventRow(item: item)
+                            .swipeActions(edge: .trailing) {
+                                Button("삭제", systemImage: "trash", role: .destructive) {
+                                    Haptic.tap()
+                                    try? Events.remove(eventId: item.id)
+                                    withAnimation(.easeOut(duration: 0.22)) {
+                                        items.removeAll { $0.id == item.id }
+                                    }
+                                }
+                            }
+                    }
                 }
                 .listStyle(.plain)
                 .refreshable { load() }

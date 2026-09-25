@@ -221,7 +221,7 @@ private struct Actions: View {
     var body: some View {
         HStack(spacing: 7) {
             // 어떤 답에도 붙는 다음 손길. 답 한 줄을 한 시간 뒤 미리알림으로 넣습니다.
-            Button(intent: RemindLaterIntent(state.headline, stamp: state.stamp)) {
+            Button(intent: RemindLaterIntent(state.asked, note: state.headline, stamp: state.stamp)) {
                 Label("1시간 뒤", systemImage: "bell")
                     .font(.caption2.weight(.bold))
                     .frame(maxWidth: .infinity, minHeight: 16)

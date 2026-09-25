@@ -102,6 +102,18 @@ enum Events {
         }
     }
 
+    static func remove(_ item: ReminderItem) throws {
+        let store = EKEventStore()
+        guard let reminder = store.calendarItem(withIdentifier: item.id) as? EKReminder else { return }
+        try store.remove(reminder, commit: true)
+    }
+
+    static func remove(eventId: String) throws {
+        let store = EKEventStore()
+        guard let event = store.event(withIdentifier: eventId) else { return }
+        try store.remove(event, span: .thisEvent, commit: true)
+    }
+
     static func complete(_ item: ReminderItem) throws {
         let store = EKEventStore()
         guard let reminder = store.calendarItem(withIdentifier: item.id) as? EKReminder else { return }
@@ -115,11 +127,12 @@ enum Events {
     /// 미리알림 앱에서 손으로 시각을 넣으면 앱이 대신 해주는 일입니다.
     /// 넣었다고 답해놓고 아무 소리도 안 나던 자리입니다.
     @discardableResult
-    static func addReminder(_ title: String, due: Date? = nil) throws -> String {
+    static func addReminder(_ title: String, due: Date? = nil, note: String = "") throws -> String {
         guard canWriteReminders else { throw Failure.needsPermission("미리알림") }
         let store = EKEventStore()
         let reminder = EKReminder(eventStore: store)
         reminder.title = title
+        if !note.isEmpty { reminder.notes = note }
         reminder.calendar = store.defaultCalendarForNewReminders()
         if let due {
             reminder.dueDateComponents = Calendar.current.dateComponents(

@@ -12,6 +12,8 @@ enum NubiIntent: Equatable {
     case addEvent(Spoken)
     /// 미리알림 추가. 되돌릴 수 있고 상대가 없으므로 묻지 않고 실행합니다.
     case addReminder(Spoken)
+    /// 안 끝난 미리알림 조회.
+    case reminders
     /// 그 외. 모델이 답합니다.
     case ask(String)
 }
@@ -45,8 +47,21 @@ enum Router {
     private static let reminderPhrases = [
         "미리알림에 추가", "미리 알림에 추가", "미리알림 추가", "미리 알림 추가",
         "미리알림으로", "미리 알림으로", "미리알림", "미리 알림",
-        "할 일 추가", "할일 추가", "리마인더",
+        "할 일 추가", "할일 추가", "할 일", "할일", "리마인더", "투두",
     ]
+
+    /// 묻는 말. 넣으라는 말과 가릅니다.
+    private static let queryWords = ["뭐", "무엇", "있어", "있나", "보여", "알려", "뭔가", "목록", "리스트"]
+
+    /// 날짜 낱말과 의문사를 걷어내고 알맹이가 남는가.
+    private static func isSubstantive(_ text: String) -> Bool {
+        var rest = text
+        for day in days { rest = rest.replacingOccurrences(of: day.key, with: " ") }
+        for word in queryWords + addWords + ["해줘", "줘", "좀", "내", "나의", "의"] {
+            rest = rest.replacingOccurrences(of: word, with: " ")
+        }
+        return !rest.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     static func route(_ utterance: String) -> NubiIntent {
         let text = utterance.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -55,9 +70,16 @@ enum Router {
         // "내일 장보기 미리알림" 은 일정 조회가 아닙니다. 일정 낱말을 먼저 보면
         // 이 문장이 조회로 새고, 사용자는 추가한 줄 압니다.
         if let phrase = reminderPhrases.first(where: { text.contains($0) }) {
-            // 날짜와 시각을 같이 읽습니다. **마감이 없는 미리알림은 울리지
-            // 않습니다** — 넣었다고 답해놓고 아무 일도 안 일어나던 자리입니다.
-            return .addReminder(DateTalk.parse(text.replacingOccurrences(of: phrase, with: " ")))
+            let rest = text.replacingOccurrences(of: phrase, with: " ")
+            // **넣으라는 말인지 묻는 말인지는 남는 것이 가릅니다.**
+            // "우유 사기 미리알림" 은 넣으라는 것이고 "오늘 할일" 은 묻는 것입니다.
+            // 미리알림 낱말을 떼고 남은 것이 알맹이면 넣기, 날짜나 의문사뿐이면 조회.
+            if isSubstantive(rest) {
+                // 날짜와 시각을 같이 읽습니다. **마감이 없는 미리알림은 울리지
+                // 않습니다** — 넣었다고 답해놓고 아무 일도 안 일어나던 자리입니다.
+                return .addReminder(DateTalk.parse(rest))
+            }
+            return .reminders
         }
 
         let asksCalendar = calendarWords.contains { text.contains($0) }
