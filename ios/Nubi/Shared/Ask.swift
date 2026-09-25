@@ -73,15 +73,20 @@ struct AskNubiIntent: LiveActivityIntent {
         self.stamp = stamp
     }
 
-    /// 답을 말로도 되돌려줍니다 — **짧게.**
+    /// 답을 돌려주지 않습니다.
     ///
-    /// `ProvidesDialog` 를 뺐더니 묻기 버튼이 아무 반응 없이 화면만 꺼졌습니다.
-    /// 값 요청 창은 인텐트가 대화를 이어받을 수 있을 때만 뜹니다. 빌드 7 에서는
-    /// 됐고 8 에서 안 됐는데, 그 사이에 바꾼 것이 이것뿐이었습니다.
+    /// `ProvidesDialog` 를 쓰면 답이 끝난 자리에 확인 배너가 뜨고, **그 배너를
+    /// 닫기 전에는 다음 입력창이 열리지 않습니다.** 실기기에서 배너가 떠 있는
+    /// 동안 묻기가 17번 연속 실패했습니다.
     ///
-    /// 다만 답 전체를 돌려주면 확인 배너가 잠금화면의 시계를 덮습니다. 그래서
-    /// **한 줄만** 돌려줍니다. 자세한 것은 대화창에 있습니다.
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    /// ```
+    /// [묻기] 입력 없이 끝남 Couldn't communicate with a helper application.
+    /// ```
+    ///
+    /// 빌드 8 에서 한 번 뺐다가 되돌린 적이 있는데, 그때 안 됐던 이유는 배너가
+    /// 아니라 턴 표시가 없어서 같은 버튼이 무시된 것이었습니다. 둘은 다른
+    /// 문제였고, 한 번에 하나씩만 바꿨어야 했습니다.
+    func perform() async throws -> some IntentResult {
         let text: String
         if let given = utterance?.trimmingCharacters(in: .whitespacesAndNewlines), !given.isEmpty {
             text = given
@@ -89,21 +94,21 @@ struct AskNubiIntent: LiveActivityIntent {
             do {
                 text = try await $utterance.requestValue("무엇을 물어볼까요")
             } catch {
-                NubiLog.write("[묻기] 입력 없이 끝남 \(error.localizedDescription)")
-                // 잠긴 화면에서는 입력창을 띄우는 시스템 도우미가 붙지 않습니다.
-                // 그냥 끝내면 고장난 버튼처럼 보이고, 실제로 열한 번 연달아
-                // 눌렸습니다. 무엇이 필요한지 대화창에 적고 끝냅니다.
-                if "\(error)".contains("helper application") {
+                let reason = error.localizedDescription
+                NubiLog.write("[묻기] 입력 없이 끝남 \(reason)")
+                // 취소는 정상입니다. 그 밖의 실패는 고장난 버튼처럼 보이므로
+                // 무엇이 막고 있는지 대화창에 적습니다.
+                if reason.contains("helper") {
                     await LiveAnswer.show(asked: "", NubiAnswer(
-                        headline: "잠금을 풀고 눌러주세요",
-                        detail: "글자 입력창은 잠긴 화면에서 열리지 않습니다. 아래 버튼은 잠긴 채로도 됩니다.",
+                        headline: "지금은 글자를 넣을 수 없습니다",
+                        detail: "위에 열려 있는 창을 닫거나 잠금을 풀고 다시 눌러주세요. 오늘·내일 버튼은 잠긴 채로도 됩니다.",
                         failed: true))
                 }
                 throw error
             }
         }
-        let answer = await Nubi.turn(text)
-        return .result(dialog: IntentDialog(stringLiteral: answer.headline))
+        _ = await Nubi.turn(text)
+        return .result()
     }
 }
 
