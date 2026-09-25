@@ -5,23 +5,19 @@ import WidgetKit
 
 /// 잠금화면 위의 대화창.
 ///
-/// 물은 것은 위, 답은 아래, 묻는 자리는 맨 밑. **앱을 열지 않고 읽고, 앱을 열지
-/// 않고 다시 묻습니다.** 좁은 자리라 세 덩이 이상은 두지 않습니다.
+/// **대화의 마지막 한 턴을 비추는 창입니다.** 전문은 앱에 있습니다. 여기는 한 문장
+/// 요약과 그 아래 두어 줄까지입니다 — 잠금화면은 그 이상 안 들어갑니다.
 struct NubiLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: NubiAttributes.self) { context in
-            Chat(state: context.state)
+            Card(state: context.state)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .activityBackgroundTint(nil)
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.center) {
-                    Answer(state: context.state)
-                }
-                DynamicIslandExpandedRegion(.bottom) {
-                    Actions(thinking: context.state.thinking, stamp: context.state.stamp)
-                }
+                DynamicIslandExpandedRegion(.center) { Reply(state: context.state) }
+                DynamicIslandExpandedRegion(.bottom) { Actions(state: context.state) }
             } compactLeading: {
                 Mark(size: 18, state: .idle)
             } compactTrailing: {
@@ -35,25 +31,25 @@ struct NubiLiveActivity: Widget {
     }
 }
 
-private struct Chat: View {
+private struct Card: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if !state.asked.isEmpty { Question(text: state.asked).padding(.bottom, 10) }
-            Answer(state: state)
-            Actions(thinking: state.thinking, stamp: state.stamp).padding(.top, 13)
+            if !state.asked.isEmpty { Asked(text: state.asked).padding(.bottom, 11) }
+            Reply(state: state)
+            Actions(state: state).padding(.top, 14)
         }
     }
 }
 
 /// 물은 말. 오른쪽에 붙어 대화라는 것을 말없이 알립니다.
-private struct Question: View {
+private struct Asked: View {
     let text: String
 
     var body: some View {
         HStack(spacing: 0) {
-            Spacer(minLength: 48)
+            Spacer(minLength: 52)
             Text(text)
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -64,15 +60,14 @@ private struct Question: View {
                 .background(
                     UnevenRoundedRectangle(
                         topLeadingRadius: 14, bottomLeadingRadius: 14,
-                        bottomTrailingRadius: 4, topTrailingRadius: 14,
+                        bottomTrailingRadius: 5, topTrailingRadius: 14,
                         style: .continuous
-                    )
-                    .fill(.primary.opacity(0.08)))
+                    ).fill(.primary.opacity(0.08)))
         }
     }
 }
 
-private struct Answer: View {
+private struct Reply: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
@@ -88,7 +83,7 @@ private struct Answer: View {
                     Text(state.detail)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                        .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -104,45 +99,40 @@ private struct Answer: View {
     }
 }
 
-/// 묻는 자리.
+/// 누르는 자리.
 ///
 /// **글자를 치는 버튼은 여기 없습니다.** 인텐트가 직접 값을 요구하는 길은 첫 번만
 /// 열리고 막힙니다. 잠금화면에서 글자를 받는 길은 단축어 앱의 "텍스트 입력 요청"
 /// 하나이고, 그 버튼은 잠금화면 아래 손전등 자리에 놓입니다.
-///
-/// 여기 남는 것은 글자 없이 누르는 것들과 앱을 여는 화살표입니다.
 private struct Actions: View {
-    let thinking: Bool
-    let stamp: Int
+    let state: NubiAttributes.ContentState
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 7) {
             ForEach(Quick.all, id: \.self) { phrase in
-                Button(intent: QuickAskIntent(phrase, stamp: stamp)) {
+                Button(intent: QuickAskIntent(phrase, stamp: state.stamp)) {
                     Text(phrase)
-                        .font(.caption2.weight(.semibold))
-                        .frame(maxWidth: .infinity, minHeight: 15)
+                        .font(.caption2.weight(.bold))
+                        .frame(maxWidth: .infinity, minHeight: 16)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.teal)
             }
-
             Button(intent: OpenNubiIntent()) {
-                Image(systemName: "arrow.up.forward")
-                    .font(.caption2.weight(.bold))
-                    .frame(minHeight: 15)
+                Label("전문", systemImage: "arrow.up.forward")
+                    .font(.caption2.weight(.semibold))
+                    .frame(maxWidth: .infinity, minHeight: 16)
             }
             .buttonStyle(.bordered)
             .tint(.primary)
         }
         .buttonBorderShape(.capsule)
         .controlSize(.small)
-        .disabled(thinking)
-        .opacity(thinking ? 0.45 : 1)
+        .disabled(state.thinking)
+        .opacity(state.thinking ? 0.45 : 1)
     }
 }
 
-/// 누비의 표시.
 private struct Mark: View {
     enum State { case idle, thinking, warning }
 
@@ -153,10 +143,7 @@ private struct Mark: View {
         ZStack {
             Circle().fill(fill)
             if state == .thinking {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .tint(.white)
-                    .scaleEffect(size / 52)
+                ProgressView().progressViewStyle(.circular).tint(.white).scaleEffect(size / 52)
             } else {
                 Image(systemName: state == .warning ? "exclamationmark" : "sparkle")
                     .font(.system(size: size * 0.46, weight: .bold))
