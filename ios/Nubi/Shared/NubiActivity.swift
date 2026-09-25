@@ -54,7 +54,10 @@ enum LiveAnswer {
                 content: .init(state: state, staleDate: nil))
             return true
         } catch {
+            // 확장과 배경의 앱은 대화창을 **새로 만들 수 없습니다.** 갱신만 됩니다.
+            // 답을 버리지 않고 적어둡니다 — 앱을 열면 거기 있습니다.
             NubiLog.write("[활동] 시작 실패 \(error.localizedDescription)")
+            Parked.save(state)
             return false
         }
     }
@@ -77,5 +80,31 @@ enum LiveAnswer {
         for activity in Activity<NubiAttributes>.activities {
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }
+    }
+}
+
+
+/// 띄울 자리가 없어 못 보여준 답.
+///
+/// 대화창이 닫혀 있으면 잠금화면 입력은 되는데 답을 놓을 곳이 없습니다.
+/// 버리지 않고 App Group 에 적어두고, 앱을 열면 거기 있습니다.
+enum Parked {
+    private static var url: URL? {
+        FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: NubiLog.group)?
+            .appendingPathComponent("parked.json")
+    }
+
+    static func save(_ state: NubiAttributes.ContentState) {
+        guard let url, let data = try? JSONEncoder().encode(state) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    static func take() -> NubiAttributes.ContentState? {
+        guard let url, let data = try? Data(contentsOf: url),
+              let state = try? JSONDecoder().decode(NubiAttributes.ContentState.self, from: data)
+        else { return nil }
+        try? FileManager.default.removeItem(at: url)
+        return state
     }
 }
