@@ -47,6 +47,7 @@ enum LiveAnswer {
             await running.update(ActivityContent(state: state, staleDate: nil))
             return true
         }
+        NubiLog.write("[활동] 떠 있는 대화창이 없어 새로 만듭니다")
         do {
             _ = try Activity.request(
                 attributes: NubiAttributes(started: Date()),
