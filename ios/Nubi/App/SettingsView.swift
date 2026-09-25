@@ -11,7 +11,6 @@ struct SettingsView: View {
     @State private var savedKey = Secrets.masked
     @State private var eventAuth = auth(.event)
     @State private var reminderAuth = auth(.reminder)
-    @State private var liveIsOn = LiveAnswer.isRunning
     @State private var log = ""
     @State private var copied = false
     @State private var showDiagnostics = false
@@ -20,7 +19,6 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                lockScreen
                 permissions
                 model
                 conversation
@@ -33,40 +31,6 @@ struct SettingsView: View {
                     Button("완료") { dismiss() }.font(.body.weight(.semibold))
                 }
             }
-        }
-    }
-
-    private var lockScreen: some View {
-        Section {
-            HStack {
-                Text("대화창")
-                Spacer()
-                Text(liveIsOn ? "떠 있음" : "꺼짐").foregroundStyle(.secondary)
-            }
-            if liveIsOn {
-                Button("잠금화면에서 내리기", role: .destructive) {
-                    LiveAnswer.dismissAll()
-                    liveIsOn = false
-                    onChange()
-                }
-            } else {
-                Button("잠금화면에 띄우기") {
-                    Task {
-                        if let last = Thread.last {
-                            await LiveAnswer.show(last)
-                        } else {
-                            await LiveAnswer.welcome()
-                        }
-                        liveIsOn = LiveAnswer.isRunning
-                        onChange()
-                    }
-                }
-            }
-            NavigationLink("단축어 만드는 법") { ShortcutGuide(onDone: onChange) }
-        } header: {
-            Text("잠금화면")
-        } footer: {
-            Text("내리면 잠금화면에서 다시 못 띄웁니다. 앱을 열거나 제어 센터의 누비 버튼을 눌러야 돌아옵니다.")
         }
     }
 
@@ -176,7 +140,6 @@ struct SettingsView: View {
         eventAuth = Self.auth(.event)
         reminderAuth = Self.auth(.reminder)
         savedKey = Secrets.masked
-        liveIsOn = LiveAnswer.isRunning
         onChange()
     }
 
