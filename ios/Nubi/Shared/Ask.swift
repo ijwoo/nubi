@@ -100,8 +100,8 @@ struct AskNubiIntent: LiveActivityIntent {
                 // 무엇이 막고 있는지 대화창에 적습니다.
                 if reason.contains("helper") {
                     await LiveAnswer.show(asked: "", NubiAnswer(
-                        headline: "지금은 글자를 넣을 수 없습니다",
-                        detail: "위에 열려 있는 창을 닫거나 잠금을 풀고 다시 눌러주세요. 오늘·내일 버튼은 잠긴 채로도 됩니다.",
+                        headline: "여기서는 글자를 못 넣습니다",
+                        detail: "오른쪽 화살표로 앱에서 물어보세요. 오늘·내일 버튼은 잠긴 채로도 됩니다.",
                         failed: true))
                 }
                 throw error
@@ -153,4 +153,19 @@ struct NubiShortcuts: AppShortcutsProvider {
             shortTitle: "오늘 일정",
             systemImageName: "calendar")
     }
+}
+
+
+/// 앱을 열어 묻습니다.
+///
+/// 잠금화면 입력창은 **앱 프로세스가 막 떴을 때 한 번만** 열립니다. 실기기에서
+/// 그 규칙이 반복됐습니다 — 프로세스 줄 바로 뒤 첫 요청만 성공하고, 그 뒤로는
+/// `Couldn't communicate with a helper application` 입니다.
+///
+/// 그래서 확실한 길을 하나 둡니다. 잠금을 풀어야 하지만 언제나 됩니다.
+struct OpenNubiIntent: AppIntent {
+    static let title: LocalizedStringResource = "누비 열기"
+    static let openAppWhenRun = true
+
+    func perform() async throws -> some IntentResult { .result() }
 }
