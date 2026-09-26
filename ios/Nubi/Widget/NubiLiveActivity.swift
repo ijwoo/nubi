@@ -13,7 +13,11 @@ struct NubiLiveActivity: Widget {
             Card(state: context.state)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .activityBackgroundTint(nil)
+                // **위젯은 배경을 실시간으로 흐릴 수 없습니다.** 시스템이 주는
+                // 반투명을 옅게 깔고, 그 위에 말풍선을 재질로 얹습니다. 배경까지
+                // 투명하게 두면 밝은 배경화면에서 글씨가 안 읽힙니다.
+                .activityBackgroundTint(Color(uiColor: .systemBackground).opacity(0.55))
+                .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
@@ -115,12 +119,15 @@ private struct Mine: View {
                 .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background(
-                    UnevenRoundedRectangle(
+                .background {
+                    let shape = UnevenRoundedRectangle(
                         topLeadingRadius: 15, bottomLeadingRadius: 15,
                         bottomTrailingRadius: 5, topTrailingRadius: 15,
-                        style: .continuous
-                    ).fill(.primary.opacity(0.07)))
+                        style: .continuous)
+                    shape.fill(.ultraThinMaterial)
+                    shape.fill(.primary.opacity(0.04))
+                    shape.stroke(.primary.opacity(0.08), lineWidth: 0.5)
+                }
         }
     }
 }
@@ -146,12 +153,15 @@ private struct Theirs: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(
-                UnevenRoundedRectangle(
+            .background {
+                let shape = UnevenRoundedRectangle(
                     topLeadingRadius: 5, bottomLeadingRadius: 15,
                     bottomTrailingRadius: 15, topTrailingRadius: 15,
-                    style: .continuous
-                ).fill(.primary.opacity(0.09)))
+                    style: .continuous)
+                shape.fill(.ultraThinMaterial)
+                shape.fill(.primary.opacity(0.06))
+                shape.stroke(.primary.opacity(0.1), lineWidth: 0.5)
+            }
             Spacer(minLength: 0)
         }
     }
