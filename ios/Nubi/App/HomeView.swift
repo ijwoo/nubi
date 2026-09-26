@@ -54,7 +54,16 @@ struct HomeView: View {
             .sheet(isPresented: $showSettings) { SettingsView(onChange: reload) }
         }
         .task { await start() }
-        .onChange(of: phase) { _, now in if now == .active { reload() } }
+        .onChange(of: phase) { _, now in
+            // 앞에 있을 때만 위치를 물을 수 있습니다.
+            Places.foreground = now == .active
+            if now == .active {
+                reload()
+                // 앱이 앞에 올 때마다 자리를 갱신합니다. **잠금 상태에서는 새로
+                // 못 잡습니다** — 잠금화면 버튼이 쓰는 것은 이때 잡아둔 값입니다.
+                Task { await store.refreshPlace() }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .nubiOpenSettings)) { _ in
             showSettings = true
         }
@@ -87,6 +96,7 @@ struct HomeView: View {
     }
 
     private func start() async {
+        Places.foreground = true
         reload()
         await store.revive()
         await store.refreshPlace()
