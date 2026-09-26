@@ -98,10 +98,18 @@ enum Router {
     /// **"완료" 와 "체크" 만 봅니다.** "오늘 운동 했어" 같은 말까지 잡으면 그냥
     /// 하는 말이 미리알림 조작이 됩니다.
     private static func completedName(in text: String) -> String? {
-        for mark in ["완료", "체크"] where text.hasSuffix(mark) {
-            let name = String(text.dropLast(mark.count))
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            return name.isEmpty ? nil : name
+        // "완료함", "완료했어" 도 같은 말입니다. 끝이 "완료" 여야만 본다면
+        // "오늘 운동 완료함" 이 모델로 샙니다.
+        let marks = ["완료함", "완료했어", "완료했음", "완료", "체크함", "체크했어", "체크"]
+        for mark in marks where text.hasSuffix(mark) {
+            var name = String(text.dropLast(mark.count))
+            // 날짜 낱말은 이름이 아닙니다. "오늘 운동 완료함" 의 이름은 "운동" 입니다.
+            for day in ["오늘", "어제", "내일"] {
+                name = name.replacingOccurrences(of: day, with: " ")
+            }
+            let cleaned = name.split(separator: " ", omittingEmptySubsequences: true)
+                .joined(separator: " ")
+            return cleaned.isEmpty ? nil : cleaned
         }
         return nil
     }
