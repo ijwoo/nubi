@@ -34,6 +34,9 @@ struct NubiAttributes: ActivityAttributes {
         /// 승인을 기다리는 일의 버튼 이름. 있으면 얼굴이 긴장합니다.
         var confirm: String = ""
 
+        /// 누를 것이 있는가. 없으면 말풍선 둘만 남습니다.
+        var hasAction: Bool { !confirm.isEmpty || !map.isEmpty }
+
         var progress: Double {
             guard !steps.isEmpty else { return thinking ? 0.35 : 1 }
             return Double(steps.filter(\.done).count) / Double(steps.count)
