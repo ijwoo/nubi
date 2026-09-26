@@ -34,7 +34,7 @@ enum Places {
 
         var errorDescription: String? {
             switch self {
-            case .noLocation: "지금 어디인지 모릅니다. 누비를 한 번 열어 위치를 허용해 주세요."
+            case .noLocation: "아직 위치를 모릅니다. 누비를 한 번 열면 그때 자리를 기억해 둡니다."
             case let .nothingFound(what): "근처에서 \(what)을 찾지 못했습니다."
             }
         }
@@ -60,12 +60,19 @@ enum Places {
     /// 앱 안에서 도는가. 확장에서는 위치를 물을 수 없습니다.
     static var inApp: Bool { Bundle.main.bundleURL.pathExtension != "appex" }
 
+    /// 앱이 지금 앞에 있는가.
+    ///
+    /// **앞에 없을 때 권한을 물으면 대화상자가 뜰 수 없고 답도 영영 오지 않습니다.**
+    /// 잠금화면에서 "근처 헬스장" 을 물었을 때 대화창이 "찾는 중" 에서 멈춘
+    /// 이유였습니다. 확장은 이 값을 세우지 않으므로 늘 거짓입니다.
+    nonisolated(unsafe) static var foreground = false
+
     /// 앱에서만 부릅니다.
     ///
     /// **허용 여부를 먼저 따지지 않습니다.** 아직 안 물어본 상태에서 막으면
     /// 묻는 데까지 가질 못합니다 — 권한 대화상자가 안 뜨던 이유였습니다.
     static func refreshLocation() async {
-        guard inApp, let here = await Locator.shared.current() else { return }
+        guard inApp, let here = await Locator.shared.current(mayAsk: foreground) else { return }
         store?.set(here.coordinate.latitude, forKey: latKey)
         store?.set(here.coordinate.longitude, forKey: lonKey)
         NubiLog.write("[위치] 갱신")
@@ -113,10 +120,11 @@ private final class Locator: NSObject, CLLocationManagerDelegate, @unchecked Sen
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
     }
 
-    func current() async -> CLLocation? {
+    func current(mayAsk: Bool) async -> CLLocation? {
         switch manager.authorizationStatus {
         case .notDetermined:
-            guard await requestPermission() else { return nil }
+            // 앞에 없으면 묻지 않습니다. 물어봐야 답이 오지 않습니다.
+            guard mayAsk, await requestPermission() else { return nil }
         case .authorizedWhenInUse, .authorizedAlways:
             break
         default:
@@ -125,10 +133,18 @@ private final class Locator: NSObject, CLLocationManagerDelegate, @unchecked Sen
         return await requestFix()
     }
 
+    /// 기다리는 모든 자리에 시한을 둡니다.
+    ///
+    /// 대리자가 끝내 답하지 않는 경우가 있습니다. 그러면 대화창이 "찾는 중" 에서
+    /// 영영 멈춥니다. **답이 없는 것도 답으로 만들어야 합니다.**
     private func requestPermission() async -> Bool {
         await withCheckedContinuation { continuation in
             askingPermission = continuation
             manager.requestWhenInUseAuthorization()
+            arm(seconds: 20) { [weak self] in
+                self?.askingPermission?.resume(returning: Places.isAllowed)
+                self?.askingPermission = nil
+            }
         }
     }
 
@@ -136,6 +152,14 @@ private final class Locator: NSObject, CLLocationManagerDelegate, @unchecked Sen
         await withCheckedContinuation { continuation in
             waitingForFix = continuation
             manager.requestLocation()
+            arm(seconds: 8) { [weak self] in self?.finish(nil) }
+        }
+    }
+
+    private func arm(seconds: Double, _ giveUp: @escaping () -> Void) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(seconds))
+            giveUp()
         }
     }
 

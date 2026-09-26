@@ -14,7 +14,11 @@ enum Nubi {
         let started = Date()
         // 앞의 말을 같이 보냅니다. 없으면 "액션으로" 같은 말이 통하지 않습니다.
         let history = Array(Thread.load().suffix(6))
-        let answer = await respond(route, history: history)
+        // **답이 없는 것도 답으로 만듭니다.** 어딘가에서 멈추면 대화창이 "생각 중"
+        // 인 채로 남고, 사람은 고장난 줄 압니다.
+        let answer = await within(seconds: 30) { await respond(route, history: history) }
+            ?? NubiAnswer(headline: "시간이 너무 걸립니다",
+                          detail: "다시 시도해 주세요.", failed: true)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
                         viaIntent: viaIntent, map: answer.map)
@@ -40,6 +44,22 @@ enum Nubi {
         }
         lines.append(.init(label: "답", detail: "만드는 중…", done: false))
         return lines
+    }
+
+    /// 시한 안에 못 끝내면 nil.
+    private static func within<T: Sendable>(
+        seconds: Double, _ work: @Sendable @escaping () async -> T
+    ) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await work() }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(seconds))
+                return nil
+            }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
     }
 
     static func respond(to utterance: String, history: [Turn] = []) async -> NubiAnswer {
