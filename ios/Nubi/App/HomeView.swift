@@ -61,7 +61,10 @@ struct HomeView: View {
                 reload()
                 // 앱이 앞에 올 때마다 자리를 갱신합니다. **잠금 상태에서는 새로
                 // 못 잡습니다** — 잠금화면 버튼이 쓰는 것은 이때 잡아둔 값입니다.
-                Task { await store.refreshPlace() }
+                Task {
+                    await store.refreshPlace()
+                    await Briefing.reschedule()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .nubiOpenSettings)) { _ in
@@ -100,6 +103,7 @@ struct HomeView: View {
         reload()
         await store.revive()
         await store.refreshPlace()
+        await Briefing.reschedule()
     }
 
     private func reload() {
