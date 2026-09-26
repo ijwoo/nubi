@@ -16,10 +16,14 @@ struct SettingsView: View {
     @State private var showDiagnostics = false
     @State private var confirmClear = false
     @State private var keySaved = false
+    @State private var briefingOn = Briefing.isOn
+    @State private var briefingAt = Calendar.current.date(
+        from: DateComponents(hour: Briefing.hour, minute: Briefing.minute)) ?? Date()
 
     var body: some View {
         NavigationStack {
             List {
+                briefing
                 permissions
                 model
                 conversation
@@ -32,6 +36,36 @@ struct SettingsView: View {
                     Button("완료") { dismiss() }.font(.body.weight(.semibold))
                 }
             }
+        }
+    }
+
+    private var briefing: some View {
+        Section {
+            Toggle("아침 브리핑", isOn: $briefingOn)
+                .onChange(of: briefingOn) { _, now in
+                    Task {
+                        if now, await Briefing.requestPermission() == false {
+                            briefingOn = false
+                            return
+                        }
+                        Briefing.isOn = now
+                        await Briefing.reschedule()
+                        Haptic.tap()
+                    }
+                }
+            if briefingOn {
+                DatePicker("시각", selection: $briefingAt, displayedComponents: .hourAndMinute)
+                    .onChange(of: briefingAt) { _, now in
+                        let parts = Calendar.current.dateComponents([.hour, .minute], from: now)
+                        Briefing.hour = parts.hour ?? 8
+                        Briefing.minute = parts.minute ?? 0
+                        Task { await Briefing.reschedule() }
+                    }
+            }
+        } header: {
+            Text("먼저 말하기")
+        } footer: {
+            Text("정해진 시각에 오늘 일정과 안 끝난 할일을 알려줍니다. 일주일치를 미리 예약하므로 가끔 앱을 열어주세요.")
         }
     }
 

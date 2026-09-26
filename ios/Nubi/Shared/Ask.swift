@@ -113,7 +113,7 @@ enum Nubi {
             answer = NubiAnswer(headline: "\(pending.kind.verb)하지 못했습니다",
                                 detail: error.localizedDescription, source: .events, failed: true)
         }
-        let turn = Turn(asked: pending.kind.verb, headline: answer.headline, detail: answer.detail,
+        let turn = Turn(asked: "승인", headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(), viaIntent: true)
         Thread.append(turn)
         await LiveAnswer.show(turn)
@@ -193,7 +193,11 @@ enum Nubi {
                                       source: .reminders, failed: true)
                 }
                 try Events.complete(only)
-                return NubiAnswer(headline: "\(only.title) 완료", source: .reminders)
+                // "우유 사기 완료" 라고 물었는데 "우유 사기 완료" 라고 답하면
+                // 메아리처럼 들립니다. 무엇이 일어났는지를 말합니다.
+                return NubiAnswer(headline: "‘\(only.title)’ 을 끝냈습니다",
+                                  detail: "안 끝난 것 \(max(0, open.count - 1))개 남았습니다.",
+                                  source: .reminders)
             } catch {
                 return NubiAnswer(headline: "미리알림을 바꿀 수 없습니다",
                                   detail: error.localizedDescription, source: .reminders, failed: true)

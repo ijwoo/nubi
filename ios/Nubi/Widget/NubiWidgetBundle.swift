@@ -6,5 +6,6 @@ struct NubiWidgetBundle: WidgetBundle {
     var body: some Widget {
         NubiLiveActivity()
         TodayControl()
+        TodayWidget()
     }
 }
