@@ -14,6 +14,8 @@ enum NubiIntent: Equatable {
     case addReminder(Spoken)
     /// 안 끝난 미리알림 조회.
     case reminders
+    /// 가까운 곳 찾기.
+    case places(String)
     /// 그 외. 모델이 답합니다.
     case ask(String)
 }
@@ -40,6 +42,9 @@ enum Router {
     /// 샜습니다 — "오늘" 하나에 걸린 것입니다.
     private static let calendarWords = ["일정", "스케줄", "약속", "캘린더", "뭐 있"]
 
+    /// 가까운 곳을 찾는 말. **이 낱말이 있으면 지도에 묻습니다.**
+    private static let nearWords = ["근처", "주변", "가까운", "가까이"]
+
     /// 넣으라는 말. 조회와 추가를 가릅니다.
     private static let addWords = ["추가", "등록", "잡아", "넣어", "만들어", "저장"]
 
@@ -59,6 +64,16 @@ enum Router {
     private static let questionWords = [
         "뭐", "무엇", "어때", "어떨", "추천", "할까", "좋을까", "어디", "언제", "왜", "어떻게", "얼마",
     ]
+
+    /// 무엇을 찾는지만 남깁니다. "집 근처 헬스장 찾아줘" → "헬스장".
+    private static func placeQuery(from text: String, removing near: String) -> String {
+        var rest = text.replacingOccurrences(of: near, with: " ")
+        for word in ["찾아줘", "찾아 줘", "알려줘", "알려 줘", "추천해줘", "추천", "어디", "있어", "있나", "좀", "집", "여기", "이"] {
+            rest = rest.replacingOccurrences(of: word, with: " ")
+        }
+        let cleaned = rest.split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
+        return cleaned.isEmpty ? "카페" : cleaned
+    }
 
     /// 날짜 낱말과 의문사를 걷어내고 알맹이가 남는가.
     private static func isSubstantive(_ text: String) -> Bool {
@@ -87,6 +102,11 @@ enum Router {
                 return .addReminder(DateTalk.parse(rest))
             }
             return .reminders
+        }
+
+        // "집 근처 헬스장 찾아줘" — 모델도 웹도 아니고 지도가 답합니다.
+        if let near = nearWords.first(where: { text.contains($0) }) {
+            return .places(placeQuery(from: text, removing: near))
         }
 
         let asksCalendar = calendarWords.contains { text.contains($0) }

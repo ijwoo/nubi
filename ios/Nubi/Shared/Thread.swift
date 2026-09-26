@@ -2,13 +2,14 @@ import Foundation
 
 /// 답이 어디서 나왔는가. 네트워크를 탔는지 아닌지가 여기서 보입니다.
 enum Source: String, Codable {
-    case events, reminders, model, none
+    case events, reminders, model, places, none
 
     var label: String? {
         switch self {
         case .events: "일정"
         case .reminders: "미리알림"
         case .model: "모델"
+        case .places: "지도"
         case .none: nil
         }
     }
@@ -27,6 +28,8 @@ struct Turn: Codable, Identifiable, Hashable {
     var at: Date
     /// 앱 밖에서 물었는가. 잠금화면과 단축어가 여기 해당합니다.
     var viaIntent: Bool
+    /// 길찾기 주소. 장소를 찾았을 때만 있습니다.
+    var map: String = ""
 
     var full: String { detail.isEmpty ? headline : "\(headline)\n\(detail)" }
 

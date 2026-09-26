@@ -36,6 +36,15 @@ final class Store {
         busy = false
     }
 
+    /// 위치를 한 번 갱신합니다.
+    ///
+    /// **확장은 위치를 물을 수 없습니다.** 잠금화면 버튼이 장소를 찾으려면 앱이
+    /// 마지막으로 알던 자리가 있어야 합니다.
+    func refreshPlace() async {
+        guard Places.isAllowed else { return }
+        await Places.refreshLocation()
+    }
+
     /// 대화창을 살립니다. **새로 만들 수 있는 것은 앞에 떠 있는 앱뿐입니다.**
     func revive() async {
         if let last = Thread.last {
