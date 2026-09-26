@@ -287,7 +287,10 @@ struct AskNubiIntent: LiveActivityIntent {
     }
 }
 
-/// 잠금화면에 미리 놓는 한 마디. 글자를 치지 않고 누르기만 합니다.
+/// 미리 정한 한 마디.
+///
+/// 잠금화면 카드에서는 뺐습니다 — 컨트롤과 단축어가 이미 하는 일이라 겹쳤고,
+/// 답이 들어갈 자리를 먹었습니다. **단축어에서는 그대로 쓸 수 있습니다.**
 struct QuickAskIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "미리 정한 질문"
     static let openAppWhenRun = false
@@ -314,11 +317,10 @@ struct QuickAskIntent: LiveActivityIntent {
     }
 }
 
-/// 답 한 줄을 한 시간 뒤 미리알림으로 넣습니다.
+/// 물은 말을 한 시간 뒤 미리알림으로 넣습니다.
 ///
-/// **어떤 답에도 붙는 다음 손길입니다.** 잠금화면에서 답을 읽고 나서 "이따 다시"
-/// 를 누를 자리가 없었습니다. 길찾기 같은 것은 답이 무엇을 가리키는지 알아야
-/// 하지만 이건 몰라도 됩니다.
+/// 잠금화면 카드에서는 뺐습니다 — 늘 떠 있을 만큼 자주 쓰지 않으면서 답이
+/// 들어갈 자리를 먹었습니다. **단축어에서는 그대로 쓸 수 있습니다.**
 struct RemindLaterIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "한 시간 뒤 알림"
     static let openAppWhenRun = false

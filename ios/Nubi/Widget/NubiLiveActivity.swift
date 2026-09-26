@@ -96,7 +96,7 @@ private struct Card: View {
         VStack(alignment: .leading, spacing: 7) {
             if !state.asked.isEmpty { Mine(text: state.asked) }
             Theirs(state: state)
-            Actions(state: state).padding(.top, 3)
+            if state.hasAction { Actions(state: state).padding(.top, 3) }
         }
     }
 }
@@ -138,7 +138,7 @@ private struct Theirs: View {
                 Text(said)
                     .font(.subheadline)
                     .foregroundStyle(state.failed ? Tone.warning.color : .primary)
-                    .lineLimit(3)
+                    .lineLimit(state.hasAction ? 3 : 4)
                     .fixedSize(horizontal: false, vertical: true)
                 if state.thinking {
                     ForEach(state.steps, id: \.self) { StepRow(step: $0) }
@@ -181,15 +181,15 @@ private struct StepRow: View {
 
 /// 누르는 자리.
 ///
-/// **글자를 치는 버튼은 여기 없습니다.** 인텐트가 직접 값을 요구하는 길은 첫 번만
-/// 열리고 막힙니다. 잠금화면에서 글자를 받는 길은 단축어 앱의 "텍스트 입력 요청"
-/// 하나이고, 그 버튼은 잠금화면 아래 손전등 자리에 놓입니다.
+/// **뜻이 있을 때만 나옵니다.** 늘 떠 있던 오늘·내일·전문은 뺐습니다.
+/// 대화창을 그냥 탭하면 앱이 열리니 전문 버튼은 같은 일을 하나 더 둔 것이었고,
+/// 오늘·내일은 잠금화면 컨트롤과 단축어가 이미 합니다. 겹치는 버튼이 답이
+/// 들어갈 자리를 먹고 있었습니다.
 private struct Actions: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
         HStack(spacing: 7) {
-            // 승인이 기다리면 그것이 첫 버튼입니다. 다른 손길보다 먼저입니다.
             if !state.confirm.isEmpty {
                 Button(intent: ConfirmIntent(stamp: state.stamp)) {
                     Label(state.confirm, systemImage: "checkmark.shield.fill")
@@ -206,34 +206,7 @@ private struct Actions: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Tone.done.color)
-            } else {
-                Button(intent: RemindLaterIntent(state.asked, note: state.headline, stamp: state.stamp)) {
-                    Label("1시간 뒤", systemImage: "bell")
-                        .font(.caption2.weight(.bold))
-                        .frame(maxWidth: .infinity, minHeight: 16)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Tone.done.color)
             }
-
-            ForEach(Quick.all, id: \.self) { phrase in
-                Button(intent: QuickAskIntent(phrase, stamp: state.stamp)) {
-                    Text(phrase)
-                        .font(.caption2.weight(.semibold))
-                        .frame(maxWidth: .infinity, minHeight: 16)
-                }
-                .buttonStyle(.bordered)
-                .tint(.primary)
-            }
-
-            Button(intent: OpenNubiIntent()) {
-                Image(systemName: "arrow.up.forward")
-                    .font(.caption2.weight(.bold))
-                    .frame(minHeight: 16)
-                    .padding(.horizontal, 2)
-            }
-            .buttonStyle(.bordered)
-            .tint(.primary)
         }
         .buttonBorderShape(.capsule)
         .controlSize(.small)
@@ -250,9 +223,4 @@ extension Malpoongi.Mood {
         if state.thinking { return .thinking }
         return state.asked.isEmpty ? .listening : .done
     }
-}
-
-/// 글자를 치지 않고 누르기만 하는 한 마디. 잠금화면은 좁으므로 둘까지입니다.
-enum Quick {
-    static let all = ["오늘", "내일"]
 }
