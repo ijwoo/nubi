@@ -30,6 +30,7 @@
 		A15C13D2E82AD194BEF631E4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE932A11C78E0A37A845E617 /* HomeView.swift */; };
 		A1DA9B6B4D8091103B167A7B /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B34F5F5B4A10E59AE49137 /* ChatView.swift */; };
 		AC617D3B909F273257DD75E2 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B7FC438A30E95882F284FA /* EventsView.swift */; };
+		B4626BA5F1FFD6C00EE9C9FE /* Pending.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3090F6C79919E1D5F765A685 /* Pending.swift */; };
 		C89878D8B58E5E6B458FA23F /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA683881492FFE4EF4FDD2D7 /* Model.swift */; };
 		C91E3A58B1D37726106C5E15 /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79C970ABA617C51650B7FDAC /* Places.swift */; };
 		CBFAB380E3112269489A2BF5 /* DateTalk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8616D9339486DB06630BC390 /* DateTalk.swift */; };
@@ -42,6 +43,7 @@
 		DC1EED99BEEE8B4CC00CA1E4 /* NubiLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8022C1BA164C96691288B821 /* NubiLog.swift */; };
 		DCA531E8FBA71F9DAAAABEE5 /* NubiLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 788D1D53B323752F6AE729DE /* NubiLiveActivity.swift */; };
 		E4F04C6055158A1714A2C172 /* Ask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BB817CEAA3982620C3845E7 /* Ask.swift */; };
+		E6C48B21F376F734447BBDE6 /* Pending.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3090F6C79919E1D5F765A685 /* Pending.swift */; };
 		F3A7BAB398E64E390A5745B6 /* NubiActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */; };
 		F638395D42778FF779434E75 /* Thread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B53AA3231F9841C1CD70652 /* Thread.swift */; };
 		F7B7D57469070EC6864FACA9 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E28B4AEBB1FA38AA2C53F58 /* SettingsView.swift */; };
@@ -77,6 +79,7 @@
 		2B53AA3231F9841C1CD70652 /* Thread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Thread.swift; sourceTree = "<group>"; };
 		2E28B4AEBB1FA38AA2C53F58 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		2FBB56C759A2052E60904159 /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+		3090F6C79919E1D5F765A685 /* Pending.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pending.swift; sourceTree = "<group>"; };
 		3B6454CB77CA45258A5A76AE /* NubiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiApp.swift; sourceTree = "<group>"; };
 		3F32EF390B68B28BEE766616 /* Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Events.swift; sourceTree = "<group>"; };
 		42A301C044F573CFE8DA01DB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -168,6 +171,7 @@
 				BA683881492FFE4EF4FDD2D7 /* Model.swift */,
 				A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */,
 				8022C1BA164C96691288B821 /* NubiLog.swift */,
+				3090F6C79919E1D5F765A685 /* Pending.swift */,
 				79C970ABA617C51650B7FDAC /* Places.swift */,
 				2FBB56C759A2052E60904159 /* Secrets.swift */,
 				2B53AA3231F9841C1CD70652 /* Thread.swift */,
@@ -283,6 +287,7 @@
 				F3A7BAB398E64E390A5745B6 /* NubiActivity.swift in Sources */,
 				9B47E9EFDCE28613D36082D3 /* NubiApp.swift in Sources */,
 				DC1EED99BEEE8B4CC00CA1E4 /* NubiLog.swift in Sources */,
+				E6C48B21F376F734447BBDE6 /* Pending.swift in Sources */,
 				3D72EE1D4D629C595DDF22FC /* Places.swift in Sources */,
 				D051D236D24C5757CF3CDF9B /* RemindersView.swift in Sources */,
 				CF6B141DD9BEED73FCF70DE0 /* Secrets.swift in Sources */,
@@ -309,6 +314,7 @@
 				DCA531E8FBA71F9DAAAABEE5 /* NubiLiveActivity.swift in Sources */,
 				05E4D5AAB6195D76F53896F6 /* NubiLog.swift in Sources */,
 				CD372470BA96FD17C70BBB28 /* NubiWidgetBundle.swift in Sources */,
+				B4626BA5F1FFD6C00EE9C9FE /* Pending.swift in Sources */,
 				C91E3A58B1D37726106C5E15 /* Places.swift in Sources */,
 				D2971726BA3573837CEA879E /* Secrets.swift in Sources */,
 				2A829C3D19C12CF18DEB67B1 /* Thread.swift in Sources */,
@@ -333,7 +339,7 @@
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 30;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -356,7 +362,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 30;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -439,7 +445,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 30;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -517,7 +523,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 30;
+				CURRENT_PROJECT_VERSION = 31;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

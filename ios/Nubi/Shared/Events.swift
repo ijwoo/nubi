@@ -108,6 +108,15 @@ enum Events {
         try store.remove(reminder, commit: true)
     }
 
+    static func move(eventId: String, to start: Date) throws {
+        let store = EKEventStore()
+        guard let event = store.event(withIdentifier: eventId) else { return }
+        let length = event.endDate.timeIntervalSince(event.startDate)
+        event.startDate = start
+        event.endDate = start.addingTimeInterval(length)
+        try store.save(event, span: .thisEvent, commit: true)
+    }
+
     static func remove(eventId: String) throws {
         let store = EKEventStore()
         guard let event = store.event(withIdentifier: eventId) else { return }

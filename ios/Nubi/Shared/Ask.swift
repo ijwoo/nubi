@@ -22,7 +22,7 @@ enum Nubi {
                           detail: "다시 시도해 주세요.", failed: true)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
-                        viaIntent: viaIntent, map: answer.map)
+                        viaIntent: viaIntent, map: answer.map, confirm: answer.confirm)
         Thread.append(turn)
         await LiveAnswer.show(turn)
         NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(Date().timeIntervalSince(started) * 1000))ms)")
@@ -46,6 +46,79 @@ enum Nubi {
         }
         lines.append(.init(label: "답", detail: "만드는 중…", done: false))
         return lines
+    }
+
+    /// 지우거나 옮길 일정을 찾아 **적어두기만** 합니다.
+    ///
+    /// 되돌릴 수 없는 동작이라 여기서 하지 않습니다. 사람이 버튼을 눌러야 합니다.
+    /// 여럿이 걸리면 아무것도 적어두지 않고 무엇인지 되묻습니다 — 잘못 고른 하나를
+    /// 지우는 것이 안 지우는 것보다 나쁩니다.
+    private static func propose(_ kind: Pending.Kind, _ spoken: Spoken) async -> NubiAnswer {
+        PendingStore.clear()
+        let name = spoken.title
+        guard name != "새 일정" else {
+            return NubiAnswer(headline: "무엇을 \(kind.verb)할까요",
+                              detail: "‘내일 운동 취소’ 처럼 이름을 같이 말해주세요.",
+                              source: .events, failed: true)
+        }
+        do {
+            let upcoming = try Events.upcoming(days: 14)
+            let hits = upcoming.filter { $0.title.contains(name) }
+            guard let only = hits.first, hits.count == 1 else {
+                if hits.isEmpty {
+                    return NubiAnswer(headline: "‘\(name)’ 일정이 없습니다",
+                                      detail: "앞으로 2주 안에는 보이지 않습니다.",
+                                      source: .events, failed: true)
+                }
+                return NubiAnswer(headline: "여러 개가 걸립니다",
+                                  detail: hits.prefix(5).map { "· \(Format.short($0.start)) \($0.title)" }
+                                      .joined(separator: "\n"),
+                                  source: .events, failed: true)
+            }
+            guard kind == .delete || spoken.hasClock else {
+                return NubiAnswer(headline: "언제로 옮길까요",
+                                  detail: "‘\(only.title) 3시로 옮겨줘’ 처럼 시각을 말해주세요.",
+                                  source: .events, failed: true)
+            }
+            let pending = Pending(kind: kind, eventId: only.id, title: only.title,
+                                  at: only.start, to: kind == .move ? spoken.start : nil)
+            PendingStore.hold(pending)
+            return NubiAnswer(headline: pending.question, detail: pending.detail,
+                              source: .events, confirm: kind.verb)
+        } catch {
+            return NubiAnswer(headline: "일정을 읽을 수 없습니다",
+                              detail: error.localizedDescription, source: .events, failed: true)
+        }
+    }
+
+    /// 사람이 눌렀을 때 실제로 합니다.
+    @discardableResult
+    static func confirmPending() async -> Turn? {
+        guard let pending = PendingStore.take() else { return nil }
+        let answer: NubiAnswer
+        do {
+            switch pending.kind {
+            case .delete:
+                try Events.remove(eventId: pending.eventId)
+                answer = NubiAnswer(headline: "‘\(pending.title)’ 을 지웠습니다",
+                                    detail: Format.short(pending.at), source: .events)
+            case .move:
+                guard let to = pending.to else { return nil }
+                try Events.move(eventId: pending.eventId, to: to)
+                answer = NubiAnswer(headline: "‘\(pending.title)’ 을 옮겼습니다",
+                                    detail: "\(Format.short(pending.at)) → \(Format.short(to))",
+                                    source: .events)
+            }
+        } catch {
+            answer = NubiAnswer(headline: "\(pending.kind.verb)하지 못했습니다",
+                                detail: error.localizedDescription, source: .events, failed: true)
+        }
+        let turn = Turn(asked: pending.kind.verb, headline: answer.headline, detail: answer.detail,
+                        source: answer.source, failed: answer.failed, at: Date(), viaIntent: true)
+        Thread.append(turn)
+        await LiveAnswer.show(turn)
+        NubiLog.write("[승인] \(answer.headline)")
+        return turn
     }
 
     /// 시한 안에 못 끝내면 nil.
@@ -104,6 +177,8 @@ enum Nubi {
                 return NubiAnswer(headline: "찾지 못했습니다",
                                   detail: error.localizedDescription, source: .places, failed: true)
             }
+        case let .editEvent(kind, spoken):
+            return await propose(kind, spoken)
         case let .completeReminder(name):
             do {
                 let open = try await Events.openReminders()
@@ -268,6 +343,25 @@ struct RemindLaterIntent: LiveActivityIntent {
         Thread.append(turn)
         await LiveAnswer.show(turn)
         NubiLog.write("[알림] \(answer.headline)")
+        return .result()
+    }
+}
+
+/// 잠금화면에서 승인을 누르는 버튼.
+///
+/// **누르기 전에는 아무것도 하지 않았습니다.** 적어둔 일을 여기서 꺼내 합니다.
+struct ConfirmIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "승인"
+    static let openAppWhenRun = false
+
+    @Parameter(title: "턴")
+    var stamp: Int
+
+    init() { stamp = 0 }
+    init(stamp: Int) { self.stamp = stamp }
+
+    func perform() async throws -> some IntentResult {
+        await Nubi.confirmPending()
         return .result()
     }
 }

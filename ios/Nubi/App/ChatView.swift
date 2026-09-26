@@ -31,7 +31,8 @@ struct ChatView: View {
                     }
                     ForEach(Array(store.turns.enumerated()), id: \.element.id) { index, turn in
                         if let mark = separator(before: index) { DayMark(text: mark) }
-                        TurnRows(turn: turn, retry: { retry(turn) }, delete: { delete(turn) })
+                        TurnRows(turn: turn, retry: { retry(turn) }, delete: { delete(turn) },
+                                 confirm: approve)
                     }
                     if store.busy { ThinkingRow() }
                     Color.clear.frame(height: 1).id(bottom)
@@ -72,6 +73,14 @@ struct ChatView: View {
         Task { await store.ask(turn.asked) }
     }
 
+    /// 적어둔 일을 실제로 합니다. **누르기 전에는 아무것도 하지 않았습니다.**
+    private func approve() {
+        Task {
+            await Nubi.confirmPending()
+            store.refresh()
+        }
+    }
+
     private func delete(_ turn: Turn) {
         withAnimation(.easeOut(duration: 0.2)) {
             Thread.remove(turn)
@@ -102,6 +111,7 @@ struct TurnRows: View {
     let turn: Turn
     let retry: () -> Void
     let delete: () -> Void
+    let confirm: () -> Void
     @State private var shown = false
 
     var body: some View {
@@ -125,6 +135,17 @@ struct TurnRows: View {
                         Button("다시 시도", action: retry)
                             .font(.caption.weight(.semibold))
                             .buttonStyle(.borderless)
+                    }
+                    if !turn.confirm.isEmpty, PendingStore.current != nil {
+                        Button(turn.confirm, systemImage: "checkmark.shield.fill", role: .destructive) {
+                            Haptic.done()
+                            confirm()
+                        }
+                        .font(.caption.weight(.bold))
+                        .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
+                        .tint(Ink.warn)
                     }
                     if let url = URL(string: turn.map), !turn.map.isEmpty {
                         Button("길찾기", systemImage: "location.fill") {
