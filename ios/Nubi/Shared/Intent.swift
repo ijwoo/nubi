@@ -16,6 +16,8 @@ enum NubiIntent: Equatable {
     case reminders
     /// 가까운 곳 찾기.
     case places(String)
+    /// 미리알림 하나를 끝냈다고 표시.
+    case completeReminder(String)
     /// 그 외. 모델이 답합니다.
     case ask(String)
 }
@@ -65,6 +67,39 @@ enum Router {
         "뭐", "무엇", "어때", "어떨", "추천", "할까", "좋을까", "어디", "언제", "왜", "어떻게", "얼마",
     ]
 
+    /// 앞 턴이 지도였을 때의 이어지는 말.
+    ///
+    /// "말고" 가 있으면 **뒤쪽이 원하는 것**입니다 — "필라테스 말고 헬스장으로"
+    /// 의 답은 헬스장입니다. 앞쪽을 같이 넣으면 찾던 것을 또 찾습니다.
+    private static func placeFollowUp(_ text: String) -> String? {
+        let marks = ["말고", "다른", "또", "더", "대신", "말구"]
+        guard marks.contains(where: { text.contains($0) }) else { return nil }
+        var rest = text
+        if let range = rest.range(of: "말고") ?? rest.range(of: "말구") {
+            rest = String(rest[range.upperBound...])
+        }
+        for word in ["다른", "대신", "또", "더", "곳도", "곳", "데도", "데", "것", "거",
+                     "으로", "로", "도", "좀", "찾아줘", "찾아 줘", "알려줘", "보여줘", "해줘"] {
+            rest = rest.replacingOccurrences(of: word, with: " ")
+        }
+        // 알맹이가 안 남으면 **같은 것을 더 보여달라**는 말입니다.
+        // "다른 데 더 알려줘" 가 "데" 를 찾으러 가던 자리입니다.
+        return rest.split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
+    }
+
+    /// "우유 사기 완료" 에서 "우유 사기" 를 꺼냅니다.
+    ///
+    /// **"완료" 와 "체크" 만 봅니다.** "오늘 운동 했어" 같은 말까지 잡으면 그냥
+    /// 하는 말이 미리알림 조작이 됩니다.
+    private static func completedName(in text: String) -> String? {
+        for mark in ["완료", "체크"] where text.hasSuffix(mark) {
+            let name = String(text.dropLast(mark.count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? nil : name
+        }
+        return nil
+    }
+
     /// 무엇을 찾는지만 남깁니다. "집 근처 헬스장 찾아줘" → "헬스장".
     private static func placeQuery(from text: String, removing near: String) -> String {
         var rest = text.replacingOccurrences(of: near, with: " ")
@@ -85,9 +120,18 @@ enum Router {
         return !rest.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    static func route(_ utterance: String) -> NubiIntent {
+    /// 앞 턴이 무엇이었는지 보고 갈립니다.
+    ///
+    /// **"다른 곳도 필라테스 말고 헬스장으로" 가 모델로 샜습니다.** 지도 이야기를
+    /// 하던 중인데 "근처" 라는 낱말이 없어서 이어지지 않았습니다. 대화는 앞말을
+    /// 물려받습니다.
+    static func route(_ utterance: String, after last: Source? = nil) -> NubiIntent {
         let text = utterance.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return .ask("") }
+
+        if last == .places, let refined = placeFollowUp(text) {
+            return .places(refined)
+        }
 
         // "내일 장보기 미리알림" 은 일정 조회가 아닙니다. 일정 낱말을 먼저 보면
         // 이 문장이 조회로 새고, 사용자는 추가한 줄 압니다.
@@ -103,6 +147,9 @@ enum Router {
             }
             return .reminders
         }
+
+        // "우유 사기 완료" — 있는 미리알림 하나를 끝냅니다.
+        if let done = completedName(in: text) { return .completeReminder(done) }
 
         // "집 근처 헬스장 찾아줘" — 모델도 웹도 아니고 지도가 답합니다.
         if let near = nearWords.first(where: { text.contains($0) }) {
