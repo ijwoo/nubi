@@ -42,9 +42,16 @@ enum Places {
 
     // MARK: 위치
 
+    private static let queryKey = "place.query"
     private static let latKey = "place.lat"
     private static let lonKey = "place.lon"
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
+
+    /// 마지막으로 찾던 것. "다른 데 더" 가 무엇을 더 찾는지 알려면 필요합니다.
+    static var lastQuery: String {
+        get { store?.string(forKey: queryKey) ?? "" }
+        set { store?.set(newValue, forKey: queryKey) }
+    }
 
     static var lastKnown: CLLocationCoordinate2D? {
         guard let store, store.object(forKey: latKey) != nil else { return nil }

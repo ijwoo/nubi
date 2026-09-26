@@ -9,7 +9,8 @@ enum Nubi {
     /// 표시를 먼저 바꾸고 답을 만들고 대화에 쌓습니다.
     @discardableResult
     static func turn(_ utterance: String, viaIntent: Bool) async -> Turn {
-        let route = Router.route(utterance)
+        // 앞 턴의 성격을 물려받습니다. 지도 이야기 뒤의 "다른 데" 는 지도입니다.
+        let route = Router.route(utterance, after: Thread.last?.source)
         await LiveAnswer.thinking(about: utterance, steps: steps(for: route))
         let started = Date()
         // 앞의 말을 같이 보냅니다. 없으면 "액션으로" 같은 말이 통하지 않습니다.
@@ -34,7 +35,8 @@ enum Nubi {
     /// 모델에 가는 것만 기다릴 만합니다.
     private static func steps(for route: NubiIntent) -> [NubiAttributes.StepLine] {
         if case let .places(query) = route {
-            return [.init(label: "지도", detail: "\(query) 찾는 중…", done: false)]
+            let what = query.isEmpty ? Places.lastQuery : query
+            return [.init(label: "지도", detail: "\(what) 찾는 중…", done: false)]
         }
         guard case .ask = route else { return [] }
         var lines: [NubiAttributes.StepLine] = []
@@ -63,7 +65,7 @@ enum Nubi {
     }
 
     static func respond(to utterance: String, history: [Turn] = []) async -> NubiAnswer {
-        await respond(Router.route(utterance), history: history)
+        await respond(Router.route(utterance, after: Thread.last?.source), history: history)
     }
 
     static func respond(_ route: NubiIntent, history: [Turn] = []) async -> NubiAnswer {
@@ -86,12 +88,40 @@ enum Nubi {
                 return NubiAnswer(headline: "일정을 넣을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
             }
-        case let .places(query):
+        case let .places(asked):
+            // 빈 말은 "같은 것을 더" 입니다. 그때는 마지막으로 찾던 것을 더 넓게 봅니다.
+            let query = asked.isEmpty ? Places.lastQuery : asked
+            guard !query.isEmpty else {
+                return NubiAnswer(headline: "무엇을 찾을까요",
+                                  detail: "근처 카페, 주변 약국 처럼 말해주세요.",
+                                  source: .places, failed: true)
+            }
+            Places.lastQuery = query
             do {
-                return Format.places(try await Places.find(query), query: query)
+                return Format.places(try await Places.find(query, limit: asked.isEmpty ? 8 : 4),
+                                     query: query)
             } catch {
                 return NubiAnswer(headline: "찾지 못했습니다",
                                   detail: error.localizedDescription, source: .places, failed: true)
+            }
+        case let .completeReminder(name):
+            do {
+                let open = try await Events.openReminders()
+                let hits = open.filter { $0.title.contains(name) }
+                guard let only = hits.first, hits.count == 1 else {
+                    if hits.isEmpty {
+                        return NubiAnswer(headline: "그런 미리알림이 없습니다",
+                                          detail: name, source: .reminders, failed: true)
+                    }
+                    return NubiAnswer(headline: "여러 개가 걸립니다",
+                                      detail: hits.map { "· \($0.title)" }.joined(separator: "\n"),
+                                      source: .reminders, failed: true)
+                }
+                try Events.complete(only)
+                return NubiAnswer(headline: "\(only.title) 완료", source: .reminders)
+            } catch {
+                return NubiAnswer(headline: "미리알림을 바꿀 수 없습니다",
+                                  detail: error.localizedDescription, source: .reminders, failed: true)
             }
         case .reminders:
             do {
