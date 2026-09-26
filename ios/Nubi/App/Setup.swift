@@ -33,11 +33,14 @@ struct SetupCard: View {
             Text("시작하기")
                 .font(.subheadline.weight(.bold))
 
-            Step(done: Setup.hasPermission, title: "일정·미리알림 권한",
-                 note: "잠금화면 버튼이 일정을 읽으려면 필요합니다.",
+            Step(done: Setup.hasPermission, title: "일정·미리알림·알림 권한",
+                 note: "일정을 읽고, 답이 왔을 때 화면을 켜는 데 씁니다.",
                  action: "허용") {
                 Task {
                     _ = await Events.requestAll()
+                    // 알림은 여기서 같이 받습니다. **따로 물으면 잊힙니다** —
+                    // 켜져 있지 않으면 잠금화면 답이 조용히 사라집니다.
+                    _ = await Briefing.requestPermission()
                     onChange()
                 }
             }

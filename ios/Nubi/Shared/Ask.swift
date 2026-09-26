@@ -25,7 +25,9 @@ enum Nubi {
                         viaIntent: viaIntent, map: answer.map, confirm: answer.confirm)
         Thread.append(turn)
         await LiveAnswer.show(turn)
-        NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(Date().timeIntervalSince(started) * 1000))ms)")
+        let took = Date().timeIntervalSince(started)
+        await Briefing.echo(turn, took: took)
+        NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(took * 1000))ms)")
         return turn
     }
 

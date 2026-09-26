@@ -93,10 +93,10 @@ private struct Card: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             if !state.asked.isEmpty { Mine(text: state.asked) }
             Theirs(state: state)
-            Actions(state: state).padding(.top, 5)
+            Actions(state: state).padding(.top, 3)
         }
     }
 }
@@ -112,7 +112,7 @@ private struct Mine: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
-                .lineLimit(2)
+                .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
                 .background(
@@ -130,27 +130,29 @@ private struct Theirs: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            Malpoongi(size: 28, mood: .of(state))
+        HStack(alignment: .top, spacing: 8) {
+            Malpoongi(size: 26, mood: .of(state))
             VStack(alignment: .leading, spacing: 5) {
+                // **세 줄이 잠금화면의 한계입니다.** 네 줄이면 버튼이 잘립니다.
+                // 나머지는 앱에 있습니다.
                 Text(said)
                     .font(.subheadline)
                     .foregroundStyle(state.failed ? Tone.warning.color : .primary)
-                    .lineLimit(4)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
                 if state.thinking {
                     ForEach(state.steps, id: \.self) { StepRow(step: $0) }
                 }
             }
-            .padding(.horizontal, 13)
+            .padding(.horizontal, 12)
             .padding(.vertical, 9)
             .background(
                 UnevenRoundedRectangle(
-                    topLeadingRadius: 15, bottomLeadingRadius: 5,
+                    topLeadingRadius: 5, bottomLeadingRadius: 15,
                     bottomTrailingRadius: 15, topTrailingRadius: 15,
                     style: .continuous
-                ).fill(.primary.opacity(0.07)))
-            Spacer(minLength: 24)
+                ).fill(.primary.opacity(0.09)))
+            Spacer(minLength: 0)
         }
     }
 
