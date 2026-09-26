@@ -84,31 +84,32 @@ enum Tone {
 
 // MARK: - 잠금화면 카드
 
+/// **채팅처럼 보입니다.** 물은 말이 오른쪽 말풍선, 답이 왼쪽 말풍선.
+///
+/// 전에는 "Q." 접두사와 출처와 시각이 위에 깔리고 답이 제목처럼 굵었습니다.
+/// 잠금화면에서 읽는 사람에게 그건 전부 곁가지였습니다 — **답 말고는 시선을
+/// 끌면 안 됩니다.** 출처와 시각은 앱에 있습니다.
 private struct Card: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if state.thinking { Asked(text: state.asked).padding(.bottom, 11) } else { Header(state: state) }
-            Reply(state: state).padding(.top, state.thinking ? 0 : 9)
-            if state.thinking {
-                Bar(value: state.progress).padding(.top, 12)
-            } else {
-                Actions(state: state).padding(.top, 13)
-            }
+        VStack(alignment: .leading, spacing: 8) {
+            if !state.asked.isEmpty { Mine(text: state.asked) }
+            Theirs(state: state)
+            Actions(state: state).padding(.top, 5)
         }
     }
 }
 
-/// 기다리는 동안은 물은 말이 오른쪽에 붙습니다. 대화라는 것을 말없이 알립니다.
-private struct Asked: View {
+/// 내가 한 말. 오른쪽.
+private struct Mine: View {
     let text: String
 
     var body: some View {
         HStack(spacing: 0) {
-            Spacer(minLength: 52)
+            Spacer(minLength: 56)
             Text(text)
-                .font(.caption2.weight(.medium))
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(2)
@@ -116,62 +117,46 @@ private struct Asked: View {
                 .padding(.vertical, 7)
                 .background(
                     UnevenRoundedRectangle(
-                        topLeadingRadius: 14, bottomLeadingRadius: 14,
-                        bottomTrailingRadius: 5, topTrailingRadius: 14,
+                        topLeadingRadius: 15, bottomLeadingRadius: 15,
+                        bottomTrailingRadius: 5, topTrailingRadius: 15,
                         style: .continuous
-                    ).fill(.primary.opacity(0.08)))
+                    ).fill(.primary.opacity(0.07)))
         }
     }
 }
 
-/// 답이 오면 물은 말은 한 줄로 줄고, 오른쪽에 출처와 시각이 붙습니다.
-private struct Header: View {
+/// 누비가 한 말. 왼쪽, 말풍이와 함께.
+private struct Theirs: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
-        HStack(spacing: 8) {
-            if !state.asked.isEmpty {
-                Text("Q. \(state.asked)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            if !state.meta.isEmpty {
-                Text(state.meta)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
-            }
-        }
-    }
-}
-
-private struct Reply: View {
-    let state: NubiAttributes.ContentState
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 11) {
-            Malpoongi(size: state.thinking ? 32 : 36, mood: .of(state))
-            VStack(alignment: .leading, spacing: state.thinking ? 6 : 3) {
-                Text(state.headline)
-                    .font(state.thinking ? .subheadline.weight(.semibold) : .title3.weight(.bold))
+        HStack(alignment: .bottom, spacing: 8) {
+            Malpoongi(size: 28, mood: .of(state))
+            VStack(alignment: .leading, spacing: 5) {
+                Text(said)
+                    .font(.subheadline)
                     .foregroundStyle(state.failed ? Tone.warning.color : .primary)
-                    .lineLimit(2)
+                    .lineLimit(4)
                     .fixedSize(horizontal: false, vertical: true)
                 if state.thinking {
                     ForEach(state.steps, id: \.self) { StepRow(step: $0) }
-                } else if !state.detail.isEmpty {
-                    Text(state.detail)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(.top, state.thinking ? 2 : 0)
-            Spacer(minLength: 0)
+            .padding(.horizontal, 13)
+            .padding(.vertical, 9)
+            .background(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 15, bottomLeadingRadius: 5,
+                    bottomTrailingRadius: 15, topTrailingRadius: 15,
+                    style: .continuous
+                ).fill(.primary.opacity(0.07)))
+            Spacer(minLength: 24)
         }
+    }
+
+    /// 한 덩이로 붙입니다. 제목과 설명을 나누면 답이 두 개처럼 보입니다.
+    private var said: String {
+        state.detail.isEmpty ? state.headline : "\(state.headline)\n\(state.detail)"
     }
 }
 
@@ -180,33 +165,15 @@ private struct StepRow: View {
     let step: NubiAttributes.StepLine
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 6) {
             Image(systemName: step.done ? "checkmark.circle.fill" : "circle.dotted")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(step.done ? Tone.done.color : Tone.working.color)
-            Text(step.label)
-                .font(.caption2.weight(.semibold))
-                .frame(width: 30, alignment: .leading)
             Text(step.detail)
                 .font(.caption2)
-                .foregroundStyle(step.done ? .secondary : Tone.working.color)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-    }
-}
-
-private struct Bar: View {
-    let value: Double
-
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(.primary.opacity(0.1))
-                Capsule().fill(Tone.working.gradient)
-                    .frame(width: max(18, geo.size.width * value))
-            }
-        }
-        .frame(height: 4)
     }
 }
 

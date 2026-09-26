@@ -185,8 +185,19 @@ enum Nubi {
                 let hits = open.filter { $0.title.contains(name) }
                 guard let only = hits.first, hits.count == 1 else {
                     if hits.isEmpty {
-                        return NubiAnswer(headline: "그런 미리알림이 없습니다",
-                                          detail: name, source: .reminders, failed: true)
+                        // 같은 이름의 일정이 있으면 그걸 짚어줍니다. 일정에는 완료가
+                        // 없고 지우는 것만 있습니다 — 그 차이를 모르면 헤맵니다.
+                        let events = ((try? Events.upcoming(days: 14)) ?? [])
+                            .filter { $0.title.contains(name) }
+                        if let event = events.first {
+                            return NubiAnswer(
+                                headline: "‘\(event.title)’ 은 일정입니다",
+                                detail: "일정에는 완료 표시가 없습니다. 지우려면 ‘\(name) 취소’ 라고 말해주세요.",
+                                source: .events)
+                        }
+                        return NubiAnswer(headline: "‘\(name)’ 미리알림이 없습니다",
+                                          detail: "안 끝난 것 중에는 보이지 않습니다.",
+                                          source: .reminders, failed: true)
                     }
                     return NubiAnswer(headline: "여러 개가 걸립니다",
                                       detail: hits.map { "· \($0.title)" }.joined(separator: "\n"),
