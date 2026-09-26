@@ -57,9 +57,15 @@ enum Places {
         return status == .authorizedWhenInUse || status == .authorizedAlways
     }
 
-    /// 앱에서만 부릅니다. 확장에서는 위치를 물을 수 없습니다.
+    /// 앱 안에서 도는가. 확장에서는 위치를 물을 수 없습니다.
+    static var inApp: Bool { Bundle.main.bundleURL.pathExtension != "appex" }
+
+    /// 앱에서만 부릅니다.
+    ///
+    /// **허용 여부를 먼저 따지지 않습니다.** 아직 안 물어본 상태에서 막으면
+    /// 묻는 데까지 가질 못합니다 — 권한 대화상자가 안 뜨던 이유였습니다.
     static func refreshLocation() async {
-        guard let here = await Locator.shared.current() else { return }
+        guard inApp, let here = await Locator.shared.current() else { return }
         store?.set(here.coordinate.latitude, forKey: latKey)
         store?.set(here.coordinate.longitude, forKey: lonKey)
         NubiLog.write("[위치] 갱신")
@@ -68,6 +74,8 @@ enum Places {
     // MARK: 찾기
 
     static func find(_ query: String, limit: Int = 4) async throws -> [Spot] {
+        // 앱 안이면 지금 자리를 잡아봅니다. 처음 묻는 사람은 여기서 허용을 봅니다.
+        if lastKnown == nil, inApp { await refreshLocation() }
         guard let origin = lastKnown else { throw Failure.noLocation }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
@@ -89,12 +97,15 @@ enum Places {
 
 /// 한 번만 물어보는 위치.
 ///
-/// `CLLocationManager` 는 대리자로만 답합니다. 기다리는 쪽을 async 로 감쌉니다.
+/// `CLLocationManager` 는 대리자로만 답합니다. **허용을 묻는 것과 자리를 잡는 것이
+/// 따로**라 둘 다 기다려야 합니다. 물어만 보고 바로 상태를 읽으면 아직
+/// `notDetermined` 여서 빈손으로 돌아옵니다.
 private final class Locator: NSObject, CLLocationManagerDelegate, @unchecked Sendable {
     static let shared = Locator()
 
     private let manager = CLLocationManager()
-    private var waiting: CheckedContinuation<CLLocation?, Never>?
+    private var askingPermission: CheckedContinuation<Bool, Never>?
+    private var waitingForFix: CheckedContinuation<CLLocation?, Never>?
 
     override init() {
         super.init()
@@ -103,14 +114,35 @@ private final class Locator: NSObject, CLLocationManagerDelegate, @unchecked Sen
     }
 
     func current() async -> CLLocation? {
-        if manager.authorizationStatus == .notDetermined {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            guard await requestPermission() else { return nil }
+        case .authorizedWhenInUse, .authorizedAlways:
+            break
+        default:
+            return nil
+        }
+        return await requestFix()
+    }
+
+    private func requestPermission() async -> Bool {
+        await withCheckedContinuation { continuation in
+            askingPermission = continuation
             manager.requestWhenInUseAuthorization()
         }
-        guard Places.isAllowed else { return nil }
-        return await withCheckedContinuation { continuation in
-            waiting = continuation
+    }
+
+    private func requestFix() async -> CLLocation? {
+        await withCheckedContinuation { continuation in
+            waitingForFix = continuation
             manager.requestLocation()
         }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        guard manager.authorizationStatus != .notDetermined else { return }
+        askingPermission?.resume(returning: Places.isAllowed)
+        askingPermission = nil
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -123,7 +155,7 @@ private final class Locator: NSObject, CLLocationManagerDelegate, @unchecked Sen
     }
 
     private func finish(_ location: CLLocation?) {
-        waiting?.resume(returning: location)
-        waiting = nil
+        waitingForFix?.resume(returning: location)
+        waitingForFix = nil
     }
 }

@@ -41,6 +41,8 @@ final class Store {
     /// **확장은 위치를 물을 수 없습니다.** 잠금화면 버튼이 장소를 찾으려면 앱이
     /// 마지막으로 알던 자리가 있어야 합니다.
     func refreshPlace() async {
+        // 이미 허용한 경우에만 조용히 갱신합니다. 앱을 켜자마자 권한 창이 뜨는
+        // 것은 무례합니다 — 처음 묻는 것은 시작하기 카드와 첫 장소 질문이 맡습니다.
         guard Places.isAllowed else { return }
         await Places.refreshLocation()
     }

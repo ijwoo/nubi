@@ -10,6 +10,9 @@ enum Setup {
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
 
     static var hasPermission: Bool { Events.canReadEvents && Events.canWriteReminders }
+    /// 위치는 **없어도 앱이 돕니다.** 가까운 곳 찾기에만 씁니다. 그래서 시작하기를
+    /// 끝내는 조건에 넣지 않고, 안 켠 동안만 한 줄 더 보여줍니다.
+    static var hasPlace: Bool { Places.isAllowed }
     static var hasKey: Bool { Secrets.apiKey != nil }
 
     /// 단축어는 앱이 확인할 방법이 없습니다. 사람이 끝냈다고 표시합니다.
@@ -41,6 +44,16 @@ struct SetupCard: View {
             Step(done: Setup.hasKey, title: "모델 키",
                  note: "일정과 미리알림에는 없어도 됩니다. 그 밖의 질문에만 씁니다.",
                  action: "넣기") { showHow = false; openSettings() }
+            if !Setup.hasPlace {
+                Step(done: false, title: "위치 (선택)",
+                     note: "가까운 곳을 찾을 때만 씁니다. 배경에서는 보지 않습니다.",
+                     action: "허용") {
+                    Task {
+                        await Places.refreshLocation()
+                        onChange()
+                    }
+                }
+            }
             Step(done: Setup.hasShortcut, title: "잠금화면 단축어",
                  note: "잠금을 풀지 않고 글자를 넣는 유일한 길입니다.",
                  action: "방법 보기") { showHow = true }
