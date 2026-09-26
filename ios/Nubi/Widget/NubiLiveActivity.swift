@@ -13,11 +13,11 @@ struct NubiLiveActivity: Widget {
             Card(state: context.state)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                // **위젯은 배경을 실시간으로 흐릴 수 없습니다.** 시스템이 주는
-                // 반투명을 옅게 깔고, 그 위에 말풍선을 재질로 얹습니다. 배경까지
-                // 투명하게 두면 밝은 배경화면에서 글씨가 안 읽힙니다.
-                .activityBackgroundTint(Color(uiColor: .systemBackground).opacity(0.55))
-                .activitySystemActionForegroundColor(.primary)
+                // **재질은 쓰지 않습니다.** ultraThinMaterial 을 얹었더니 잠금화면에서
+                // 검은 덩어리로 굳었습니다 — 위젯은 배경을 흐릴 수 없어서 재질이
+                // 그렇게 렌더됩니다. 검은 판에 회색 말풍선, 흰 글씨로 갑니다.
+                .activityBackgroundTint(.black)
+                .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
@@ -61,6 +61,17 @@ struct NubiLiveActivity: Widget {
 }
 
 // MARK: - 색
+
+/// 잠금화면 카드의 색.
+///
+/// **검은 판 위에 회색 말풍선, 흰 글씨.** 배경화면이 밝든 어둡든 같게 보입니다.
+/// 시스템 색(`.primary`, `.secondary`)을 쓰면 잠금화면의 밝기에 따라 흐려집니다.
+enum Skin {
+    static let theirs = Color(white: 0.20)
+    static let mine = Color(white: 0.28)
+    static let text = Color.white
+    static let faint = Color.white.opacity(0.6)
+}
 
 /// 상태마다 쓰는 색. **하나의 상태에 하나의 색입니다.**
 enum Tone {
@@ -114,20 +125,17 @@ private struct Mine: View {
             Spacer(minLength: 56)
             Text(text)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Skin.faint)
                 .multilineTextAlignment(.trailing)
                 .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background {
-                    let shape = UnevenRoundedRectangle(
+                .background(
+                    UnevenRoundedRectangle(
                         topLeadingRadius: 15, bottomLeadingRadius: 15,
                         bottomTrailingRadius: 5, topTrailingRadius: 15,
-                        style: .continuous)
-                    shape.fill(.ultraThinMaterial)
-                    shape.fill(.primary.opacity(0.04))
-                    shape.stroke(.primary.opacity(0.08), lineWidth: 0.5)
-                }
+                        style: .continuous
+                    ).fill(Skin.mine))
         }
     }
 }
@@ -144,7 +152,7 @@ private struct Theirs: View {
                 // 나머지는 앱에 있습니다.
                 Text(said)
                     .font(.subheadline)
-                    .foregroundStyle(state.failed ? Tone.warning.color : .primary)
+                    .foregroundStyle(state.failed ? Tone.warning.color : Skin.text)
                     .lineLimit(state.hasAction ? 3 : 4)
                     .fixedSize(horizontal: false, vertical: true)
                 if state.thinking {
@@ -153,15 +161,12 @@ private struct Theirs: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background {
-                let shape = UnevenRoundedRectangle(
+            .background(
+                UnevenRoundedRectangle(
                     topLeadingRadius: 5, bottomLeadingRadius: 15,
                     bottomTrailingRadius: 15, topTrailingRadius: 15,
-                    style: .continuous)
-                shape.fill(.ultraThinMaterial)
-                shape.fill(.primary.opacity(0.06))
-                shape.stroke(.primary.opacity(0.1), lineWidth: 0.5)
-            }
+                    style: .continuous
+                ).fill(Skin.theirs))
             Spacer(minLength: 0)
         }
     }
@@ -183,7 +188,7 @@ private struct StepRow: View {
                 .foregroundStyle(step.done ? Tone.done.color : Tone.working.color)
             Text(step.detail)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Skin.faint)
                 .lineLimit(1)
         }
     }
