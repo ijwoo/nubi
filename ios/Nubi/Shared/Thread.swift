@@ -30,6 +30,8 @@ struct Turn: Codable, Identifiable, Hashable {
     var viaIntent: Bool
     /// 길찾기 주소. 장소를 찾았을 때만 있습니다.
     var map: String = ""
+    /// 승인을 기다리는 일의 버튼 이름.
+    var confirm: String = ""
 
     var full: String { detail.isEmpty ? headline : "\(headline)\n\(detail)" }
 

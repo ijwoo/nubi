@@ -10,14 +10,17 @@ struct NubiAnswer: Equatable {
     let failed: Bool
     /// 길찾기 주소. 장소를 찾았을 때만 있습니다.
     let map: String
+    /// 승인을 기다리는 일의 버튼 이름. 비어 있으면 기다리는 게 없습니다.
+    let confirm: String
 
     init(headline: String, detail: String = "", source: Source = .none,
-         failed: Bool = false, map: String = "") {
+         failed: Bool = false, map: String = "", confirm: String = "") {
         self.headline = headline
         self.detail = detail
         self.source = source
         self.failed = failed
         self.map = map
+        self.confirm = confirm
     }
 }
 

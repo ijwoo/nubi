@@ -18,6 +18,8 @@ enum NubiIntent: Equatable {
     case places(String)
     /// 미리알림 하나를 끝냈다고 표시.
     case completeReminder(String)
+    /// 일정을 지우거나 옮깁니다. **바로 하지 않고 묻습니다.**
+    case editEvent(Pending.Kind, Spoken)
     /// 그 외. 모델이 답합니다.
     case ask(String)
 }
@@ -49,6 +51,10 @@ enum Router {
 
     /// 넣으라는 말. 조회와 추가를 가릅니다.
     private static let addWords = ["추가", "등록", "잡아", "넣어", "만들어", "저장"]
+
+    /// 지우라는 말과 옮기라는 말. **넣으라는 말보다 먼저 봅니다.**
+    private static let dropWords = ["취소", "삭제", "지워", "없애", "빼줘", "빼 줘"]
+    private static let moveWords = ["옮겨", "옮기", "변경", "바꿔", "미뤄", "당겨"]
 
     /// 미리알림으로 읽는 말. **일정보다 먼저 봅니다.**
     private static let reminderPhrases = [
@@ -146,6 +152,15 @@ enum Router {
                 return .addReminder(DateTalk.parse(rest))
             }
             return .reminders
+        }
+
+        // 지우기와 옮기기가 먼저입니다. "내일 운동 일정 취소" 에는 "일정" 이
+        // 들어 있어서, 나중에 보면 조회로 샙니다.
+        if dropWords.contains(where: { text.contains($0) }) {
+            return .editEvent(.delete, DateTalk.parse(text))
+        }
+        if moveWords.contains(where: { text.contains($0) }) {
+            return .editEvent(.move, DateTalk.parse(text))
         }
 
         // "우유 사기 완료" — 있는 미리알림 하나를 끝냅니다.

@@ -63,7 +63,7 @@ enum Tone {
     case working, done, warning
 
     static func of(_ state: NubiAttributes.ContentState) -> Tone {
-        if state.failed { return .warning }
+        if state.failed || !state.confirm.isEmpty { return .warning }
         if state.thinking { return .working }
         return .done
     }
@@ -220,8 +220,16 @@ private struct Actions: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            // 장소를 찾았으면 다음 손길은 길찾기입니다. 아니면 한 시간 뒤 알림.
-            if let url = URL(string: state.map), !state.map.isEmpty {
+            // 승인이 기다리면 그것이 첫 버튼입니다. 다른 손길보다 먼저입니다.
+            if !state.confirm.isEmpty {
+                Button(intent: ConfirmIntent(stamp: state.stamp)) {
+                    Label(state.confirm, systemImage: "checkmark.shield.fill")
+                        .font(.caption2.weight(.bold))
+                        .frame(maxWidth: .infinity, minHeight: 16)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Tone.warning.color)
+            } else if let url = URL(string: state.map), !state.map.isEmpty {
                 Button(intent: OpenURLIntent(url)) {
                     Label("길찾기", systemImage: "location.fill")
                         .font(.caption2.weight(.bold))
@@ -269,7 +277,7 @@ extension Malpoongi.Mood {
     /// 아직 아무것도 안 물었으면 듣는 얼굴입니다. 색만으로는 "듣는 중" 과
     /// "생각 중" 이 구별되지 않아서 표정이 그 일을 합니다.
     static func of(_ state: NubiAttributes.ContentState) -> Malpoongi.Mood {
-        if state.failed { return .waiting }
+        if state.failed || !state.confirm.isEmpty { return .waiting }
         if state.thinking { return .thinking }
         return state.asked.isEmpty ? .listening : .done
     }
