@@ -38,6 +38,31 @@ enum Briefing {
         String(format: "%02d:%02d", hour, minute)
     }
 
+    /// 답이 오면 알림으로도 보낼까.
+    ///
+    /// **잠금화면 버튼을 누르면 1~2초 뒤에 화면이 꺼집니다.** 모델 답은 그
+    /// 뒤에 도착해서 아무도 못 봅니다. 알림은 화면을 다시 켭니다 — 우리가
+    /// 대기 시간을 늘릴 수는 없으니 도착을 알리는 수밖에 없습니다.
+    private static let echoKey = "briefing.echo"
+
+    static var echoesAnswers: Bool {
+        get { store?.object(forKey: echoKey) as? Bool ?? true }
+        set { store?.set(newValue, forKey: echoKey) }
+    }
+
+    /// 밖에서 물어 답이 늦게 온 것만 알립니다. 앱에서 보고 있는 것과 즉시
+    /// 끝난 일정 조회까지 울리면 시끄럽기만 합니다.
+    static func echo(_ turn: Turn, took: TimeInterval) async {
+        guard echoesAnswers, turn.viaIntent, took > 0.8 else { return }
+        let content = UNMutableNotificationContent()
+        content.title = turn.asked.isEmpty ? "누비" : turn.asked
+        content.body = turn.headline
+        content.sound = nil
+        let request = UNNotificationRequest(identifier: "echo.\(turn.id)",
+                                            content: content, trigger: nil)
+        try? await UNUserNotificationCenter.current().add(request)
+    }
+
     static func requestPermission() async -> Bool {
         (try? await UNUserNotificationCenter.current()
             .requestAuthorization(options: [.alert, .sound])) ?? false

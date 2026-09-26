@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var confirmClear = false
     @State private var keySaved = false
     @State private var briefingOn = Briefing.isOn
+    @State private var echoOn = Briefing.echoesAnswers
     @State private var briefingAt = Calendar.current.date(
         from: DateComponents(hour: Briefing.hour, minute: Briefing.minute)) ?? Date()
 
@@ -62,10 +63,20 @@ struct SettingsView: View {
                         Task { await Briefing.reschedule() }
                     }
             }
+            Toggle("답이 오면 알림", isOn: $echoOn)
+                .onChange(of: echoOn) { _, now in
+                    Task {
+                        if now, await Briefing.requestPermission() == false {
+                            echoOn = false
+                            return
+                        }
+                        Briefing.echoesAnswers = now
+                    }
+                }
         } header: {
             Text("먼저 말하기")
         } footer: {
-            Text("정해진 시각에 오늘 일정과 안 끝난 할일을 알려줍니다. 일주일치를 미리 예약하므로 가끔 앱을 열어주세요.")
+            Text("브리핑은 정해진 시각에 오늘 일정과 할일을 알려줍니다. 일주일치를 미리 예약하므로 가끔 앱을 열어주세요.\n잠금화면에서 물으면 답이 오기 전에 화면이 꺼집니다. 알림이 그때 화면을 다시 켭니다.")
         }
     }
 
