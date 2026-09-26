@@ -24,6 +24,8 @@
 	<false/>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>일정을 읽어 물어본 것에 답합니다.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>가까운 곳을 찾을 때만 씁니다. 배경에서는 보지 않습니다.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>말한 것을 미리알림으로 추가합니다.</string>
 	<key>NSSupportsLiveActivities</key>

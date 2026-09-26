@@ -89,6 +89,7 @@ struct HomeView: View {
     private func start() async {
         reload()
         await store.revive()
+        await store.refreshPlace()
     }
 
     private func reload() {
@@ -108,7 +109,7 @@ struct HomeView: View {
 }
 
 enum Suggestion {
-    static let all = ["오늘 일정", "오늘 할일", "내일 3시 회의 일정 추가", "우유 사기 미리알림"]
+    static let all = ["오늘 일정", "오늘 할일", "근처 카페", "내일 3시 회의 일정 추가"]
 }
 
 /// 서랍 한 칸.

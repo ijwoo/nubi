@@ -126,6 +126,14 @@ struct TurnRows: View {
                             .font(.caption.weight(.semibold))
                             .buttonStyle(.borderless)
                     }
+                    if let url = URL(string: turn.map), !turn.map.isEmpty {
+                        Button("길찾기", systemImage: "location.fill") {
+                            Haptic.tap()
+                            UIApplication.shared.open(url)
+                        }
+                        .font(.caption.weight(.semibold))
+                        .buttonStyle(.borderless)
+                    }
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)

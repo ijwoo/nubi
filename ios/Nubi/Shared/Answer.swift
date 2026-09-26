@@ -8,12 +8,16 @@ struct NubiAnswer: Equatable {
     let detail: String
     let source: Source
     let failed: Bool
+    /// 길찾기 주소. 장소를 찾았을 때만 있습니다.
+    let map: String
 
-    init(headline: String, detail: String = "", source: Source = .none, failed: Bool = false) {
+    init(headline: String, detail: String = "", source: Source = .none,
+         failed: Bool = false, map: String = "") {
         self.headline = headline
         self.detail = detail
         self.source = source
         self.failed = failed
+        self.map = map
     }
 }
 
@@ -35,6 +39,18 @@ enum Format {
         }
         return NubiAnswer(headline: "\(label) 일정 \(items.count)건",
                           detail: lines.joined(separator: "\n"), source: .events)
+    }
+
+    static func places(_ spots: [Places.Spot], query: String) -> NubiAnswer {
+        let first = spots[0]
+        let lines = spots.map { "· \($0.name) \($0.away)" }
+        guard spots.count > 1 else {
+            return NubiAnswer(headline: "\(first.name) \(first.away)", source: .places,
+                              map: first.directions?.absoluteString ?? "")
+        }
+        return NubiAnswer(headline: "\(first.name) \(first.away)",
+                          detail: lines.dropFirst().joined(separator: "\n"),
+                          source: .places, map: first.directions?.absoluteString ?? "")
     }
 
     static func reminders(_ items: [Events.ReminderItem]) -> NubiAnswer {

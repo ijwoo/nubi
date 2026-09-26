@@ -17,7 +17,7 @@ enum Nubi {
         let answer = await respond(route, history: history)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
-                        viaIntent: viaIntent)
+                        viaIntent: viaIntent, map: answer.map)
         Thread.append(turn)
         await LiveAnswer.show(turn)
         NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(Date().timeIntervalSince(started) * 1000))ms)")
@@ -29,6 +29,9 @@ enum Nubi {
     /// 일정 조회나 추가는 두 자리 밀리초에 끝나서 보여줄 단계가 없습니다.
     /// 모델에 가는 것만 기다릴 만합니다.
     private static func steps(for route: NubiIntent) -> [NubiAttributes.StepLine] {
+        if case let .places(query) = route {
+            return [.init(label: "지도", detail: "\(query) 찾는 중…", done: false)]
+        }
         guard case .ask = route else { return [] }
         var lines: [NubiAttributes.StepLine] = []
         if Events.canReadEvents {
@@ -62,6 +65,13 @@ enum Nubi {
             } catch {
                 return NubiAnswer(headline: "일정을 넣을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
+            }
+        case let .places(query):
+            do {
+                return Format.places(try await Places.find(query), query: query)
+            } catch {
+                return NubiAnswer(headline: "찾지 못했습니다",
+                                  detail: error.localizedDescription, source: .places, failed: true)
             }
         case .reminders:
             do {

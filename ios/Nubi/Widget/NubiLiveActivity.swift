@@ -220,14 +220,24 @@ private struct Actions: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            // 어떤 답에도 붙는 다음 손길. 답 한 줄을 한 시간 뒤 미리알림으로 넣습니다.
-            Button(intent: RemindLaterIntent(state.asked, note: state.headline, stamp: state.stamp)) {
-                Label("1시간 뒤", systemImage: "bell")
-                    .font(.caption2.weight(.bold))
-                    .frame(maxWidth: .infinity, minHeight: 16)
+            // 장소를 찾았으면 다음 손길은 길찾기입니다. 아니면 한 시간 뒤 알림.
+            if let url = URL(string: state.map), !state.map.isEmpty {
+                Button(intent: OpenURLIntent(url)) {
+                    Label("길찾기", systemImage: "location.fill")
+                        .font(.caption2.weight(.bold))
+                        .frame(maxWidth: .infinity, minHeight: 16)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Tone.done.color)
+            } else {
+                Button(intent: RemindLaterIntent(state.asked, note: state.headline, stamp: state.stamp)) {
+                    Label("1시간 뒤", systemImage: "bell")
+                        .font(.caption2.weight(.bold))
+                        .frame(maxWidth: .infinity, minHeight: 16)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Tone.done.color)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Tone.done.color)
 
             ForEach(Quick.all, id: \.self) { phrase in
                 Button(intent: QuickAskIntent(phrase, stamp: state.stamp)) {
