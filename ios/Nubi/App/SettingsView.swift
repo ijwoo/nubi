@@ -39,8 +39,17 @@ struct SettingsView: View {
         Section {
             LabeledContent("일정", value: eventAuth)
             LabeledContent("미리알림", value: reminderAuth)
+            LabeledContent("위치", value: Places.isAllowed ? "허용" : "꺼짐")
+            if !Places.isAllowed {
+                Button("위치 허용") {
+                    Task {
+                        await Places.refreshLocation()
+                        refresh()
+                    }
+                }
+            }
             if Events.canReadEvents && Events.canWriteReminders {
-                Text("필요한 권한이 다 있습니다").font(.caption).foregroundStyle(.secondary)
+                Text("일정과 미리알림 권한이 다 있습니다").font(.caption).foregroundStyle(.secondary)
             } else if isDenied {
                 Button("설정 앱에서 바꾸기") {
                     guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
