@@ -57,6 +57,24 @@ enum Places {
         return status == .authorizedWhenInUse || status == .authorizedAlways
     }
 
+    /// 지금 자리.
+    ///
+    /// **시스템이 이미 들고 있는 마지막 좌표를 먼저 봅니다.** 이건 배경에서도
+    /// 곧바로 읽힙니다. 새로 잡으려 하면 잠금 상태에서는 8초를 기다리다 빈손으로
+    /// 돌아옵니다 — `근처 헬스장` 이 8347ms 만에 실패하던 이유였습니다.
+    static func here() -> CLLocationCoordinate2D? {
+        if isAllowed, let known = CLLocationManager().location {
+            remember(known.coordinate)
+            return known.coordinate
+        }
+        return lastKnown
+    }
+
+    private static func remember(_ coordinate: CLLocationCoordinate2D) {
+        store?.set(coordinate.latitude, forKey: latKey)
+        store?.set(coordinate.longitude, forKey: lonKey)
+    }
+
     /// 앱 안에서 도는가. 확장에서는 위치를 물을 수 없습니다.
     static var inApp: Bool { Bundle.main.bundleURL.pathExtension != "appex" }
 
@@ -72,18 +90,17 @@ enum Places {
     /// **허용 여부를 먼저 따지지 않습니다.** 아직 안 물어본 상태에서 막으면
     /// 묻는 데까지 가질 못합니다 — 권한 대화상자가 안 뜨던 이유였습니다.
     static func refreshLocation() async {
-        guard inApp, let here = await Locator.shared.current(mayAsk: foreground) else { return }
-        store?.set(here.coordinate.latitude, forKey: latKey)
-        store?.set(here.coordinate.longitude, forKey: lonKey)
+        guard inApp, let fix = await Locator.shared.current(mayAsk: foreground) else { return }
+        remember(fix.coordinate)
         NubiLog.write("[위치] 갱신")
     }
 
     // MARK: 찾기
 
     static func find(_ query: String, limit: Int = 4) async throws -> [Spot] {
-        // 앱 안이면 지금 자리를 잡아봅니다. 처음 묻는 사람은 여기서 허용을 봅니다.
-        if lastKnown == nil, inApp { await refreshLocation() }
-        guard let origin = lastKnown else { throw Failure.noLocation }
+        // 앞에 있을 때만 새로 잡아봅니다. 처음 묻는 사람은 여기서 허용을 봅니다.
+        if here() == nil, inApp, foreground { await refreshLocation() }
+        guard let origin = here() else { throw Failure.noLocation }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         // 2km 안에서만 봅니다. "근처" 라고 물었는데 지하철로 갈 거리를 주면 안 됩니다.
