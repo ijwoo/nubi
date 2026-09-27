@@ -5,7 +5,29 @@ import Foundation
 /// **Haiku 급입니다.** 빠른 모드의 목표가 수 초이고, 여기서 하는 일은 몇 문장을
 /// 만드는 것입니다 ([ADR 0011](../../../docs/adr/0011-remote-engine-hybrid-client.md)).
 enum Model {
-    static let id = "claude-haiku-4-5"
+    /// 어떤 모델을 쓸지.
+    ///
+    /// **빠른 쪽과 정확한 쪽이 다릅니다.** 영화 줄거리나 최신 정보에서 틀린 답이
+    /// 섞여 나왔는데, 그건 모델 급의 문제였습니다. 일정·미리알림·지도는 모델을
+    /// 아예 안 타므로 이 선택은 자유 질문에만 영향을 줍니다.
+    enum Grade: String, CaseIterable, Identifiable {
+        case fast, careful
+
+        var id: String { rawValue }
+        var label: String { self == .fast ? "빠르게" : "정확하게" }
+        var note: String { self == .fast ? "1~2초" : "3~5초, 더 정확" }
+        var model: String { self == .fast ? "claude-haiku-4-5" : "claude-sonnet-5" }
+    }
+
+    private static let gradeKey = "model.grade"
+    private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
+
+    static var grade: Grade {
+        get { Grade(rawValue: store?.string(forKey: gradeKey) ?? "") ?? .fast }
+        set { store?.set(newValue.rawValue, forKey: gradeKey) }
+    }
+
+    static var id: String { grade.model }
 
     enum Failure: Error, LocalizedError {
         case noKey
