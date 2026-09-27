@@ -17,9 +17,14 @@ enum Model {
         var label: String { self == .fast ? "빠르게" : "정확하게" }
         var note: String { self == .fast ? "1~2초" : "3~5초, 더 정확" }
         var model: String { self == .fast ? "claude-haiku-4-5" : "claude-sonnet-5" }
+        /// 모델마다 쓸 수 있는 검색 도구가 다릅니다.
+        var searchTool: String {
+            self == .careful ? "web_search_20260209" : "web_search_20250305"
+        }
     }
 
     private static let gradeKey = "model.grade"
+    private static let searchKey = "model.search"
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
 
     static var grade: Grade {
@@ -28,6 +33,18 @@ enum Model {
     }
 
     static var id: String { grade.model }
+
+    /// 웹을 찾아보게 할까.
+    ///
+    /// **켜면 느려지고 값이 붙습니다.** 대신 날씨·최신 영화·가게 영업시간처럼
+    /// 모델이 외워둘 수 없는 것에 답할 수 있게 됩니다. 일정·미리알림·지도는
+    /// 모델을 안 타므로 그쪽 속도는 그대로입니다.
+    static var searches: Bool {
+        get { store?.object(forKey: searchKey) as? Bool ?? true }
+        set { store?.set(newValue, forKey: searchKey) }
+    }
+
+
 
     enum Failure: Error, LocalizedError {
         case noKey
@@ -50,6 +67,10 @@ enum Model {
     첫 줄은 한 문장 요약이다. 그 줄만 읽어도 답이 되어야 한다.
     그다음 줄부터 필요한 만큼 자세히 쓴다. 세 문단을 넘기지 않는다.
     인사나 서론은 쓰지 않는다. 모르면 모른다고 한 줄로 말한다.
+
+    날씨, 오늘의 뉴스, 가게 영업시간, 최근 개봉작처럼 **지금 사실이 바뀌는 것**은
+    웹을 찾아보고 답한다. 외워둔 것으로 답하면 틀린다. 외워둔 것으로 충분한
+    질문에는 찾아보지 않는다 — 느려지기만 한다.
 
     일정과 미리알림은 앱의 다른 부분이 다룬다. 너는 직접 읽지도 쓰지도 못한다.
     **"추가했습니다", "등록했습니다", "넣었습니다", "저장했습니다" 라고 절대 쓰지 마라.**
@@ -102,12 +123,16 @@ enum Model {
         request.setValue(key, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: [
+        var body: [String: Any] = [
             "model": id,
             "max_tokens": 700,
             "system": system(now: now),
             "messages": messages(history, question),
-        ])
+        ]
+        if searches {
+            body["tools"] = [["type": grade.searchTool, "name": "web_search", "max_uses": 3]]
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
@@ -119,9 +144,18 @@ enum Model {
         var lines = text.split(separator: "\n", omittingEmptySubsequences: true)
         let headline = String(lines.first ?? "답이 비어 있습니다")
         if !lines.isEmpty { lines.removeFirst() }
+        // 찾아봤으면 그렇게 적습니다. **어디서 온 답인지가 보여야 합니다.**
         return NubiAnswer(headline: headline,
                           detail: lines.joined(separator: "\n"),
-                          source: .model)
+                          source: Self.searched(in: data) ? .search : .model)
+    }
+
+    /// 웹을 실제로 찾아봤는가. 도구 결과 블록이 오면 찾아본 것입니다.
+    private static func searched(in data: Data) -> Bool {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let blocks = root["content"] as? [[String: Any]]
+        else { return false }
+        return blocks.contains { ($0["type"] as? String)?.contains("web_search") == true }
     }
 
     /// 응답의 `content` 는 블록 배열입니다. `text` 블록만 이어 붙입니다.
