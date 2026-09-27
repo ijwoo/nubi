@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var briefingOn = Briefing.isOn
     @State private var echoOn = Briefing.echoesAnswers
     @State private var grade = Model.grade
+    @State private var searchOn = Model.searches
     @State private var briefingAt = Calendar.current.date(
         from: DateComponents(hour: Briefing.hour, minute: Briefing.minute)) ?? Date()
 
@@ -139,11 +140,13 @@ struct SettingsView: View {
                 }
             }
             .onChange(of: grade) { _, now in Model.grade = now }
+            Toggle("웹 찾아보기", isOn: $searchOn)
+                .onChange(of: searchOn) { _, now in Model.searches = now }
             LabeledContent("모델", value: Model.id)
         } header: {
             Text("모델")
         } footer: {
-            Text("일정과 미리알림에는 필요 없습니다. 그 밖의 질문에만 씁니다. 저장소에도 앱 파일에도 들어가지 않습니다.")
+            Text("일정과 미리알림에는 필요 없습니다. 그 밖의 질문에만 씁니다. 저장소에도 앱 파일에도 들어가지 않습니다.\n웹 찾아보기를 켜면 날씨나 최신 정보에 답할 수 있습니다. 대신 1~2초 느려지고 토큰이 더 듭니다.")
         }
     }
 
