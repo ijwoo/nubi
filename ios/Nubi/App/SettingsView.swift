@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var keySaved = false
     @State private var briefingOn = Briefing.isOn
     @State private var echoOn = Briefing.echoesAnswers
+    @State private var grade = Model.grade
     @State private var briefingAt = Calendar.current.date(
         from: DateComponents(hour: Briefing.hour, minute: Briefing.minute)) ?? Date()
 
@@ -132,6 +133,12 @@ struct SettingsView: View {
                 }
             }
             .disabled(key.isEmpty)
+            Picker("답하는 방식", selection: $grade) {
+                ForEach(Model.Grade.allCases) { item in
+                    Text("\(item.label) · \(item.note)").tag(item)
+                }
+            }
+            .onChange(of: grade) { _, now in Model.grade = now }
             LabeledContent("모델", value: Model.id)
         } header: {
             Text("모델")

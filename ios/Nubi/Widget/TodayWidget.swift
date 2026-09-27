@@ -112,3 +112,62 @@ private struct TodayFace: View {
         }
     }
 }
+
+/// 잠금화면 위젯.
+///
+/// 대화창은 물어봐야 뜹니다. **이건 묻지 않아도 늘 거기 있습니다.** 시계 아래
+/// 한 줄, 또는 동그라미 하나로 다음 일정을 말합니다.
+struct NextWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "dev.jaewoo.nubi.next", provider: TodayProvider()) { entry in
+            NextFace(entry: entry)
+                .containerBackground(.clear, for: .widget)
+        }
+        .configurationDisplayName("다음 일정")
+        .description("잠금화면에 다음 일정을 한 줄로.")
+        .supportedFamilies([.accessoryInline, .accessoryRectangular, .accessoryCircular])
+    }
+}
+
+private struct NextFace: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: TodayEntry
+
+    /// 지나간 일정은 다음이 아닙니다. 아직 안 온 것 중 가장 이른 것.
+    private var next: Events.Item? {
+        entry.events.first { $0.start > Date() } ?? entry.events.first
+    }
+
+    var body: some View {
+        switch family {
+        case .accessoryInline:
+            Text(inline)
+        case .accessoryCircular:
+            Gauge(value: Double(min(entry.events.count, 6)), in: 0...6) {
+                Image(systemName: "calendar")
+            } currentValueLabel: {
+                Text("\(entry.events.count)")
+            }
+            .gaugeStyle(.accessoryCircular)
+        default:
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.events.isEmpty ? "오늘" : "오늘 \(entry.events.count)건")
+                    .font(.caption2.weight(.bold))
+                    .widgetAccentable()
+                if let next {
+                    Text(next.allDay ? "종일" : Format.time(next.start))
+                        .font(.caption2)
+                    Text(next.title).font(.caption.weight(.semibold)).lineLimit(1)
+                } else {
+                    Text("일정이 없습니다").font(.caption)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var inline: String {
+        guard let next else { return "오늘 일정 없음" }
+        return next.allDay ? next.title : "\(Format.time(next.start)) \(next.title)"
+    }
+}

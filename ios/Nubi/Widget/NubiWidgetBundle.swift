@@ -7,5 +7,6 @@ struct NubiWidgetBundle: WidgetBundle {
         NubiLiveActivity()
         TodayControl()
         TodayWidget()
+        NextWidget()
     }
 }
