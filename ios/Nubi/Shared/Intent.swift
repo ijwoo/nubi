@@ -18,6 +18,8 @@ enum NubiIntent: Equatable {
     case places(String)
     /// 미리알림 하나를 끝냈다고 표시.
     case completeReminder(String)
+    /// 날씨. 모델을 거치지 않습니다.
+    case weather
     /// 일정을 지우거나 옮깁니다. **바로 하지 않고 묻습니다.**
     case editEvent(Pending.Kind, Spoken)
     /// 그 외. 모델이 답합니다.
@@ -45,6 +47,9 @@ enum Router {
     /// **날짜 낱말만으로는 부족합니다.** "오늘 저녁 메뉴 추천" 이 일정 조회로
     /// 샜습니다 — "오늘" 하나에 걸린 것입니다.
     private static let calendarWords = ["일정", "스케줄", "약속", "캘린더", "뭐 있"]
+
+    /// 날씨를 묻는 말. **모델에게 물으면 외워둔 것으로 답해 틀립니다.**
+    private static let weatherWords = ["날씨", "기온", "우산", "비 와", "비와", "비 올", "비올", "몇 도", "몇도"]
 
     /// 가까운 곳을 찾는 말. **이 낱말이 있으면 지도에 묻습니다.**
     private static let nearWords = ["근처", "주변", "가까운", "가까이"]
@@ -161,6 +166,8 @@ enum Router {
             }
             return .reminders
         }
+
+        if weatherWords.contains(where: { text.contains($0) }) { return .weather }
 
         // 지우기와 옮기기가 먼저입니다. "내일 운동 일정 취소" 에는 "일정" 이
         // 들어 있어서, 나중에 보면 조회로 샙니다.

@@ -36,6 +36,9 @@ enum Nubi {
     /// 일정 조회나 추가는 두 자리 밀리초에 끝나서 보여줄 단계가 없습니다.
     /// 모델에 가는 것만 기다릴 만합니다.
     private static func steps(for route: NubiIntent) -> [NubiAttributes.StepLine] {
+        if case .weather = route {
+            return [.init(label: "날씨", detail: "보는 중…", done: false)]
+        }
         if case let .places(query) = route {
             let what = query.isEmpty ? Places.lastQuery : query
             return [.init(label: "지도", detail: "\(what) 찾는 중…", done: false)]
@@ -162,6 +165,17 @@ enum Nubi {
             } catch {
                 return NubiAnswer(headline: "일정을 넣을 수 없습니다",
                                   detail: error.localizedDescription, source: .events, failed: true)
+            }
+        case .weather:
+            do {
+                let sky = try await Weather.now()
+                var detail: [String] = []
+                if let high = sky.highest, let low = sky.lowest { detail.append("\(low)° / \(high)°") }
+                return NubiAnswer(headline: sky.line, detail: detail.joined(separator: " · "),
+                                  source: .weather)
+            } catch {
+                return NubiAnswer(headline: "날씨를 못 봤습니다",
+                                  detail: error.localizedDescription, source: .weather, failed: true)
             }
         case let .places(asked):
             // 빈 말은 "같은 것을 더" 입니다. 그때는 마지막으로 찾던 것을 더 넓게 봅니다.

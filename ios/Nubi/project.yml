@@ -38,6 +38,7 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.dev.jaewoo.nubi
+        com.apple.developer.weatherkit: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.jaewoo.nubi
@@ -77,6 +78,7 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.dev.jaewoo.nubi
+        com.apple.developer.weatherkit: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.jaewoo.nubi.widget

@@ -83,6 +83,11 @@ enum Briefing {
                                         to: Calendar.current.startOfDay(for: day)) ?? day
         let due = ((try? await Events.openReminders()) ?? []).filter { ($0.due ?? .distantFuture) < end }
         if !due.isEmpty { parts.append("할일 \(due.count)개") }
+        // 날씨는 오늘 것만 붙입니다. 일주일치를 미리 예약하므로 먼 날의 날씨는
+        // 예약 시점의 추측일 뿐입니다 — 틀린 것을 적느니 안 적습니다.
+        if Calendar.current.isDateInToday(day), let sky = await Weather.quiet() {
+            parts.append(sky.line)
+        }
         return parts.isEmpty ? "오늘은 잡힌 게 없습니다" : parts.joined(separator: " · ")
     }
 

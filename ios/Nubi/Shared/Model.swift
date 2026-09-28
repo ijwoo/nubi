@@ -88,13 +88,14 @@ enum Model {
     ///
     /// **모델은 오늘이 며칠인지도 모릅니다.** 그래서 "오늘 저녁 추천" 에 일반론만
     /// 답했습니다. 토큰 몇십 개로 답이 구체적으로 바뀝니다.
-    private static func system(now: Date) -> String {
+    private static func system(now: Date, sky: Weather.Snapshot?) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "yyyy년 M월 d일 EEEE a h시 m분"
         var text = base + "\n\n지금은 \(f.string(from: now))이다."
         let brief = Events.todayBrief()
         if !brief.isEmpty { text += "\n사용자의 오늘 일정: \(brief)" }
+        if let sky { text += "\n지금 날씨: \(sky.line)" }
         return text
     }
 
@@ -116,6 +117,8 @@ enum Model {
     static func answer(to question: String, history: [Turn] = [],
                        now: Date = Date()) async throws -> NubiAnswer {
         guard let key = Secrets.apiKey else { throw Failure.noKey }
+        // 날씨를 미리 넣어둡니다. "오늘 운동 어디서" 에 비 소식을 보고 답해야 합니다.
+        let sky = await Weather.quiet()
 
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
@@ -126,7 +129,7 @@ enum Model {
         var body: [String: Any] = [
             "model": id,
             "max_tokens": 700,
-            "system": system(now: now),
+            "system": system(now: now, sky: sky),
             "messages": messages(history, question),
         ]
         if searches {
