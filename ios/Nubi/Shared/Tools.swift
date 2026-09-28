@@ -10,6 +10,8 @@ import Foundation
 /// 모델이 정합니다. 우리는 도구가 한 일만 기록합니다.
 struct ToolRun {
     var map = ""
+    /// 걸 번호. **예약 도구는 없지만 전화는 넘길 수 있습니다.**
+    var call = ""
     var confirm = ""
     var used: Set<Source> = []
     /// 실제로 무언가를 **쓴** 적이 있는가.
@@ -46,6 +48,11 @@ enum Tools {
                 "minutes": ["type": "integer", "description": "몇 분짜리인지. 모르면 60"],
                 "place": ["type": "string",
                           "description": "어디서 하는지. 가게 이름이나 주소. 방금 find_places 로 찾은 곳이면 그 이름을 그대로 쓴다 — 아이폰이 출발할 시각을 알려준다"],
+                "repeat": ["type": "string", "enum": ["daily", "weekly", "monthly", "yearly"],
+                           "description": "되풀이하면. 한 번뿐이면 비운다"],
+                "repeat_days": ["type": "array", "items": ["type": "string"],
+                                "description": "주마다 되풀이할 요일. 일 월 화 수 목 금 토 중에서"],
+                "repeat_times": ["type": "integer", "description": "몇 번 하고 끝낼지. 끝이 없으면 비운다"],
             ], ["title", "start", "all_day"]),
 
             tool("propose_event_change",
@@ -73,6 +80,26 @@ enum Tools {
             ], ["query"]),
 
             tool("get_weather", "지금 자리의 날씨를 본다.", [:], []),
+
+            tool("set_timer",
+                 "몇 분 뒤에 알린다. 라면·빨래처럼 목록에 남길 필요 없는 짧은 것에 쓴다. 날짜가 있는 일이면 add_reminder 를 쓴다.", [
+                "minutes": ["type": "integer"],
+                "label": ["type": "string", "description": "무엇을 위한 것인지. 예 '라면'"],
+            ], ["minutes"]),
+
+            tool("get_timers", "걸어둔 알림이 몇 분 남았는지 본다.", [:], []),
+
+            tool("cancel_timer", "걸어둔 알림을 끈다.", [
+                "label": ["type": "string", "description": "무엇을 끌지. 비우면 전부"],
+            ], []),
+
+            tool("remind_at_place",
+                 "그 자리에 닿으면 알린다. 시각이 아니라 장소로 울리는 미리알림이다.", [
+                "title": ["type": "string"],
+                "place": ["type": "string",
+                          "description": "방금 find_places 로 찾은 가게 이름. 지금 서 있는 자리면 '여기'"],
+                "on_leaving": ["type": "boolean", "description": "떠날 때 울리려면 true. 기본은 닿을 때"],
+            ], ["title", "place"]),
         ]
     }
 
@@ -105,13 +132,28 @@ enum Tools {
             let place = (input["place"] as? String ?? "").trimmingCharacters(in: .whitespaces)
             // **넣기 전에 봅니다.** 넣고 나서 보면 자기 자신이 걸립니다.
             let clashes = allDay ? [] : Events.clashes(with: start, minutes: minutes)
+            // **방금 넣은 것을 또 넣지 않습니다.**
+            //
+            // "예약하자" 로 오늘 8시 반을 넣고, 24초 뒤 "저녁약속을 내일로" 라고
+            // 하자 내일 것을 하나 더 넣었습니다. 옮긴 게 아니라 둘이 됐고
+            // 사용자는 옮긴 줄 알았습니다. 말로 막는 자리가 아닙니다.
+            if let just = Events.justAdded, Date().timeIntervalSince(just.at) < 600,
+               just.start != start, Events.similar(just.title, title) >= 0.45 {
+                return "‘\(just.title)’ 을 방금 \(Format.short(just.start)) 에 넣었습니다. "
+                    + "같은 약속으로 보여 새로 넣지 않았습니다. "
+                    + "옮기려면 propose_event_change 를 써라. "
+                    + "정말 다른 일정이면 제목을 분명히 달리해서 다시 불러라."
+            }
+            let repeats = repeating(input)
             do {
                 try Events.addEvent(title: title, start: start, allDay: allDay,
                                     minutes: minutes, place: place,
-                                    at: place.isEmpty ? nil : Places.coordinate(of: place))
+                                    at: place.isEmpty ? nil : Places.coordinate(of: place),
+                                    repeats: repeats)
                 run.wrote = true
                 var said = "넣었습니다: \(Format.short(start)) \(title)"
                 if !place.isEmpty { said += " (\(place))" }
+                if repeats != nil { said += " · 되풀이" }
                 guard !clashes.isEmpty else { return said }
                 return said + "\n겹치는 일정이 있습니다:\n"
                     + clashes.map(line).joined(separator: "\n")
@@ -169,7 +211,9 @@ enum Tools {
                 let found = try await Places.findWidening(query)
                 run.map = found.spots[0].directions?.absoluteString ?? ""
                 Places.lastQuery = query
-                let list = found.spots.map { "\($0.name) \($0.away)" }.joined(separator: "\n")
+                let list = found.spots.map {
+                    $0.phone.isEmpty ? "\($0.name) \($0.away)" : "\($0.name) \($0.away) \($0.phone)"
+                }.joined(separator: "\n")
                 return found.wide ? "근처에는 없어 조금 넓혀 찾았습니다.\n" + list : list
             } catch {
                 return error.localizedDescription
@@ -189,9 +233,64 @@ enum Tools {
                 return "\(error.localizedDescription) 대신 웹에서 지금 날씨를 찾아보고 답해라."
             }
 
+        case "set_timer":
+            guard let minutes = input["minutes"] as? Int else { return "몇 분인지 모르겠습니다." }
+            let label = input["label"] as? String ?? ""
+            do {
+                let said = try await Timers.set(minutes: minutes, label: label)
+                run.wrote = true
+                return said
+            } catch {
+                return "알림 권한이 없습니다. 사용자가 앱에서 허용해야 합니다."
+            }
+
+        case "get_timers":
+            let all = await Timers.running()
+            guard !all.isEmpty else { return "걸어둔 알림이 없습니다." }
+            return all.map { item in
+                let left = Int(item.fires.timeIntervalSinceNow / 60)
+                return "\(item.label) — \(max(0, left))분 남음 (\(Format.time(item.fires)))"
+            }.joined(separator: "\n")
+
+        case "cancel_timer":
+            let killed = await Timers.cancel(label: input["label"] as? String ?? "")
+            guard !killed.isEmpty else { return "끌 알림이 없습니다." }
+            run.wrote = true
+            return "껐습니다: " + killed.joined(separator: ", ")
+
+        case "remind_at_place":
+            run.used.insert(.reminders)
+            guard let title = input["title"] as? String,
+                  let place = input["place"] as? String else { return "무엇을 어디서인지 모르겠습니다." }
+            let here = ["여기", "현재 위치", "지금 자리", "이 자리"].contains(place)
+            guard let spot = here ? Places.here() : Places.coordinate(of: place) else {
+                return here ? "아직 위치를 모릅니다. 누비를 한 번 열면 그때 자리를 기억해 둡니다."
+                    : "‘\(place)’ 가 어디인지 모릅니다. find_places 로 먼저 찾아라."
+            }
+            let leaving = input["on_leaving"] as? Bool ?? false
+            do {
+                try Events.addPlaceReminder(title, place: here ? "여기" : place,
+                                            at: spot, onArrival: !leaving)
+                run.wrote = true
+                return "넣었습니다: \(place)\(leaving ? "를 떠나면" : "에 닿으면") \(title)"
+            } catch {
+                return "넣지 못했습니다: \(error.localizedDescription)"
+            }
+
         default:
             return "모르는 도구입니다."
         }
+    }
+
+    /// 되풀이 규칙을 읽습니다. 아무것도 없으면 nil — 한 번뿐인 일정입니다.
+    private static func repeating(_ input: [String: Any]) -> Events.Repeat? {
+        guard let raw = input["repeat"] as? String,
+              let every = Events.Repeat.Every(rawValue: raw) else { return nil }
+        let names = ["일": 1, "월": 2, "화": 3, "수": 4, "목": 5, "금": 6, "토": 7]
+        let days = (input["repeat_days"] as? [String] ?? [])
+            .compactMap { names[String($0.prefix(1))] }
+        return Events.Repeat(every: every, days: days,
+                             times: input["repeat_times"] as? Int ?? 0)
     }
 
     /// 지우거나 옮길 것을 **적어두기만** 합니다. 사람이 눌러야 실제로 합니다.

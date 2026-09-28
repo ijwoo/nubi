@@ -213,14 +213,27 @@ private struct Actions: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Tone.warning.color)
-            } else if !state.map.isEmpty {
-                Button(intent: DirectionsIntent(state.map)) {
-                    Label("길찾기", systemImage: "location.fill")
-                        .font(.caption2.weight(.bold))
-                        .frame(maxWidth: .infinity, minHeight: 16)
+            } else {
+                if !state.map.isEmpty {
+                    Button(intent: DirectionsIntent(state.map)) {
+                        Label("길찾기", systemImage: "location.fill")
+                            .font(.caption2.weight(.bold))
+                            .frame(maxWidth: .infinity, minHeight: 16)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Tone.done.color)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Tone.done.color)
+                // **예약 도구는 없지만 전화는 넘길 수 있습니다.** 가게 번호는
+                // 찾을 때 이미 받아놓고 버리고 있었습니다.
+                if !state.call.isEmpty {
+                    Button(intent: DirectionsIntent(state.call)) {
+                        Label("전화", systemImage: "phone.fill")
+                            .font(.caption2.weight(.bold))
+                            .frame(maxWidth: .infinity, minHeight: 16)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Tone.working.color)
+                }
             }
         }
         .buttonBorderShape(.capsule)

@@ -31,11 +31,13 @@ struct NubiAttributes: ActivityAttributes {
         var at: Date
         /// 길찾기 주소. 있으면 버튼이 하나 바뀝니다.
         var map: String = ""
+        /// 걸 번호. 있으면 전화 버튼이 하나 더 붙습니다.
+        var call: String = ""
         /// 승인을 기다리는 일의 버튼 이름. 있으면 얼굴이 긴장합니다.
         var confirm: String = ""
 
         /// 누를 것이 있는가. 없으면 말풍선 둘만 남습니다.
-        var hasAction: Bool { !confirm.isEmpty || !map.isEmpty }
+        var hasAction: Bool { !confirm.isEmpty || !map.isEmpty || !call.isEmpty }
 
         var progress: Double {
             guard !steps.isEmpty else { return thinking ? 0.35 : 1 }
@@ -89,7 +91,8 @@ enum LiveAnswer {
     static func show(_ turn: Turn) async {
         await push(.init(asked: turn.asked, headline: turn.headline, detail: turn.detail,
                          meta: turn.meta, steps: [], thinking: false, failed: turn.failed,
-                         stamp: now(), at: turn.at, map: turn.map, confirm: turn.confirm))
+                         stamp: now(), at: turn.at, map: turn.map, call: turn.call,
+                         confirm: turn.confirm))
     }
 
     static func dismissAll() {

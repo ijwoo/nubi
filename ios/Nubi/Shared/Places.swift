@@ -14,6 +14,8 @@ enum Places {
         let name: String
         let distance: CLLocationDistance
         let coordinate: CLLocationCoordinate2D
+        /// 가게 번호. 카카오가 줍니다. 애플 지도 쪽은 비어 있습니다.
+        var phone: String = ""
 
         static func == (a: Spot, b: Spot) -> Bool { a.name == b.name && a.distance == b.distance }
         func hash(into hasher: inout Hasher) { hasher.combine(name); hasher.combine(distance) }
@@ -24,6 +26,12 @@ enum Places {
 
         /// 걸어가는 길. 어느 지도 앱으로 열지는 설정이 정합니다.
         var directions: URL? { MapApp.chosen.directions(to: self) }
+
+        /// 거는 주소. **예약은 못 해도 전화는 넘길 수 있습니다.**
+        var call: URL? {
+            let digits = phone.filter { $0.isNumber || $0 == "+" }
+            return digits.count >= 7 ? URL(string: "tel:\(digits)") : nil
+        }
     }
 
     enum Failure: Error, LocalizedError, Equatable {
@@ -60,28 +68,48 @@ enum Places {
     /// 알려줍니다.** 그래서 찾아준 순간에 붙잡아 둡니다.
     static func remember(found spots: [Spot]) {
         let rows: [[String: Any]] = spots.map {
-            ["name": $0.name, "lat": $0.coordinate.latitude, "lon": $0.coordinate.longitude]
+            ["name": $0.name, "lat": $0.coordinate.latitude,
+             "lon": $0.coordinate.longitude, "phone": $0.phone]
         }
         guard let data = try? JSONSerialization.data(withJSONObject: rows) else { return }
         store?.set(data, forKey: spotsKey)
     }
 
-    /// 이름으로 좌표를 되찾습니다. 모델이 이름을 조금 줄여 부르는 일이 있어
-    /// 양쪽 다 포함으로 봅니다.
-    static func coordinate(of name: String) -> CLLocationCoordinate2D? {
-        let wanted = name.trimmingCharacters(in: .whitespaces)
-        guard !wanted.isEmpty, let data = store?.data(forKey: spotsKey),
+    static var remembered: [Spot] {
+        guard let data = store?.data(forKey: spotsKey),
               let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
-        else { return nil }
-        for row in rows {
-            guard let found = row["name"] as? String,
+        else { return [] }
+        return rows.compactMap { row in
+            guard let name = row["name"] as? String,
                   let lat = row["lat"] as? Double, let lon = row["lon"] as? Double
-            else { continue }
-            if found == wanted || found.contains(wanted) || wanted.contains(found) {
-                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-            }
+            else { return nil }
+            return Spot(name: name, distance: 0,
+                        coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                        phone: row["phone"] as? String ?? "")
         }
-        return nil
+    }
+
+    /// 이름으로 되찾습니다. 모델이 이름을 조금 줄여 부르는 일이 있어 양쪽 다
+    /// 포함으로 봅니다.
+    static func spot(named name: String) -> Spot? {
+        let wanted = name.trimmingCharacters(in: .whitespaces)
+        guard wanted.count >= 2 else { return nil }
+        return remembered.first {
+            $0.name == wanted || $0.name.contains(wanted) || wanted.contains($0.name)
+        }
+    }
+
+    static func coordinate(of name: String) -> CLLocationCoordinate2D? {
+        spot(named: name)?.coordinate
+    }
+
+    /// 이 글 안에 방금 찾아준 가게 이름이 있는가.
+    ///
+    /// **모델이 고른 곳과 버튼이 가리키는 곳이 달랐습니다.** 버튼은 늘 첫 번째
+    /// 결과를 가리켰는데, 모델은 두 번째를 권한 적이 있습니다 — 샤브향을
+    /// 권해놓고 길찾기는 해안선으로 갔습니다. 답에서 이름을 찾아 맞춥니다.
+    static func mentioned(in text: String) -> Spot? {
+        remembered.first { !$0.name.isEmpty && text.contains($0.name) }
     }
 
     static var lastKnown: CLLocationCoordinate2D? {
