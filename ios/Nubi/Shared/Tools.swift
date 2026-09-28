@@ -160,7 +160,10 @@ enum Tools {
                 if let high = sky.highest, let low = sky.lowest { line += " · \(low)°/\(high)°" }
                 return line
             } catch {
-                return error.localizedDescription
+                // **막다른 길로 두지 않습니다.** 날씨 서비스가 막혀도 웹으로는
+                // 찾을 수 있습니다. 모델에게 그 길을 알려줍니다.
+                run.used.remove(.weather)
+                return "\(error.localizedDescription) 대신 웹에서 지금 날씨를 찾아보고 답해라."
             }
 
         default:
