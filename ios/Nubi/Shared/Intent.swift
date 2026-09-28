@@ -175,7 +175,7 @@ enum Router {
             return .editEvent(.delete, DateTalk.parse(text))
         }
         if moveWords.contains(where: { text.contains($0) }) {
-            return .editEvent(.move, DateTalk.parse(text))
+            return .editEvent(.move, DateTalk.move(text))
         }
 
         // "우유 사기 완료" — 있는 미리알림 하나를 끝냅니다.

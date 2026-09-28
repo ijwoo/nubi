@@ -85,8 +85,16 @@ enum Nubi {
                                   detail: "‘\(only.title) 3시로 옮겨줘’ 처럼 시각을 말해주세요.",
                                   source: .events, failed: true)
             }
+            // 오전·오후를 안 말했으면 **원래 시각에 가까운 쪽**으로 읽습니다.
+            // 저녁 7시 일정을 "8시 30분으로" 옮기라는 말은 아침 8시가 아닙니다.
+            var moveTo = spoken.start
+            if kind == .move, !spoken.hadMeridiem,
+               let shifted = Calendar.current.date(byAdding: .hour, value: 12, to: moveTo),
+               abs(shifted.timeIntervalSince(only.start)) < abs(moveTo.timeIntervalSince(only.start)) {
+                moveTo = shifted
+            }
             let pending = Pending(kind: kind, eventId: only.id, title: only.title,
-                                  at: only.start, to: kind == .move ? spoken.start : nil)
+                                  at: only.start, to: kind == .move ? moveTo : nil)
             PendingStore.hold(pending)
             return NubiAnswer(headline: pending.question, detail: pending.detail,
                               source: .events, confirm: kind.verb)

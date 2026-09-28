@@ -18,6 +18,8 @@ struct Spoken {
     var hasDay: Bool
     /// 시각을 말했는가.
     var hasClock: Bool
+    /// 오전·오후를 말했는가. 안 말했으면 추측한 것이라 나중에 고칠 수 있습니다.
+    var hadMeridiem: Bool = false
 }
 
 enum DateTalk {
@@ -83,7 +85,8 @@ enum DateTalk {
         rest = rest.replacingOccurrences(of: clock.matched, with: " ")
         let start = calendar.date(byAdding: .minute, value: clock.hour * 60 + clock.minute, to: base) ?? base
         return Spoken(start: start, allDay: false, title: clean(rest),
-                      spoken: "\(dayLabel) \(Format.time(start))", hasDay: hasDay, hasClock: true)
+                      spoken: "\(dayLabel) \(Format.time(start))", hasDay: hasDay,
+                      hasClock: true, hadMeridiem: clock.hadMeridiem)
     }
 
     /// "2시간 뒤", "30분 후", "한 시간 이따" 처럼 지금부터 재는 말.
@@ -108,10 +111,53 @@ enum DateTalk {
         return day.isEmpty ? Format.short(date) : "\(day) \(Format.time(date))"
     }
 
+    /// 옮기라는 말. **이름은 앞에서, 시각은 뒤에서.**
+    ///
+    /// "하체운동 7시말고 8시30분으로 바꿔줘" 를 통째로 읽으면 앞의 7시를 목적지로
+    /// 잡고 이름이 "하체운동 말고 8시30분으로" 가 됩니다. 실기기에서 그랬습니다.
+    static func move(_ text: String, now: Date = Date()) -> Spoken {
+        let split = text.range(of: "말고") ?? text.range(of: "말구") ?? text.range(of: "에서")
+        let head = split.map { String(text[..<$0.lowerBound]) } ?? text
+        let tail = split.map { String(text[$0.upperBound...]) } ?? text
+
+        var offset = 0
+        var dayLabel = "오늘"
+        var hasDay = false
+        if let day = days.first(where: { text.contains($0.key) }) {
+            offset = day.offset
+            dayLabel = day.label
+            hasDay = true
+        }
+        let base = Calendar.current.startOfDay(
+            for: Calendar.current.date(byAdding: .day, value: offset, to: now) ?? now)
+        let name = nameOnly(head)
+
+        guard let clock = time(in: tail) else {
+            return Spoken(start: base, allDay: true, title: name,
+                          spoken: "\(dayLabel) 종일", hasDay: hasDay, hasClock: false)
+        }
+        let start = Calendar.current.date(byAdding: .minute,
+                                          value: clock.hour * 60 + clock.minute, to: base) ?? base
+        return Spoken(start: start, allDay: false, title: name,
+                      spoken: "\(dayLabel) \(Format.time(start))", hasDay: hasDay,
+                      hasClock: true, hadMeridiem: clock.hadMeridiem)
+    }
+
+    /// 시각과 명령어를 걷어내고 이름만 남깁니다.
+    private static func nameOnly(_ text: String) -> String {
+        var rest = text
+        while let clock = time(in: rest) {
+            rest = rest.replacingOccurrences(of: clock.matched, with: " ")
+        }
+        for day in days { rest = rest.replacingOccurrences(of: day.key, with: " ") }
+        return clean(rest)
+    }
+
     private struct Clock {
         var hour: Int
         var minute: Int
         var matched: String
+        var hadMeridiem: Bool
     }
 
     /// `오후 1시`, `1시 30분`, `7시반`, `13시` 를 읽습니다.
@@ -140,7 +186,8 @@ enum DateTalk {
             // 해석한 시각을 답에 되돌려주므로 틀렸으면 바로 보입니다.
             if (1...7).contains(hour) { hour += 12 }
         }
-        return Clock(hour: min(hour, 23), minute: min(minute, 59), matched: String(text[whole]))
+        return Clock(hour: min(hour, 23), minute: min(minute, 59),
+                     matched: String(text[whole]), hadMeridiem: meridiem != nil)
     }
 
     private static func clean(_ text: String) -> String {
