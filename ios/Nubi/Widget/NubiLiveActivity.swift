@@ -213,8 +213,8 @@ private struct Actions: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Tone.warning.color)
-            } else if let url = URL(string: state.map), !state.map.isEmpty {
-                Button(intent: OpenURLIntent(url)) {
+            } else if !state.map.isEmpty {
+                Button(intent: DirectionsIntent(state.map)) {
                     Label("길찾기", systemImage: "location.fill")
                         .font(.caption2.weight(.bold))
                         .frame(maxWidth: .infinity, minHeight: 16)
