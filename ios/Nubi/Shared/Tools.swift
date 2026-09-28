@@ -12,6 +12,12 @@ struct ToolRun {
     var map = ""
     var confirm = ""
     var used: Set<Source> = []
+    /// 실제로 무언가를 **쓴** 적이 있는가.
+    ///
+    /// 읽기만 하고 "넣었어" 라고 말하는 일을 잡으려면 이 표시가 필요합니다.
+    /// 모델이 식당을 "예약 잡았어" 라고 답한 적이 있는데, 그 턴에 돈 도구는
+    /// 일정 읽기 하나뿐이었습니다.
+    var wrote = false
 
     /// 답 아래 붙일 출처. 도구를 안 썼으면 모델입니다.
     var source: Source {
@@ -94,6 +100,7 @@ enum Tools {
             let allDay = input["all_day"] as? Bool ?? false
             do {
                 try Events.addEvent(title: title, start: start, allDay: allDay)
+                run.wrote = true
                 return "넣었습니다: \(Format.short(start)) \(title)"
             } catch {
                 return "넣지 못했습니다: \(error.localizedDescription)"
@@ -122,6 +129,7 @@ enum Tools {
             let due = date(input["due"])
             do {
                 try Events.addReminder(title, due: due)
+                run.wrote = true
                 return due.map { "넣었습니다: \(Format.short($0)) \(title)" } ?? "넣었습니다: \(title) (마감 없음)"
             } catch {
                 return "넣지 못했습니다: \(error.localizedDescription)"
@@ -137,6 +145,7 @@ enum Tools {
                     : "여러 개가 걸립니다: " + hits.map(\.title).joined(separator: ", ")
             }
             try? Events.complete(only)
+            run.wrote = true
             return "끝냈습니다: \(only.title)"
 
         case "find_places":
