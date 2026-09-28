@@ -56,8 +56,10 @@ enum Tools {
                 "name": ["type": "string"],
             ], ["name"]),
 
-            tool("find_places", "지금 자리에서 가까운 곳을 찾는다.", [
-                "query": ["type": "string", "description": "카페, 헬스장 같은 것"],
+            tool("find_places",
+                 "지금 자리에서 가까운 가게를 찾는다. 지역명은 넣지 않는다 — 언제나 현재 위치 기준이다.", [
+                "query": ["type": "string",
+                          "description": "간판에 쓰이는 가게 종류. '회'가 아니라 '횟집', '고기'가 아니라 '고깃집', '커피'가 아니라 '카페'"],
             ], ["query"]),
 
             tool("get_weather", "지금 자리의 날씨를 본다.", [:], []),
@@ -141,10 +143,11 @@ enum Tools {
             run.used.insert(.places)
             guard let query = input["query"] as? String else { return "무엇을 찾을지 모르겠습니다." }
             do {
-                let spots = try await Places.find(query)
-                run.map = spots[0].directions?.absoluteString ?? ""
+                let found = try await Places.findWidening(query)
+                run.map = found.spots[0].directions?.absoluteString ?? ""
                 Places.lastQuery = query
-                return spots.map { "\($0.name) \($0.away)" }.joined(separator: "\n")
+                let list = found.spots.map { "\($0.name) \($0.away)" }.joined(separator: "\n")
+                return found.wide ? "근처에는 없어 조금 넓혀 찾았습니다.\n" + list : list
             } catch {
                 return error.localizedDescription
             }

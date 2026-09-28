@@ -109,15 +109,24 @@ enum Places {
 
     // MARK: 찾기
 
-    static func find(_ query: String, limit: Int = 4) async throws -> [Spot] {
+    /// 가까운 데 없으면 한 번 더 넓혀 봅니다. **없다고만 하면 쓸모가 없습니다.**
+    static func findWidening(_ query: String, limit: Int = 4) async throws -> (spots: [Spot], wide: Bool) {
+        do {
+            return (try await find(query, limit: limit), false)
+        } catch Failure.nothingFound {
+            return (try await find(query, limit: limit, radius: 15000), true)
+        }
+    }
+
+    static func find(_ query: String, limit: Int = 4, radius: CLLocationDistance = 5000) async throws -> [Spot] {
         // 앞에 있을 때만 새로 잡아봅니다. 처음 묻는 사람은 여기서 허용을 봅니다.
         if here() == nil, inApp, foreground { await refreshLocation() }
         guard let origin = here() else { throw Failure.noLocation }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         // 2km 안에서만 봅니다. "근처" 라고 물었는데 지하철로 갈 거리를 주면 안 됩니다.
-        request.region = MKCoordinateRegion(center: origin, latitudinalMeters: 2000,
-                                            longitudinalMeters: 2000)
+        request.region = MKCoordinateRegion(center: origin, latitudinalMeters: radius,
+                                            longitudinalMeters: radius)
         let response = try await MKLocalSearch(request: request).start()
         let from = CLLocation(latitude: origin.latitude, longitude: origin.longitude)
         let spots = response.mapItems.compactMap { item -> Spot? in
@@ -129,7 +138,7 @@ enum Places {
         // **지도는 반경을 힌트로만 받습니다.** 근처에 없으면 멀리 있는 것을
         // 돌려줍니다 — "근처 카페" 에 8982km 떨어진 곳이 나온 적이 있습니다.
         // 근처라고 물었으면 근처가 아닌 것은 답이 아닙니다.
-        let near = spots.filter { $0.distance < 5000 }
+        let near = spots.filter { $0.distance < radius }
         guard !near.isEmpty else { throw Failure.nothingFound(query) }
         return Array(near.prefix(limit))
     }

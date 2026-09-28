@@ -55,15 +55,27 @@ enum Model {
 
     /// **첫 줄이 한 문장 요약이어야 합니다.** 잠금화면은 그 줄만 보여줍니다.
     private static let base = """
-    너는 사용자의 아이폰에서 도는 비서다. 한국어로 답한다.
-    첫 줄은 한 문장 요약이다. 그 줄만 읽어도 답이 되어야 한다.
-    그다음 줄부터 필요한 만큼 자세히 쓴다. 세 문단을 넘기지 않는다.
-    인사나 서론은 쓰지 않는다.
+    너는 잠금화면에서 읽히는 비서다. 한국어로 답한다.
 
-    일정·미리알림·가까운 곳·날씨는 도구로 직접 할 수 있다. 필요하면 바로 쓴다.
-    **다른 앱을 쓰라고 미루지 마라.** 네가 할 수 있는 일이다.
+    ## 길이
+    첫 줄은 한 문장 요약이고, 그 줄만 읽어도 답이 되어야 한다.
+    전체는 네 줄을 넘기지 않는다. 화면이 좁다.
+    후보를 여러 개 늘어놓지 말고 **하나를 골라 권하고** 이유를 한 줄 붙인다.
+
+    ## 모양
+    마크다운을 쓰지 마라. 별표, 우물정자, 하이픈 목록 전부 안 된다.
+    화면이 그대로 글자로 보여준다. 나열이 필요하면 줄마다 가운뎃점(·)을 쓴다.
+    인사, 서론, "도와드릴까요" 같은 맺음말을 쓰지 않는다.
+
+    ## 되묻지 않기
+    **할 수 있으면 먼저 하고 결과를 보여준다.** "찾아드릴까요?" 라고 묻지 마라.
+    정보가 모자라면 가장 그럴듯한 값으로 한 번 해보고, 그게 아니면 고쳐달라고 한 줄 붙인다.
+    정말 아무것도 못 고를 때만 딱 하나를 묻는다.
+
+    ## 도구
+    일정·미리알림·가까운 곳·날씨는 직접 할 수 있다. 다른 앱을 쓰라고 미루지 마라.
     지우거나 옮기는 것은 propose_event_change 로 제안만 한다 — 사용자가 눌러야 실행된다.
-    도구가 필요 없는 질문에는 그냥 답한다. 추천이나 의견을 물으면 네 생각을 말한다.
+    도구가 필요 없는 질문에는 그냥 답한다. 의견을 물으면 네 생각을 말한다.
     """
 
     private static func system(now: Date, sky: Weather.Snapshot?) -> String {
@@ -159,9 +171,30 @@ enum Model {
     }
 
     private static func text(in content: [[String: Any]]) -> String {
-        content
+        plain(content
             .compactMap { $0["type"] as? String == "text" ? $0["text"] as? String : nil }
             .joined()
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    /// 마크다운을 벗깁니다.
+    ///
+    /// **화면은 마크다운을 모릅니다.** 별표가 그대로 글자로 보입니다. 프롬프트로
+    /// 쓰지 말라고 해도 새므로 여기서 한 번 더 걷어냅니다 — 말로 막는 것과
+    /// 코드로 막는 것은 다릅니다.
+    private static func plain(_ text: String) -> String {
+        var out = text
+            .replacingOccurrences(of: "**", with: "")
+            .replacingOccurrences(of: "__", with: "")
+        out = out.split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line -> String in
+                var l = String(line).trimmingCharacters(in: .whitespaces)
+                while l.hasPrefix("#") { l.removeFirst() }
+                l = l.trimmingCharacters(in: .whitespaces)
+                if l.hasPrefix("- ") || l.hasPrefix("* ") { l = "· " + l.dropFirst(2) }
+                return l
+            }
+            .joined(separator: "\n")
+        return out.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
