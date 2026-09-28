@@ -424,6 +424,48 @@ struct ConfirmIntent: LiveActivityIntent {
     }
 }
 
+/// 잠금화면에서 길찾기를 누르는 버튼.
+///
+/// **시스템의 URL 열기 인텐트는 잠긴 화면에서 조용히 막힙니다.** 우리 코드가
+/// 돌지 않으니 기록도 안 남고, 누른 사람은 버튼이 고장난 줄 압니다.
+///
+/// 그래서 주소를 적어두고 앱을 엽니다. 앱이 뜨면 그때 지도로 넘깁니다 —
+/// 잠금을 한 번 풀어야 하지만 **언제나 됩니다.**
+struct DirectionsIntent: AppIntent {
+    static let title: LocalizedStringResource = "길찾기"
+    static let openAppWhenRun = true
+
+    @Parameter(title: "주소")
+    var url: String
+
+    init() { url = "" }
+    init(_ url: String) { self.url = url }
+
+    func perform() async throws -> some IntentResult {
+        Navigation.pending = url
+        NubiLog.write("[길찾기] 앱을 열어 넘깁니다")
+        return .result()
+    }
+}
+
+/// 앱이 열리면 넘겨줄 주소.
+enum Navigation {
+    private static let key = "navigate.to"
+    private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
+
+    static var pending: String? {
+        get { store?.string(forKey: key) }
+        set { store?.set(newValue, forKey: key) }
+    }
+
+    /// 꺼내면서 지웁니다. 앱을 열 때마다 지도로 튀면 안 됩니다.
+    static func take() -> URL? {
+        guard let text = pending, !text.isEmpty else { return nil }
+        store?.removeObject(forKey: key)
+        return URL(string: text)
+    }
+}
+
 /// 앱을 엽니다. 대화창에서 전문을 보러 가는 길입니다.
 struct OpenNubiIntent: AppIntent {
     static let title: LocalizedStringResource = "누비 열기"

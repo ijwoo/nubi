@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum Drawer: Hashable { case events, reminders, chat, lock }
 
@@ -61,6 +62,7 @@ struct HomeView: View {
                 reload()
                 // 앱이 앞에 올 때마다 자리를 갱신합니다. **잠금 상태에서는 새로
                 // 못 잡습니다** — 잠금화면 버튼이 쓰는 것은 이때 잡아둔 값입니다.
+                openPendingRoute()
                 Task {
                     await store.refreshPlace()
                     await Briefing.reschedule()
@@ -101,9 +103,16 @@ struct HomeView: View {
     private func start() async {
         Places.foreground = true
         reload()
+        openPendingRoute()
         await store.revive()
         await store.refreshPlace()
         await Briefing.reschedule()
+    }
+
+    /// 잠금화면에서 누른 길찾기를 이어받습니다.
+    private func openPendingRoute() {
+        guard let url = Navigation.take() else { return }
+        UIApplication.shared.open(url)
     }
 
     private func reload() {
