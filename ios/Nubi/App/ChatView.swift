@@ -32,7 +32,7 @@ struct ChatView: View {
                     ForEach(Array(store.turns.enumerated()), id: \.element.id) { index, turn in
                         if let mark = separator(before: index) { DayMark(text: mark) }
                         TurnRows(turn: turn, retry: { retry(turn) }, delete: { delete(turn) },
-                                 confirm: approve)
+                                 confirm: approve, cancel: drop)
                     }
                     if store.busy { ThinkingRow() }
                     Color.clear.frame(height: 1).id(bottom)
@@ -81,6 +81,14 @@ struct ChatView: View {
         }
     }
 
+    /// 승인을 물립니다. 적어둔 것을 지우고 그랬다고 말합니다.
+    private func drop() {
+        PendingStore.clear()
+        Thread.append(Turn(asked: "취소", headline: "하지 않았습니다", detail: "",
+                           source: .events, failed: false, at: Date(), viaIntent: false))
+        store.refresh()
+    }
+
     private func delete(_ turn: Turn) {
         withAnimation(.easeOut(duration: 0.2)) {
             Thread.remove(turn)
@@ -112,6 +120,7 @@ struct TurnRows: View {
     let retry: () -> Void
     let delete: () -> Void
     let confirm: () -> Void
+    let cancel: () -> Void
     @State private var shown = false
 
     var body: some View {
@@ -132,20 +141,37 @@ struct TurnRows: View {
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if turn.failed {
-                        Button("다시 시도", action: retry)
-                            .font(.caption.weight(.semibold))
-                            .buttonStyle(.borderless)
+                        HStack(spacing: 14) {
+                            Button("다시 시도", action: retry)
+                            // **말만 하고 길을 안 열어주면 막다른 길입니다.**
+                            if turn.needsSetup {
+                                Button("설정 열기") {
+                                    NotificationCenter.default.post(name: .nubiOpenSettings, object: nil)
+                                }
+                            }
+                        }
+                        .font(.caption.weight(.semibold))
+                        .buttonStyle(.borderless)
                     }
                     if !turn.confirm.isEmpty, PendingStore.current != nil {
-                        Button(turn.confirm, systemImage: "checkmark.shield.fill", role: .destructive) {
-                            Haptic.done()
-                            confirm()
+                        HStack(spacing: 8) {
+                            Button(turn.confirm, systemImage: "checkmark.shield.fill") {
+                                Haptic.done()
+                                confirm()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Ink.warn)
+                            // 물릴 길이 없으면 제안이 아니라 통보입니다.
+                            Button("취소") {
+                                Haptic.tap()
+                                cancel()
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.secondary)
                         }
                         .font(.caption.weight(.bold))
-                        .buttonStyle(.borderedProminent)
                         .buttonBorderShape(.capsule)
                         .controlSize(.small)
-                        .tint(Ink.warn)
                     }
                     if let url = URL(string: turn.map), !turn.map.isEmpty {
                         Button("길찾기", systemImage: "location.fill") {

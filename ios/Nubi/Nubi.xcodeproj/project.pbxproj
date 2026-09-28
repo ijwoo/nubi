@@ -8,13 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		0070F80511BB2ED8DE6A7807 /* TodayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2F88853B7D797478C4DE6A /* TodayIntent.swift */; };
+		015B2871214C332B4DA52DE8 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA679F4C5115AE0DA4E735CC /* Tools.swift */; };
 		03A181F4E2619EBFAB7ACC19 /* Malpoongi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A686DB057CB597AA2F2BBC11 /* Malpoongi.swift */; };
 		05E4D5AAB6195D76F53896F6 /* NubiLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8022C1BA164C96691288B821 /* NubiLog.swift */; };
 		067DAFEC52953E42CE39CD84 /* NubiControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF16C77452B7A625FB1CAC5 /* NubiControl.swift */; };
+		1246C1EA352C0429D569220F /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA679F4C5115AE0DA4E735CC /* Tools.swift */; };
 		12D9EB201AD4DB02E24B6AA5 /* Briefing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D185434B2F19A1C29EDC0C2 /* Briefing.swift */; };
 		248776525A64E2A55F6D56DB /* TodayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2F88853B7D797478C4DE6A /* TodayIntent.swift */; };
 		2A829C3D19C12CF18DEB67B1 /* Thread.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B53AA3231F9841C1CD70652 /* Thread.swift */; };
 		3D72EE1D4D629C595DDF22FC /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79C970ABA617C51650B7FDAC /* Places.swift */; };
+		3DBE8988DF6C844882733271 /* FastPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D78B6F5B43980761726563 /* FastPath.swift */; };
 		3FC9B47ED41D90C7EC7572AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */; };
 		3FE562F76FE1E3A2382F8B69 /* Answer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913D2FA0CD3AB7D5171F9F15 /* Answer.swift */; };
 		458D5070925AFFE506E8C362 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9605B696A0CAA173365B098C /* Intent.swift */; };
@@ -31,6 +34,7 @@
 		9B47E9EFDCE28613D36082D3 /* NubiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B6454CB77CA45258A5A76AE /* NubiApp.swift */; };
 		A15C13D2E82AD194BEF631E4 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE932A11C78E0A37A845E617 /* HomeView.swift */; };
 		A1DA9B6B4D8091103B167A7B /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B34F5F5B4A10E59AE49137 /* ChatView.swift */; };
+		A754073F7FA539933EB6E5AE /* FastPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D78B6F5B43980761726563 /* FastPath.swift */; };
 		AC617D3B909F273257DD75E2 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B7FC438A30E95882F284FA /* EventsView.swift */; };
 		B4626BA5F1FFD6C00EE9C9FE /* Pending.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3090F6C79919E1D5F765A685 /* Pending.swift */; };
 		C89878D8B58E5E6B458FA23F /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA683881492FFE4EF4FDD2D7 /* Model.swift */; };
@@ -110,9 +114,11 @@
 		BA683881492FFE4EF4FDD2D7 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		D1B9F03A6425F50B4D2ED25B /* NubiWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = NubiWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D2664AF5C4C38CF8EB670E96 /* Nubi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Nubi.entitlements; sourceTree = "<group>"; };
+		D6D78B6F5B43980761726563 /* FastPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FastPath.swift; sourceTree = "<group>"; };
 		E3646FB2F5E07CB94B2899EA /* Nubi.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Nubi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		ED796797B95535CEC7A6C3BB /* LockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenView.swift; sourceTree = "<group>"; };
+		FA679F4C5115AE0DA4E735CC /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
 		FCD47A312889616E41B12B48 /* RemindersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersView.swift; sourceTree = "<group>"; };
 		FE932A11C78E0A37A845E617 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -176,6 +182,7 @@
 				2D185434B2F19A1C29EDC0C2 /* Briefing.swift */,
 				8616D9339486DB06630BC390 /* DateTalk.swift */,
 				3F32EF390B68B28BEE766616 /* Events.swift */,
+				D6D78B6F5B43980761726563 /* FastPath.swift */,
 				9605B696A0CAA173365B098C /* Intent.swift */,
 				A686DB057CB597AA2F2BBC11 /* Malpoongi.swift */,
 				BA683881492FFE4EF4FDD2D7 /* Model.swift */,
@@ -186,6 +193,7 @@
 				2FBB56C759A2052E60904159 /* Secrets.swift */,
 				2B53AA3231F9841C1CD70652 /* Thread.swift */,
 				AF2F88853B7D797478C4DE6A /* TodayIntent.swift */,
+				FA679F4C5115AE0DA4E735CC /* Tools.swift */,
 				366DF705AEBA2BEE184572F5 /* Weather.swift */,
 			);
 			path = Shared;
@@ -291,6 +299,7 @@
 				8296A9C4D2D01C18CB69B755 /* DateTalk.swift in Sources */,
 				8DC14FE3683FBCB33C6591CB /* Events.swift in Sources */,
 				AC617D3B909F273257DD75E2 /* EventsView.swift in Sources */,
+				A754073F7FA539933EB6E5AE /* FastPath.swift in Sources */,
 				A15C13D2E82AD194BEF631E4 /* HomeView.swift in Sources */,
 				458D5070925AFFE506E8C362 /* Intent.swift in Sources */,
 				92D7DF9E9F12DEC65594E2AB /* LockScreenView.swift in Sources */,
@@ -307,6 +316,7 @@
 				7863A0BC557FA0C42B17BBA9 /* Setup.swift in Sources */,
 				F638395D42778FF779434E75 /* Thread.swift in Sources */,
 				0070F80511BB2ED8DE6A7807 /* TodayIntent.swift in Sources */,
+				015B2871214C332B4DA52DE8 /* Tools.swift in Sources */,
 				F966143537AA95B632778B77 /* Weather.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -320,6 +330,7 @@
 				12D9EB201AD4DB02E24B6AA5 /* Briefing.swift in Sources */,
 				CBFAB380E3112269489A2BF5 /* DateTalk.swift in Sources */,
 				8778F0A476A2E4E84A802AF8 /* Events.swift in Sources */,
+				3DBE8988DF6C844882733271 /* FastPath.swift in Sources */,
 				6F709CE0EDB3DB9F3CAF69AC /* Intent.swift in Sources */,
 				D41556E79CD58E7BF40E22AC /* Malpoongi.swift in Sources */,
 				F8A171F4F881E22E507ED455 /* Model.swift in Sources */,
@@ -334,6 +345,7 @@
 				2A829C3D19C12CF18DEB67B1 /* Thread.swift in Sources */,
 				248776525A64E2A55F6D56DB /* TodayIntent.swift in Sources */,
 				EB35F2C4B9067A9837D25E69 /* TodayWidget.swift in Sources */,
+				1246C1EA352C0429D569220F /* Tools.swift in Sources */,
 				F02F511117F44B571AD6D5AF /* Weather.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -355,7 +367,7 @@
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -378,7 +390,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -461,7 +473,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -539,7 +551,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 42;
+				CURRENT_PROJECT_VERSION = 43;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

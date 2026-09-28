@@ -9,20 +9,21 @@ enum Nubi {
     /// 표시를 먼저 바꾸고 답을 만들고 대화에 쌓습니다.
     @discardableResult
     static func turn(_ utterance: String, viaIntent: Bool) async -> Turn {
-        // 앞 턴의 성격을 물려받습니다. 지도 이야기 뒤의 "다른 데" 는 지도입니다.
-        let route = Router.route(utterance, after: Thread.last?.source)
+        // 정해진 몇 마디만 빠른 길로 갑니다. 나머지는 모델이 갈래를 고릅니다.
+        let route = FastPath.match(utterance)
         await LiveAnswer.thinking(about: utterance, steps: steps(for: route))
         let started = Date()
         // 앞의 말을 같이 보냅니다. 없으면 "액션으로" 같은 말이 통하지 않습니다.
         let history = Array(Thread.load().suffix(6))
         // **답이 없는 것도 답으로 만듭니다.** 어딘가에서 멈추면 대화창이 "생각 중"
         // 인 채로 남고, 사람은 고장난 줄 압니다.
-        let answer = await within(seconds: 30) { await respond(route, history: history) }
+        let answer = await within(seconds: 40) { await respond(route, history: history, asked: utterance) }
             ?? NubiAnswer(headline: "시간이 너무 걸립니다",
                           detail: "다시 시도해 주세요.", failed: true)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
-                        viaIntent: viaIntent, map: answer.map, confirm: answer.confirm)
+                        viaIntent: viaIntent, map: answer.map, confirm: answer.confirm,
+                        needsSetup: answer.needsSetup)
         Thread.append(turn)
         await LiveAnswer.show(turn)
         let took = Date().timeIntervalSince(started)
@@ -35,22 +36,12 @@ enum Nubi {
     ///
     /// 일정 조회나 추가는 두 자리 밀리초에 끝나서 보여줄 단계가 없습니다.
     /// 모델에 가는 것만 기다릴 만합니다.
-    private static func steps(for route: NubiIntent) -> [NubiAttributes.StepLine] {
-        if case .weather = route {
-            return [.init(label: "날씨", detail: "보는 중…", done: false)]
+    private static func steps(for route: NubiIntent?) -> [NubiAttributes.StepLine] {
+        guard let route else {
+            // 모델이 갈래를 고르는 길. 무엇을 쓸지는 아직 모릅니다.
+            return [.init(label: "답", detail: "생각하는 중…", done: false)]
         }
-        if case let .places(query) = route {
-            let what = query.isEmpty ? Places.lastQuery : query
-            return [.init(label: "지도", detail: "\(what) 찾는 중…", done: false)]
-        }
-        guard case .ask = route else { return [] }
-        var lines: [NubiAttributes.StepLine] = []
-        if Events.canReadEvents {
-            let brief = Events.todayBrief()
-            lines.append(.init(label: "일정", detail: brief.isEmpty ? "오늘 없음" : brief, done: true))
-        }
-        lines.append(.init(label: "답", detail: "만드는 중…", done: false))
-        return lines
+        return []
     }
 
     /// 지우거나 옮길 일정을 찾아 **적어두기만** 합니다.
@@ -134,6 +125,11 @@ enum Nubi {
         return turn
     }
 
+    private static func isPlainAsk(_ route: NubiIntent) -> Bool {
+        if case .ask = route { return true }
+        return false
+    }
+
     /// 시한 안에 못 끝내면 nil.
     private static func within<T: Sendable>(
         seconds: Double, _ work: @Sendable @escaping () async -> T
@@ -151,10 +147,27 @@ enum Nubi {
     }
 
     static func respond(to utterance: String, history: [Turn] = []) async -> NubiAnswer {
-        await respond(Router.route(utterance, after: Thread.last?.source), history: history)
+        await respond(FastPath.match(utterance), history: history, asked: utterance)
     }
 
-    static func respond(_ route: NubiIntent, history: [Turn] = []) async -> NubiAnswer {
+    static func respond(_ route: NubiIntent?, history: [Turn] = [],
+                        asked: String) async -> NubiAnswer {
+        guard let route else {
+            do {
+                return try await Model.answer(to: asked, history: history)
+            } catch {
+                // 키가 없으면 모델을 못 씁니다. 그때는 낱말 규칙이라도 써서
+                // 일정과 미리알림은 답합니다 — **없는 것보다 낫습니다.**
+                if (error as? Model.Failure) == .noKey,
+                   let fallback = Router.route(asked, after: Thread.last?.source) as NubiIntent?,
+                   !isPlainAsk(fallback) {
+                    return await respond(fallback, history: history, asked: asked)
+                }
+                return NubiAnswer(headline: "답하지 못했습니다",
+                                  detail: error.localizedDescription, source: .model, failed: true,
+                                  needsSetup: (error as? Model.Failure) == .noKey)
+            }
+        }
         switch route {
         case let .events(offset, span, label):
             do {
@@ -162,7 +175,8 @@ enum Nubi {
                 return Format.events(try Events.upcoming(days: span, from: base), label: label)
             } catch {
                 return NubiAnswer(headline: "일정을 읽을 수 없습니다",
-                                  detail: error.localizedDescription, source: .events, failed: true)
+                                  detail: error.localizedDescription, source: .events, failed: true,
+                                  needsSetup: error is Events.Failure)
             }
         case let .addEvent(spoken):
             do {
@@ -183,7 +197,8 @@ enum Nubi {
                                   source: .weather)
             } catch {
                 return NubiAnswer(headline: "날씨를 못 봤습니다",
-                                  detail: error.localizedDescription, source: .weather, failed: true)
+                                  detail: error.localizedDescription, source: .weather, failed: true,
+                                  needsSetup: error is Weather.Failure)
             }
         case let .places(asked):
             // 빈 말은 "같은 것을 더" 입니다. 그때는 마지막으로 찾던 것을 더 넓게 봅니다.
@@ -199,7 +214,8 @@ enum Nubi {
                                      query: query)
             } catch {
                 return NubiAnswer(headline: "찾지 못했습니다",
-                                  detail: error.localizedDescription, source: .places, failed: true)
+                                  detail: error.localizedDescription, source: .places, failed: true,
+                                  needsSetup: (error as? Places.Failure) == .noLocation)
             }
         case let .editEvent(kind, spoken):
             return await propose(kind, spoken)
@@ -269,7 +285,8 @@ enum Nubi {
                 return try await Model.answer(to: question, history: history)
             } catch {
                 return NubiAnswer(headline: "답하지 못했습니다",
-                                  detail: error.localizedDescription, source: .model, failed: true)
+                                  detail: error.localizedDescription, source: .model, failed: true,
+                                  needsSetup: (error as? Model.Failure) == .noKey)
             }
         }
     }

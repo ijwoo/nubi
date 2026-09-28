@@ -34,6 +34,8 @@ struct Turn: Codable, Identifiable, Hashable {
     var map: String = ""
     /// 승인을 기다리는 일의 버튼 이름.
     var confirm: String = ""
+    /// 설정을 고쳐야 풀리는 실패인가.
+    var needsSetup: Bool = false
 
     var full: String { detail.isEmpty ? headline : "\(headline)\n\(detail)" }
 

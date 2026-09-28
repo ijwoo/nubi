@@ -28,7 +28,7 @@ enum Places {
         }
     }
 
-    enum Failure: Error, LocalizedError {
+    enum Failure: Error, LocalizedError, Equatable {
         case noLocation
         case nothingFound(String)
 
@@ -69,12 +69,17 @@ enum Places {
     /// **시스템이 이미 들고 있는 마지막 좌표를 먼저 봅니다.** 이건 배경에서도
     /// 곧바로 읽힙니다. 새로 잡으려 하면 잠금 상태에서는 8초를 기다리다 빈손으로
     /// 돌아옵니다 — `근처 헬스장` 이 8347ms 만에 실패하던 이유였습니다.
+    /// 좌표가 쓸 만한가. (0, 0) 은 바다 한가운데이고 자리를 모른다는 뜻입니다.
+    private static func usable(_ c: CLLocationCoordinate2D) -> Bool {
+        CLLocationCoordinate2DIsValid(c) && !(abs(c.latitude) < 0.001 && abs(c.longitude) < 0.001)
+    }
+
     static func here() -> CLLocationCoordinate2D? {
-        if isAllowed, let known = CLLocationManager().location {
+        if isAllowed, let known = CLLocationManager().location, usable(known.coordinate) {
             remember(known.coordinate)
             return known.coordinate
         }
-        return lastKnown
+        return lastKnown.flatMap { usable($0) ? $0 : nil }
     }
 
     private static func remember(_ coordinate: CLLocationCoordinate2D) {
@@ -121,8 +126,12 @@ enum Places {
                         coordinate: place.coordinate)
         }
         .sorted { $0.distance < $1.distance }
-        guard !spots.isEmpty else { throw Failure.nothingFound(query) }
-        return Array(spots.prefix(limit))
+        // **지도는 반경을 힌트로만 받습니다.** 근처에 없으면 멀리 있는 것을
+        // 돌려줍니다 — "근처 카페" 에 8982km 떨어진 곳이 나온 적이 있습니다.
+        // 근처라고 물었으면 근처가 아닌 것은 답이 아닙니다.
+        let near = spots.filter { $0.distance < 5000 }
+        guard !near.isEmpty else { throw Failure.nothingFound(query) }
+        return Array(near.prefix(limit))
     }
 }
 
