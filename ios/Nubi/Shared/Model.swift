@@ -29,7 +29,10 @@ enum Model {
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
 
     static var grade: Grade {
-        get { Grade(rawValue: store?.string(forKey: gradeKey) ?? "") ?? .fast }
+        // **정확한 쪽이 기본입니다.** 빠른 쪽은 길이와 형식 지시를 자주 어깁니다 —
+        // 네 줄로 답하라고 해도 세 문단을 쓰고, 하나만 권하라고 해도 셋을 늘어놨습니다.
+        // 1~2초를 아끼려다 답을 못 쓰게 되는 것보다 낫습니다.
+        get { Grade(rawValue: store?.string(forKey: gradeKey) ?? "") ?? .careful }
         set { store?.set(newValue.rawValue, forKey: gradeKey) }
     }
 
@@ -74,8 +77,14 @@ enum Model {
 
     ## 도구
     일정·미리알림·가까운 곳·날씨는 직접 할 수 있다. 다른 앱을 쓰라고 미루지 마라.
+    **앱은 사용자의 위치를 안다.** 가까운 곳을 물으면 지역을 되묻지 말고
+    find_places 를 바로 불러라. 검색어에 지역명을 넣지 마라.
     지우거나 옮기는 것은 propose_event_change 로 제안만 한다 — 사용자가 눌러야 실행된다.
     도구가 필요 없는 질문에는 그냥 답한다. 의견을 물으면 네 생각을 말한다.
+
+    ## 마지막으로, 길이
+    네 줄을 넘기지 마라. 후보를 셋씩 늘어놓지 마라. **하나를 고르고 이유를 한 줄.**
+    더 듣고 싶으면 사용자가 다시 묻는다.
     """
 
     private static func system(now: Date, sky: Weather.Snapshot?) -> String {
@@ -96,7 +105,10 @@ enum Model {
         guard let key = Secrets.apiKey else { throw Failure.noKey }
         let sky = await Weather.quiet()
 
-        var messages = history.suffix(6).flatMap { turn -> [[String: Any]] in
+        // **실패한 턴은 보내지 않습니다.** "위치를 모릅니다" 같은 답이 앞에 쌓이면
+        // 모델이 그걸 보고 "저는 못 합니다" 를 배웁니다. 실패는 그때의 사정이지
+        // 지금의 사정이 아닙니다.
+        var messages = history.filter { !$0.failed }.suffix(6).flatMap { turn -> [[String: Any]] in
             [["role": "user", "content": String(turn.asked.prefix(400))],
              ["role": "assistant", "content": String(turn.full.prefix(800))]]
         }
