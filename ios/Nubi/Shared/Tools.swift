@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 
 /// 모델이 부를 수 있는 것들.
@@ -93,6 +94,19 @@ enum Tools {
                 "label": ["type": "string", "description": "무엇을 끌지. 비우면 전부"],
             ], []),
 
+            tool("remember",
+                 "사용자가 알려준 것을 오래 기억한다. 다음에도 쓸 것만. 오늘 한 끼 같은 한 번뿐인 일은 기억하지 않는다.", [
+                "text": ["type": "string", "description": "한 줄. 예 '매운 거 못 먹는다'"],
+                "kind": ["type": "string", "enum": ["fact", "taste", "state", "place"],
+                         "description": "fact 는 안 변하는 것, taste 는 취향, state 는 지금 상태(석 달 뒤 확인한다), place 는 자주 가는 자리"],
+                "here": ["type": "boolean",
+                         "description": "place 일 때, 사용자가 지금 서 있는 자리를 그 장소로 삼으면 true"],
+            ], ["text", "kind"]),
+
+            tool("forget", "기억한 것을 지운다.", [
+                "about": ["type": "string", "description": "무엇에 대한 기억인지"],
+            ], ["about"]),
+
             tool("remind_at_place",
                  "그 자리에 닿으면 알린다. 시각이 아니라 장소로 울리는 미리알림이다.", [
                 "title": ["type": "string"],
@@ -148,7 +162,7 @@ enum Tools {
             do {
                 try Events.addEvent(title: title, start: start, allDay: allDay,
                                     minutes: minutes, place: place,
-                                    at: place.isEmpty ? nil : Places.coordinate(of: place),
+                                    at: place.isEmpty ? nil : locate(place),
                                     repeats: repeats)
                 run.wrote = true
                 var said = "넣었습니다: \(Format.short(start)) \(title)"
@@ -262,10 +276,11 @@ enum Tools {
             run.used.insert(.reminders)
             guard let title = input["title"] as? String,
                   let place = input["place"] as? String else { return "무엇을 어디서인지 모르겠습니다." }
-            let here = ["여기", "현재 위치", "지금 자리", "이 자리"].contains(place)
-            guard let spot = here ? Places.here() : Places.coordinate(of: place) else {
+            let here = isHere(place)
+            guard let spot = here ? Places.here() : locate(place) else {
                 return here ? "아직 위치를 모릅니다. 누비를 한 번 열면 그때 자리를 기억해 둡니다."
-                    : "‘\(place)’ 가 어디인지 모릅니다. find_places 로 먼저 찾아라."
+                    : "‘\(place)’ 가 어디인지 모릅니다. find_places 로 찾거나, "
+                        + "사용자가 거기 서 있다면 remember 로 그 자리를 먼저 기억해라."
             }
             let leaving = input["on_leaving"] as? Bool ?? false
             do {
@@ -277,9 +292,48 @@ enum Tools {
                 return "넣지 못했습니다: \(error.localizedDescription)"
             }
 
+        case "remember":
+            guard let text = input["text"] as? String else { return "무엇을 기억할지 모르겠습니다." }
+            let kind = Memory.Kind(rawValue: input["kind"] as? String ?? "") ?? .fact
+            // 장소는 좌표가 있어야 값을 합니다. 없으면 이름만 남는 글자입니다.
+            var spot: CLLocationCoordinate2D?
+            if kind == .place {
+                spot = (input["here"] as? Bool ?? false) ? Places.here() : locate(text)
+            }
+            do {
+                try Memory.remember(text, kind: kind, at: spot)
+                run.wrote = true
+                if kind == .place, spot == nil {
+                    return "기억했습니다: \(text). 다만 자리가 어딘지는 모릅니다 — "
+                        + "거기 서서 다시 말해주면 좌표까지 기억합니다."
+                }
+                return "기억했습니다: \(text)"
+            } catch {
+                return error.localizedDescription
+            }
+
+        case "forget":
+            guard let about = input["about"] as? String else { return "무엇을 지울지 모르겠습니다." }
+            let gone = Memory.forget(about: about)
+            guard !gone.isEmpty else { return "그런 기억이 없습니다." }
+            run.wrote = true
+            return "지웠습니다: " + gone.map(\.text).joined(separator: ", ")
+
         default:
             return "모르는 도구입니다."
         }
+    }
+
+    /// 이름이 가리키는 자리.
+    ///
+    /// 방금 찾아준 가게가 먼저이고, 없으면 **오래 기억해둔 자리**입니다 —
+    /// 집, 회사, 헬스장. 그래서 "집에 도착하면 알려줘" 가 됩니다.
+    private static func locate(_ name: String) -> CLLocationCoordinate2D? {
+        Places.coordinate(of: name) ?? Memory.place(named: name)?.coordinate
+    }
+
+    private static func isHere(_ name: String) -> Bool {
+        ["여기", "현재 위치", "지금 자리", "이 자리", "여기에"].contains(name)
     }
 
     /// 되풀이 규칙을 읽습니다. 아무것도 없으면 nil — 한 번뿐인 일정입니다.

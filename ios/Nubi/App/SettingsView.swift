@@ -32,6 +32,7 @@ struct SettingsView: View {
                 briefing
                 permissions
                 model
+                memory
                 maps
                 conversation
                 diagnostics
@@ -180,6 +181,21 @@ struct SettingsView: View {
             Text("카카오 키를 넣으면 가까운 곳을 한국 지도에서 찾습니다. 애플 지도는 한국 가게에 약합니다.\n키는 developers.kakao.com 에서 앱을 만들고 REST API 키를 복사하면 됩니다.")
         }
     }
+
+    /// **무엇을 아는지 못 보면 왜 이상한 답이 나오는지도 알 수 없습니다.**
+    private var memory: some View {
+        Section {
+            NavigationLink {
+                MemoryView()
+            } label: {
+                LabeledContent("기억", value: known == 0 ? "없음" : "\(known)개")
+            }
+        } footer: {
+            Text("‘나 매운 거 못 먹어’ 처럼 말하면 오래 기억합니다. 여기서 보고 지울 수 있습니다.")
+        }
+    }
+
+    private var known: Int { Memory.all().count }
 
     private var conversation: some View {
         Section("대화") {
