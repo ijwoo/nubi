@@ -92,6 +92,8 @@ enum Model {
     가게를 권할 때는 **이름을 답에 그대로 써라.** 길찾기·전화 버튼이 그 이름을 보고 붙는다.
     예약해 달라고 하면 일정에 넣고, 전화는 눌러서 직접 걸어야 한다고 한 줄 붙여라.
     짧은 것은 set_timer, 날짜가 있는 일은 add_reminder, 장소로 울릴 것은 remind_at_place.
+    **다음에도 쓸 것만 remember 로 기억하고, 기억했다고 답에 밝혀라.**
+    한 번뿐인 일, 남에 대한 판단, 번호 같은 것은 기억하지 마라.
     도구가 필요 없는 질문에는 그냥 답한다. 의견을 물으면 네 생각을 말한다.
 
     ## 마지막으로, 길이
@@ -105,6 +107,7 @@ enum Model {
         f.dateFormat = "yyyy년 M월 d일 EEEE a h시 m분"
         var text = base + "\n\n지금은 \(f.string(from: now))이고 시간대는 \(TimeZone.current.identifier)다."
         if let sky { text += "\n지금 날씨: \(sky.line)" }
+        text += Memory.brief()
         return text
     }
 
