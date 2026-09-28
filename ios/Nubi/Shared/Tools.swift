@@ -61,6 +61,8 @@ enum Tools {
                 "name": ["type": "string", "description": "일정 제목의 일부"],
                 "action": ["type": "string", "enum": ["delete", "move"]],
                 "new_start": ["type": "string", "description": "옮길 때만. ISO8601"],
+                "at": ["type": "string",
+                       "description": "같은 이름이 여럿일 때 어느 것인지. 그 일정의 시작 시각, ISO8601"],
             ], ["name", "action"]),
 
             tool("get_reminders", "안 끝난 미리알림을 읽는다.", [:], []),
@@ -181,7 +183,8 @@ enum Tools {
             guard let name = input["name"] as? String,
                   let action = input["action"] as? String else { return "무엇을 바꿀지 모르겠습니다." }
             let kind: Pending.Kind = action == "move" ? .move : .delete
-            return propose(kind, name: name, to: date(input["new_start"]), into: &run)
+            return propose(kind, name: name, to: date(input["new_start"]),
+                           which: date(input["at"]), into: &run)
 
         case "get_reminders":
             run.used.insert(.reminders)
@@ -248,6 +251,7 @@ enum Tools {
             }
 
         case "set_timer":
+            run.used.insert(.timer)
             guard let minutes = input["minutes"] as? Int else { return "몇 분인지 모르겠습니다." }
             let label = input["label"] as? String ?? ""
             do {
@@ -259,6 +263,7 @@ enum Tools {
             }
 
         case "get_timers":
+            run.used.insert(.timer)
             let all = await Timers.running()
             guard !all.isEmpty else { return "걸어둔 알림이 없습니다." }
             return all.map { item in
@@ -267,6 +272,7 @@ enum Tools {
             }.joined(separator: "\n")
 
         case "cancel_timer":
+            run.used.insert(.timer)
             let killed = await Timers.cancel(label: input["label"] as? String ?? "")
             guard !killed.isEmpty else { return "끌 알림이 없습니다." }
             run.wrote = true
@@ -349,14 +355,21 @@ enum Tools {
 
     /// 지우거나 옮길 것을 **적어두기만** 합니다. 사람이 눌러야 실제로 합니다.
     private static func propose(_ kind: Pending.Kind, name: String,
-                                to newStart: Date?, into run: inout ToolRun) -> String {
+                                to newStart: Date?, which: Date? = nil,
+                                into run: inout ToolRun) -> String {
         PendingStore.clear()
         guard let upcoming = try? Events.upcoming(days: 14) else { return "일정을 읽을 수 없습니다." }
-        let hits = upcoming.filter { $0.title.contains(name) }
+        var hits = upcoming.filter { $0.title.contains(name) }
+        // **되풀이 일정이 생기면서 같은 이름이 흔해졌습니다.** 시각까지 주면
+        // 그걸로 하나를 고릅니다. 1분 안쪽이면 같은 것으로 봅니다.
+        if hits.count > 1, let which {
+            let exact = hits.filter { abs($0.start.timeIntervalSince(which)) < 60 }
+            if !exact.isEmpty { hits = exact }
+        }
         guard hits.count == 1, let only = hits.first else {
             return hits.isEmpty ? "‘\(name)’ 일정이 앞으로 2주 안에 없습니다."
-                : "여러 개가 걸립니다: " + hits.map { "\(Format.short($0.start)) \($0.title)" }
-                    .joined(separator: ", ")
+                : "여러 개가 걸립니다. at 에 시각을 넣어 하나를 골라라: "
+                    + hits.map { "\(Format.short($0.start)) \($0.title)" }.joined(separator: ", ")
         }
         if kind == .move, newStart == nil { return "언제로 옮길지 알려줘야 합니다." }
         PendingStore.hold(Pending(kind: kind, eventId: only.id, title: only.title,

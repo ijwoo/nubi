@@ -36,13 +36,19 @@ enum Timers {
         return "\(Format.time(fires))에 알립니다 (\(span)분)"
     }
 
+    /// 걸어둔 것들.
+    ///
+    /// **울릴 시각은 식별자에서 읽습니다.** `nextTriggerDate()` 는 한 번만
+    /// 울리는 방아쇠에 대해 nil 을 돌려주는 경우가 있고, 그러면 방금 건
+    /// 타이머가 "없음" 으로 보입니다. 우리가 만든 이름이 가장 확실합니다.
     static func running() async -> [Running] {
         let pending = await UNUserNotificationCenter.current().pendingNotificationRequests()
-        return pending.compactMap { request in
+        return pending.compactMap { request -> Running? in
             guard request.identifier.hasPrefix(prefix),
-                  let trigger = request.trigger as? UNTimeIntervalNotificationTrigger,
-                  let fires = trigger.nextTriggerDate()
+                  let epoch = Double(request.identifier.dropFirst(prefix.count))
             else { return nil }
+            let fires = Date(timeIntervalSince1970: epoch)
+            guard fires > Date().addingTimeInterval(-5) else { return nil }
             return Running(id: request.identifier, label: request.content.title, fires: fires)
         }
         .sorted { $0.fires < $1.fires }

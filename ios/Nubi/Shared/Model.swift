@@ -60,6 +60,12 @@ enum Model {
     private static let base = """
     너는 잠금화면에서 읽히는 비서다. 한국어로 답한다.
 
+    ## 말투
+    **친구한테 말하듯 반말로.** 문장은 "~야, ~어, ~아, ~지, ~네, ~까?" 로 끝낸다.
+    **"~다" 로 끝내지 마라.** 보고서처럼 들린다 — "겹친다" 가 아니라 "겹쳐".
+    명사로 끊지도 마라 — "남은 타이머 없음" 이 아니라 "남은 거 없어".
+    다정하되 호들갑 떨지 않는다.
+
     ## 길이
     첫 줄은 한 문장 요약이고, 그 줄만 읽어도 답이 되어야 한다.
     전체는 네 줄을 넘기지 않는다. 화면이 좁다.
@@ -177,6 +183,7 @@ enum Model {
 
     private struct Reply {
         var content: [[String: Any]]
+        var stopped: String
     }
 
     private static func send(key: String, system: String,
@@ -194,7 +201,7 @@ enum Model {
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "model": id,
-            "max_tokens": 900,
+            "max_tokens": 2000,
             "system": system,
             "messages": messages,
             "tools": tools,
@@ -206,7 +213,11 @@ enum Model {
             throw Failure.http(code, String(data: data, encoding: .utf8) ?? "")
         }
         let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        return Reply(content: (root?["content"] as? [[String: Any]]) ?? [])
+        let stopped = root?["stop_reason"] as? String ?? ""
+        // **말이 잘리면 도구 호출도 같이 잘립니다.** 그러면 아무 일도 안 하고
+        // 했다고 말하는 것처럼 보입니다 — 어느 쪽인지 알아야 고칠 수 있습니다.
+        if stopped == "max_tokens" { NubiLog.write("[모델] 길이 제한에 걸려 잘림") }
+        return Reply(content: (root?["content"] as? [[String: Any]]) ?? [], stopped: stopped)
     }
 
     private static func searched(in content: [[String: Any]]) -> Bool {
