@@ -21,6 +21,7 @@
 		3FC9B47ED41D90C7EC7572AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */; };
 		3FE562F76FE1E3A2382F8B69 /* Answer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913D2FA0CD3AB7D5171F9F15 /* Answer.swift */; };
 		458D5070925AFFE506E8C362 /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9605B696A0CAA173365B098C /* Intent.swift */; };
+		463C481970DF24194225030C /* Kakao.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88CFEDCB726DF98E1FC53224 /* Kakao.swift */; };
 		5E0B62C5C7B3DD40FD3C80AB /* NubiActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */; };
 		6F709CE0EDB3DB9F3CAF69AC /* Intent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9605B696A0CAA173365B098C /* Intent.swift */; };
 		77B971B7DB19E26939D090B9 /* Briefing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D185434B2F19A1C29EDC0C2 /* Briefing.swift */; };
@@ -37,6 +38,7 @@
 		A754073F7FA539933EB6E5AE /* FastPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6D78B6F5B43980761726563 /* FastPath.swift */; };
 		AC617D3B909F273257DD75E2 /* EventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B7FC438A30E95882F284FA /* EventsView.swift */; };
 		B4626BA5F1FFD6C00EE9C9FE /* Pending.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3090F6C79919E1D5F765A685 /* Pending.swift */; };
+		C3939BF545C13CD7CA235D0D /* Kakao.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88CFEDCB726DF98E1FC53224 /* Kakao.swift */; };
 		C89878D8B58E5E6B458FA23F /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA683881492FFE4EF4FDD2D7 /* Model.swift */; };
 		C91E3A58B1D37726106C5E15 /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79C970ABA617C51650B7FDAC /* Places.swift */; };
 		CBFAB380E3112269489A2BF5 /* DateTalk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8616D9339486DB06630BC390 /* DateTalk.swift */; };
@@ -102,6 +104,7 @@
 		7DF16C77452B7A625FB1CAC5 /* NubiControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiControl.swift; sourceTree = "<group>"; };
 		8022C1BA164C96691288B821 /* NubiLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NubiLog.swift; sourceTree = "<group>"; };
 		8616D9339486DB06630BC390 /* DateTalk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateTalk.swift; sourceTree = "<group>"; };
+		88CFEDCB726DF98E1FC53224 /* Kakao.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Kakao.swift; sourceTree = "<group>"; };
 		913D2FA0CD3AB7D5171F9F15 /* Answer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Answer.swift; sourceTree = "<group>"; };
 		9605B696A0CAA173365B098C /* Intent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intent.swift; sourceTree = "<group>"; };
 		A686DB057CB597AA2F2BBC11 /* Malpoongi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Malpoongi.swift; sourceTree = "<group>"; };
@@ -184,6 +187,7 @@
 				3F32EF390B68B28BEE766616 /* Events.swift */,
 				D6D78B6F5B43980761726563 /* FastPath.swift */,
 				9605B696A0CAA173365B098C /* Intent.swift */,
+				88CFEDCB726DF98E1FC53224 /* Kakao.swift */,
 				A686DB057CB597AA2F2BBC11 /* Malpoongi.swift */,
 				BA683881492FFE4EF4FDD2D7 /* Model.swift */,
 				A6F9BAD139F721A09A618BB2 /* NubiActivity.swift */,
@@ -302,6 +306,7 @@
 				A754073F7FA539933EB6E5AE /* FastPath.swift in Sources */,
 				A15C13D2E82AD194BEF631E4 /* HomeView.swift in Sources */,
 				458D5070925AFFE506E8C362 /* Intent.swift in Sources */,
+				C3939BF545C13CD7CA235D0D /* Kakao.swift in Sources */,
 				92D7DF9E9F12DEC65594E2AB /* LockScreenView.swift in Sources */,
 				03A181F4E2619EBFAB7ACC19 /* Malpoongi.swift in Sources */,
 				C89878D8B58E5E6B458FA23F /* Model.swift in Sources */,
@@ -332,6 +337,7 @@
 				8778F0A476A2E4E84A802AF8 /* Events.swift in Sources */,
 				3DBE8988DF6C844882733271 /* FastPath.swift in Sources */,
 				6F709CE0EDB3DB9F3CAF69AC /* Intent.swift in Sources */,
+				463C481970DF24194225030C /* Kakao.swift in Sources */,
 				D41556E79CD58E7BF40E22AC /* Malpoongi.swift in Sources */,
 				F8A171F4F881E22E507ED455 /* Model.swift in Sources */,
 				5E0B62C5C7B3DD40FD3C80AB /* NubiActivity.swift in Sources */,
@@ -367,7 +373,7 @@
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 45;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -390,7 +396,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 45;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -473,7 +479,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 45;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -551,7 +557,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 44;
+				CURRENT_PROJECT_VERSION = 45;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

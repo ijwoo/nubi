@@ -22,10 +22,8 @@ enum Places {
             distance < 1000 ? "\(Int(distance))m" : String(format: "%.1fkm", distance / 1000)
         }
 
-        /// 걸어가는 길. 잠금화면 버튼과 앱이 같이 씁니다.
-        var directions: URL? {
-            URL(string: "maps://?daddr=\(coordinate.latitude),\(coordinate.longitude)&dirflg=w")
-        }
+        /// 걸어가는 길. 어느 지도 앱으로 열지는 설정이 정합니다.
+        var directions: URL? { MapApp.chosen.directions(to: self) }
     }
 
     enum Failure: Error, LocalizedError, Equatable {
@@ -122,6 +120,13 @@ enum Places {
         // 앞에 있을 때만 새로 잡아봅니다. 처음 묻는 사람은 여기서 허용을 봅니다.
         if here() == nil, inApp, foreground { await refreshLocation() }
         guard let origin = here() else { throw Failure.noLocation }
+        // 카카오 키가 있으면 그쪽이 먼저입니다. 한국 가게는 애플보다 훨씬 잘 잡습니다.
+        if Kakao.isReady {
+            let spots = try await Kakao.search(query, near: origin, radius: Int(radius), limit: limit)
+            guard !spots.isEmpty else { throw Failure.nothingFound(query) }
+            return spots
+        }
+
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
         // 2km 안에서만 봅니다. "근처" 라고 물었는데 지하철로 갈 거리를 주면 안 됩니다.

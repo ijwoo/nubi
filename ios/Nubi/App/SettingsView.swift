@@ -20,6 +20,9 @@ struct SettingsView: View {
     @State private var echoOn = Briefing.echoesAnswers
     @State private var grade = Model.grade
     @State private var searchOn = Model.searches
+    @State private var kakaoKey = ""
+    @State private var kakaoSaved = false
+    @State private var mapApp = MapApp.chosen
     @State private var briefingAt = Calendar.current.date(
         from: DateComponents(hour: Briefing.hour, minute: Briefing.minute)) ?? Date()
 
@@ -29,6 +32,7 @@ struct SettingsView: View {
                 briefing
                 permissions
                 model
+                maps
                 conversation
                 diagnostics
             }
@@ -147,6 +151,33 @@ struct SettingsView: View {
             Text("모델")
         } footer: {
             Text("일정과 미리알림에는 필요 없습니다. 그 밖의 질문에만 씁니다. 저장소에도 앱 파일에도 들어가지 않습니다.\n웹 찾아보기를 켜면 날씨나 최신 정보에 답할 수 있습니다. 대신 1~2초 느려지고 토큰이 더 듭니다.")
+        }
+    }
+
+    private var maps: some View {
+        Section {
+            LabeledContent("카카오 키", value: Secrets.kakaoMasked)
+            SecureField("카카오 REST API 키", text: $kakaoKey)
+            Button(kakaoSaved ? "저장됨" : "저장") {
+                Secrets.kakaoKey = kakaoKey.trimmingCharacters(in: .whitespacesAndNewlines)
+                kakaoKey = ""
+                kakaoSaved = true
+                Haptic.done()
+                onChange()
+                Task {
+                    try? await Task.sleep(for: .seconds(2))
+                    kakaoSaved = false
+                }
+            }
+            .disabled(kakaoKey.isEmpty)
+            Picker("길찾기 앱", selection: $mapApp) {
+                ForEach(MapApp.allCases) { Text($0.label).tag($0) }
+            }
+            .onChange(of: mapApp) { _, now in MapApp.chosen = now }
+        } header: {
+            Text("지도")
+        } footer: {
+            Text("카카오 키를 넣으면 가까운 곳을 한국 지도에서 찾습니다. 애플 지도는 한국 가게에 약합니다.\n키는 developers.kakao.com 에서 앱을 만들고 REST API 키를 복사하면 됩니다.")
         }
     }
 
