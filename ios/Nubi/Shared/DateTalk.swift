@@ -56,6 +56,15 @@ enum DateTalk {
         var rest = text
         let calendar = Calendar.current
 
+        // "2시간 뒤" 가 먼저입니다. **"2시간" 의 "2시" 를 시각으로 읽던 자리입니다** —
+        // 제목이 "간 뒤에 반지 찾기" 가 되고 시각은 오후 2시가 됐습니다.
+        if let later = relative(in: rest, from: now) {
+            rest = rest.replacingOccurrences(of: later.matched, with: " ")
+            return Spoken(start: later.date, allDay: false, title: clean(rest),
+                          spoken: label(for: later.date, from: now),
+                          hasDay: true, hasClock: true)
+        }
+
         var offset = 0
         var dayLabel = "오늘"
         var hasDay = false
@@ -77,6 +86,28 @@ enum DateTalk {
                       spoken: "\(dayLabel) \(Format.time(start))", hasDay: hasDay, hasClock: true)
     }
 
+    /// "2시간 뒤", "30분 후", "한 시간 이따" 처럼 지금부터 재는 말.
+    private static func relative(in text: String, from now: Date) -> (date: Date, matched: String)? {
+        let pattern = #"(\d{1,3})\s*(시간|분)\s*(뒤|후|있다가|이따|후에|뒤에)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let whole = Range(match.range, in: text),
+              let countRange = Range(match.range(at: 1), in: text),
+              let count = Int(text[countRange]),
+              let unitRange = Range(match.range(at: 2), in: text)
+        else { return nil }
+        let seconds = text[unitRange] == "시간" ? count * 3600 : count * 60
+        return (now.addingTimeInterval(TimeInterval(seconds)), String(text[whole]))
+    }
+
+    /// 사람이 읽는 말로. 오늘이면 시각만, 아니면 날짜까지.
+    private static func label(for date: Date, from now: Date) -> String {
+        let calendar = Calendar.current
+        let day = calendar.isDate(date, inSameDayAs: now) ? "오늘"
+            : calendar.isDateInTomorrow(date) ? "내일" : ""
+        return day.isEmpty ? Format.short(date) : "\(day) \(Format.time(date))"
+    }
+
     private struct Clock {
         var hour: Int
         var minute: Int
@@ -85,7 +116,8 @@ enum DateTalk {
 
     /// `오후 1시`, `1시 30분`, `7시반`, `13시` 를 읽습니다.
     private static func time(in text: String) -> Clock? {
-        let pattern = #"(오전|오후|새벽|아침|저녁|밤)?\s*(\d{1,2})\s*시\s*(반|\d{1,2}\s*분)?"#
+        // `시` 뒤에 `간` 이 오면 시각이 아니라 길이입니다. 2시간은 2시가 아닙니다.
+        let pattern = #"(오전|오후|새벽|아침|저녁|밤)?\s*(\d{1,2})\s*시(?!간)\s*(반|\d{1,2}\s*분)?"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
               let whole = Range(match.range, in: text),

@@ -2,6 +2,9 @@ import CoreLocation
 import Foundation
 import WeatherKit
 
+/// `Weather` 라는 이름을 우리가 먼저 썼습니다. WeatherKit 의 것은 이렇게 부릅니다.
+private typealias SwiftWeather = WeatherKit.Weather
+
 /// 날씨.
 ///
 /// **모델을 거치지 않습니다.** 애플 날씨에 바로 묻습니다 — 일정·미리알림·지도와
@@ -34,14 +37,22 @@ enum Weather {
 
     enum Failure: Error, LocalizedError {
         case noLocation
+        case notReady
 
         var errorDescription: String? {
-            "지금 어디인지 몰라 날씨를 못 봅니다. 누비를 한 번 열면 자리를 기억해 둡니다."
+            switch self {
+            case .noLocation:
+                "지금 어디인지 몰라 날씨를 못 봅니다. 누비를 한 번 열면 자리를 기억해 둡니다."
+            case .notReady:
+                "날씨 서비스가 아직 안 열렸습니다. 권한을 켠 지 얼마 안 됐다면 30분쯤 뒤에 됩니다."
+            }
         }
     }
 
     private static let cacheKey = "weather.now"
     private static let stampKey = "weather.at"
+    /// 실패한 시각. **실패해도 매번 다시 두드리면 답이 느려지기만 합니다.**
+    private static let failedKey = "weather.failed"
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
 
     /// 지금 날씨.
@@ -52,7 +63,17 @@ enum Weather {
         if !fresh, let cached = cached() { return cached }
         guard let here = Places.here() else { throw Failure.noLocation }
         let location = CLLocation(latitude: here.latitude, longitude: here.longitude)
-        let weather = try await WeatherService.shared.weather(for: location)
+
+        let weather: SwiftWeather
+        do {
+            weather = try await WeatherService.shared.weather(for: location)
+        } catch {
+            // 날 것의 오류를 그대로 보여주면 읽을 수 없습니다. 흔한 것은
+            // 권한을 켠 직후의 전파 지연이고, 30분쯤 뒤에 됩니다.
+            NubiLog.write("[날씨] 실패 \(error.localizedDescription)")
+            store?.set(Date(), forKey: failedKey)
+            throw Failure.notReady
+        }
 
         let current = weather.currentWeather
         let soon = weather.hourlyForecast.forecast
@@ -71,8 +92,14 @@ enum Weather {
     }
 
     /// 실패해도 조용히 넘어가는 쪽. 브리핑과 모델 맥락에 씁니다.
+    ///
+    /// **최근에 실패했으면 아예 두드리지 않습니다.** 날씨가 안 되는 동안 모든
+    /// 자유 질문이 그만큼 느려질 이유가 없습니다.
     static func quiet() async -> Snapshot? {
-        try? await now()
+        if let cached = cached() { return cached }
+        if let failed = store?.object(forKey: failedKey) as? Date,
+           Date().timeIntervalSince(failed) < 600 { return nil }
+        return try? await now()
     }
 
     private static func cached() -> Snapshot? {
@@ -87,5 +114,6 @@ enum Weather {
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
         store?.set(data, forKey: cacheKey)
         store?.set(Date(), forKey: stampKey)
+        store?.removeObject(forKey: failedKey)
     }
 }
