@@ -69,9 +69,45 @@ enum Secrets {
         return key
     }
 
+    /// 카카오 REST 키. 가까운 곳을 한국 지도에서 찾을 때 씁니다.
+    ///
+    /// 없으면 애플 지도를 씁니다. 애플은 한국 가게 정보가 약해서 "회" 같은 말에
+    /// 엉뚱한 곳을 돌려줬습니다.
+    static var kakaoKey: String? {
+        get { read("kakao") }
+        set { write("kakao", newValue) }
+    }
+
+    private static func fileURL(_ name: String) -> URL? {
+        FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: NubiLog.group)?
+            .appendingPathComponent(name)
+    }
+
+    private static func read(_ name: String) -> String? {
+        guard let url = fileURL(name), let data = try? Data(contentsOf: url),
+              let key = String(data: data, encoding: .utf8)?
+                  .trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty
+        else { return nil }
+        return key
+    }
+
+    private static func write(_ name: String, _ value: String?) {
+        guard let url = fileURL(name) else { return }
+        guard let value, !value.isEmpty else {
+            try? FileManager.default.removeItem(at: url)
+            return
+        }
+        try? Data(value.utf8).write(
+            to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+
     /// 화면에 그대로 띄우지 않습니다. 있는지만 보여줍니다.
-    static var masked: String {
-        guard let key = apiKey else { return "없음" }
+    static var masked: String { mask(apiKey) }
+    static var kakaoMasked: String { mask(kakaoKey) }
+
+    private static func mask(_ key: String?) -> String {
+        guard let key else { return "없음" }
         return key.count > 12 ? "\(key.prefix(8))…\(key.suffix(4))" : "설정됨"
     }
 }
