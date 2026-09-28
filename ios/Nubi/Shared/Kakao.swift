@@ -78,17 +78,22 @@ enum MapApp: String, CaseIterable, Identifiable {
         set { store?.set(newValue.rawValue, forKey: key) }
     }
 
-    /// 걸어가는 길. 앱이 없으면 아무 일도 안 일어나므로 웹 주소로 떨어집니다.
+    /// 걸어가는 길.
+    ///
+    /// **앱 스킴은 그 앱이 없으면 아무 일도 안 일어납니다.** 잠금화면에서 길찾기를
+    /// 눌러도 조용하던 이유입니다 — 누른 사람은 버튼이 고장난 줄 압니다.
+    /// 그래서 웹 주소를 씁니다. 앱이 있으면 웹이 앱으로 넘겨주고, 없으면 웹에서
+    /// 보여줍니다. 애플 지도만 스킴을 씁니다 — 그건 늘 있습니다.
     func directions(to spot: Places.Spot) -> URL? {
         let lat = spot.coordinate.latitude, lon = spot.coordinate.longitude
-        let name = spot.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let name = spot.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "목적지"
         switch self {
         case .kakao:
-            return URL(string: "kakaomap://route?ep=\(lat),\(lon)&by=FOOT")
+            return URL(string: "https://map.kakao.com/link/to/\(name),\(lat),\(lon)")
         case .naver:
-            return URL(string: "nmap://route/walk?dlat=\(lat)&dlng=\(lon)&dname=\(name)&appname=dev.jaewoo.nubi")
+            return URL(string: "https://map.naver.com/p/directions/-/\(lon),\(lat),\(name)/-/walk")
         case .apple:
-            return URL(string: "maps://?daddr=\(lat),\(lon)&dirflg=w")
+            return URL(string: "https://maps.apple.com/?daddr=\(lat),\(lon)&dirflg=w")
         }
     }
 }
