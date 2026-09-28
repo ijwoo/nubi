@@ -38,10 +38,14 @@ enum Tools {
                 "span_days": ["type": "integer", "description": "며칠치. 하루면 1"],
             ], ["day_offset", "span_days"]),
 
-            tool("add_event", "캘린더에 일정을 넣는다.", [
+            tool("add_event",
+                 "캘린더에 일정을 넣는다. 겹치는 일정이 있으면 넣은 뒤에 알려준다.", [
                 "title": ["type": "string"],
                 "start": ["type": "string", "description": "ISO8601, 예 2026-09-28T19:00:00+09:00"],
                 "all_day": ["type": "boolean", "description": "시각을 모르면 true"],
+                "minutes": ["type": "integer", "description": "몇 분짜리인지. 모르면 60"],
+                "place": ["type": "string",
+                          "description": "어디서 하는지. 가게 이름이나 주소. 방금 find_places 로 찾은 곳이면 그 이름을 그대로 쓴다 — 아이폰이 출발할 시각을 알려준다"],
             ], ["title", "start", "all_day"]),
 
             tool("propose_event_change",
@@ -90,18 +94,28 @@ enum Tools {
                 return "일정 권한이 없습니다. 사용자가 앱에서 허용해야 합니다."
             }
             guard !items.isEmpty else { return "그 기간에 일정이 없습니다." }
-            return items.map { "\(Format.short($0.start))\($0.allDay ? " (종일)" : "") \($0.title)" }
-                .joined(separator: "\n")
+            return items.map(line).joined(separator: "\n")
 
         case "add_event":
             run.used.insert(.events)
             guard let title = input["title"] as? String,
                   let start = date(input["start"]) else { return "시각을 알 수 없습니다." }
             let allDay = input["all_day"] as? Bool ?? false
+            let minutes = input["minutes"] as? Int ?? 60
+            let place = (input["place"] as? String ?? "").trimmingCharacters(in: .whitespaces)
+            // **넣기 전에 봅니다.** 넣고 나서 보면 자기 자신이 걸립니다.
+            let clashes = allDay ? [] : Events.clashes(with: start, minutes: minutes)
             do {
-                try Events.addEvent(title: title, start: start, allDay: allDay)
+                try Events.addEvent(title: title, start: start, allDay: allDay,
+                                    minutes: minutes, place: place,
+                                    at: place.isEmpty ? nil : Places.coordinate(of: place))
                 run.wrote = true
-                return "넣었습니다: \(Format.short(start)) \(title)"
+                var said = "넣었습니다: \(Format.short(start)) \(title)"
+                if !place.isEmpty { said += " (\(place))" }
+                guard !clashes.isEmpty else { return said }
+                return said + "\n겹치는 일정이 있습니다:\n"
+                    + clashes.map(line).joined(separator: "\n")
+                    + "\n사용자에게 겹친다고 알리고, 옮길지 물어라."
             } catch {
                 return "넣지 못했습니다: \(error.localizedDescription)"
             }
@@ -195,9 +209,28 @@ enum Tools {
         PendingStore.hold(Pending(kind: kind, eventId: only.id, title: only.title,
                                   at: only.start, to: newStart))
         run.confirm = kind.verb
-        return "아직 하지 않았습니다. 사용자에게 \(kind.verb)할지 물어보는 중입니다: "
+        var said = "아직 하지 않았습니다. 사용자에게 \(kind.verb)할지 물어보는 중입니다: "
             + "\(only.title) \(Format.short(only.start))"
             + (newStart.map { " → \(Format.short($0))" } ?? "")
+        // 옮기려는 자리가 또 겹치면 옮기나 마나입니다.
+        if let newStart {
+            let minutes = Int(only.end.timeIntervalSince(only.start) / 60)
+            let clashes = Events.clashes(with: newStart, minutes: max(5, minutes), ignoring: only.id)
+            if !clashes.isEmpty {
+                said += "\n옮길 자리에도 겹치는 것이 있습니다:\n"
+                    + clashes.map(line).joined(separator: "\n")
+            }
+        }
+        return said
+    }
+
+    /// 모델에게 보여줄 일정 한 줄. **끝시각과 장소까지 줍니다** — 겹치는지,
+    /// 가는 데 시간이 되는지 판단하려면 둘 다 있어야 합니다.
+    private static func line(_ item: Events.Item) -> String {
+        guard !item.allDay else { return "\(Format.short(item.start)) \(item.title) (종일)" }
+        var text = "\(Format.short(item.start))~\(Format.time(item.end)) \(item.title)"
+        if !item.place.isEmpty { text += " @\(item.place)" }
+        return text
     }
 
     private static func date(_ value: Any?) -> Date? {

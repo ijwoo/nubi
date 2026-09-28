@@ -51,6 +51,39 @@ enum Places {
         set { store?.set(newValue, forKey: queryKey) }
     }
 
+    private static let spotsKey = "place.spots"
+
+    /// 방금 찾아준 곳들을 좌표째 적어둡니다.
+    ///
+    /// 그 다음 말이 "거기로 일정 잡아줘" 인 경우가 많습니다. 이름만 가지고
+    /// 일정을 넣으면 글자일 뿐이지만, **좌표가 붙으면 아이폰이 출발 시각을
+    /// 알려줍니다.** 그래서 찾아준 순간에 붙잡아 둡니다.
+    static func remember(found spots: [Spot]) {
+        let rows: [[String: Any]] = spots.map {
+            ["name": $0.name, "lat": $0.coordinate.latitude, "lon": $0.coordinate.longitude]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: rows) else { return }
+        store?.set(data, forKey: spotsKey)
+    }
+
+    /// 이름으로 좌표를 되찾습니다. 모델이 이름을 조금 줄여 부르는 일이 있어
+    /// 양쪽 다 포함으로 봅니다.
+    static func coordinate(of name: String) -> CLLocationCoordinate2D? {
+        let wanted = name.trimmingCharacters(in: .whitespaces)
+        guard !wanted.isEmpty, let data = store?.data(forKey: spotsKey),
+              let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
+        else { return nil }
+        for row in rows {
+            guard let found = row["name"] as? String,
+                  let lat = row["lat"] as? Double, let lon = row["lon"] as? Double
+            else { continue }
+            if found == wanted || found.contains(wanted) || wanted.contains(found) {
+                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            }
+        }
+        return nil
+    }
+
     static var lastKnown: CLLocationCoordinate2D? {
         guard let store, store.object(forKey: latKey) != nil else { return nil }
         return CLLocationCoordinate2D(latitude: store.double(forKey: latKey),
@@ -124,6 +157,7 @@ enum Places {
         if Kakao.isReady {
             let spots = try await Kakao.search(query, near: origin, radius: Int(radius), limit: limit)
             guard !spots.isEmpty else { throw Failure.nothingFound(query) }
+            remember(found: spots)
             return spots
         }
 
@@ -143,9 +177,10 @@ enum Places {
         // **지도는 반경을 힌트로만 받습니다.** 근처에 없으면 멀리 있는 것을
         // 돌려줍니다 — "근처 카페" 에 8982km 떨어진 곳이 나온 적이 있습니다.
         // 근처라고 물었으면 근처가 아닌 것은 답이 아닙니다.
-        let near = spots.filter { $0.distance < radius }
+        let near = Array(spots.filter { $0.distance < radius }.prefix(limit))
         guard !near.isEmpty else { throw Failure.nothingFound(query) }
-        return Array(near.prefix(limit))
+        remember(found: near)
+        return near
     }
 }
 

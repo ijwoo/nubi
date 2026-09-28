@@ -1,3 +1,4 @@
+import CoreLocation
 import EventKit
 import Foundation
 
@@ -37,7 +38,9 @@ enum Events {
         let id: String
         let title: String
         let start: Date
+        let end: Date
         let allDay: Bool
+        let place: String
     }
 
     /// 오늘 0시부터 `days` 날만큼. `days: 1` 이 오늘 하루입니다.
@@ -51,7 +54,8 @@ enum Events {
         return store.events(matching: predicate)
             .sorted { $0.startDate < $1.startDate }
             .map { Item(id: $0.eventIdentifier ?? UUID().uuidString,
-                        title: $0.title ?? "제목 없음", start: $0.startDate, allDay: $0.isAllDay) }
+                        title: $0.title ?? "제목 없음", start: $0.startDate, end: $0.endDate,
+                        allDay: $0.isAllDay, place: $0.location ?? "") }
     }
 
     /// 하루치만. 서랍 요약에 씁니다.
@@ -61,8 +65,16 @@ enum Events {
         return (try? upcoming(days: 1, from: day)) ?? []
     }
 
+    /// 일정을 넣습니다.
+    ///
+    /// **장소를 같이 넣으면 아이폰이 출발할 시각을 알려줍니다.** 캘린더가 교통
+    /// 상황을 보고 "지금 나가야 합니다" 를 띄우는 기능인데, 좌표가 붙은
+    /// 일정에만 붙습니다. 그래서 가게를 찾아준 다음 일정을 넣을 때는 그때
+    /// 받아둔 좌표를 같이 넘깁니다 — 우리가 이동 시간을 계산할 이유가 없습니다.
     @discardableResult
-    static func addEvent(title: String, start: Date, allDay: Bool) throws -> String {
+    static func addEvent(title: String, start: Date, allDay: Bool,
+                         minutes: Int = 60, place: String = "",
+                         at spot: CLLocationCoordinate2D? = nil) throws -> String {
         guard canReadEvents else { throw Failure.needsPermission("일정") }
         let store = EKEventStore()
         let event = EKEvent(eventStore: store)
@@ -73,9 +85,33 @@ enum Events {
         // 길이를 말하지 않으면 한 시간입니다. 종일이면 그날 전부입니다.
         event.endDate = allDay
             ? Calendar.current.date(byAdding: .day, value: 1, to: start) ?? start
-            : start.addingTimeInterval(3600)
+            : start.addingTimeInterval(TimeInterval(max(5, minutes) * 60))
+        if !place.isEmpty {
+            let located = EKStructuredLocation(title: place)
+            if let spot { located.geoLocation = CLLocation(latitude: spot.latitude,
+                                                           longitude: spot.longitude) }
+            event.structuredLocation = located
+        }
         try store.save(event, span: .thisEvent, commit: true)
         return title
+    }
+
+    /// 이 시간대에 이미 있는 일정.
+    ///
+    /// **모델이 알아서 눈치채기를 기다리지 않습니다.** 겹친다고 짚어준 적이
+    /// 있었지만 그건 일정을 읽다가 우연히 본 것이었고, 다음에도 그런다는 보장이
+    /// 없었습니다. 코드가 먼저 확인해서 알려주면 언제나 짚습니다.
+    ///
+    /// 종일 일정은 세지 않습니다 — 하루를 통째로 덮어서 전부 겹침이 됩니다.
+    static func clashes(with start: Date, minutes: Int = 60,
+                        ignoring id: String = "") -> [Item] {
+        let end = start.addingTimeInterval(TimeInterval(max(5, minutes) * 60))
+        // 앞뒤로 하루씩 넉넉히 읽고 실제로 겹치는 것만 거릅니다.
+        let from = Calendar.current.date(byAdding: .day, value: -1, to: start) ?? start
+        guard let around = try? upcoming(days: 3, from: from) else { return [] }
+        return around.filter { item in
+            !item.allDay && item.id != id && item.start < end && start < item.end
+        }
     }
 
     struct ReminderItem: Identifiable, Hashable {
