@@ -22,7 +22,8 @@ enum Nubi {
                           detail: "다시 시도해 주세요.", failed: true)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
-                        viaIntent: viaIntent, map: answer.map, confirm: answer.confirm,
+                        viaIntent: viaIntent, map: answer.map, call: answer.call,
+                        confirm: answer.confirm,
                         needsSetup: answer.needsSetup)
         Thread.append(turn)
         await LiveAnswer.show(turn)
@@ -424,13 +425,14 @@ struct ConfirmIntent: LiveActivityIntent {
     }
 }
 
-/// 잠금화면에서 길찾기를 누르는 버튼.
+/// 잠금화면에서 길찾기나 전화를 누르는 버튼.
 ///
 /// **시스템의 URL 열기 인텐트는 잠긴 화면에서 조용히 막힙니다.** 우리 코드가
 /// 돌지 않으니 기록도 안 남고, 누른 사람은 버튼이 고장난 줄 압니다.
 ///
-/// 그래서 주소를 적어두고 앱을 엽니다. 앱이 뜨면 그때 지도로 넘깁니다 —
-/// 잠금을 한 번 풀어야 하지만 **언제나 됩니다.**
+/// 그래서 주소를 적어두고 앱을 엽니다. 앱이 뜨면 그때 넘깁니다 — 잠금을 한 번
+/// 풀어야 하지만 **언제나 됩니다.** 전화도 같은 길입니다. 어차피 전화는 잠금을
+/// 풀어야 걸립니다.
 struct DirectionsIntent: AppIntent {
     static let title: LocalizedStringResource = "길찾기"
     static let openAppWhenRun = true
@@ -443,7 +445,7 @@ struct DirectionsIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         Navigation.pending = url
-        NubiLog.write("[길찾기] 앱을 열어 넘깁니다")
+        NubiLog.write("[\(url.hasPrefix("tel:") ? "전화" : "길찾기")] 앱을 열어 넘깁니다")
         return .result()
     }
 }

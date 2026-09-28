@@ -32,6 +32,8 @@ struct Turn: Codable, Identifiable, Hashable {
     var viaIntent: Bool
     /// 길찾기 주소. 장소를 찾았을 때만 있습니다.
     var map: String = ""
+    /// 걸 번호.
+    var call: String = ""
     /// 승인을 기다리는 일의 버튼 이름.
     var confirm: String = ""
     /// 설정을 고쳐야 풀리는 실패인가.

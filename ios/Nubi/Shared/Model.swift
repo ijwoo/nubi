@@ -87,6 +87,11 @@ enum Model {
     **일정을 넣을 때 어디서 하는지 알면 place 에 적어라.** 그래야 아이폰이 출발할
     시각을 알려준다. 방금 찾아준 가게면 그 이름을 그대로 쓴다.
     도구가 겹치는 일정을 알려주면 숨기지 말고 한 줄로 말하고, 옮길지 물어라.
+    **이미 넣은 일정을 다른 때로 바꿀 때는 add_event 를 또 부르지 마라.**
+    그러면 두 개가 된다. propose_event_change 로 옮겨라.
+    가게를 권할 때는 **이름을 답에 그대로 써라.** 길찾기·전화 버튼이 그 이름을 보고 붙는다.
+    예약해 달라고 하면 일정에 넣고, 전화는 눌러서 직접 걸어야 한다고 한 줄 붙여라.
+    짧은 것은 set_timer, 날짜가 있는 일은 add_reminder, 장소로 울릴 것은 remind_at_place.
     도구가 필요 없는 질문에는 그냥 답한다. 의견을 물으면 네 생각을 말한다.
 
     ## 마지막으로, 길이
@@ -144,12 +149,27 @@ enum Model {
             messages.append(["role": "user", "content": results])
         }
 
-        var lines = plain(honest(text, wrote: run.wrote))
-            .split(separator: "\n", omittingEmptySubsequences: true)
+        let said = plain(honest(text, wrote: run.wrote))
+        aim(&run, at: said)
+        var lines = said.split(separator: "\n", omittingEmptySubsequences: true)
         let headline = String(lines.first ?? "답이 비어 있습니다")
         if !lines.isEmpty { lines.removeFirst() }
         return NubiAnswer(headline: headline, detail: lines.joined(separator: "\n"),
-                          source: run.source, map: run.map, confirm: run.confirm)
+                          source: run.source, map: run.map, call: run.call,
+                          confirm: run.confirm)
+    }
+
+    /// 버튼을 **모델이 고른 곳**에 맞춥니다.
+    ///
+    /// 버튼은 늘 첫 번째 검색 결과를 가리켰습니다. 그런데 모델이 두 번째를 권한
+    /// 적이 있습니다 — 샤브향을 권해놓고 길찾기는 해안선으로 갔습니다. 누른
+    /// 사람은 엉뚱한 데로 갑니다.
+    ///
+    /// 답에 가게 이름이 있으면 그 가게로 맞추고, 전화번호도 같이 답니다.
+    private static func aim(_ run: inout ToolRun, at said: String) {
+        guard run.used.contains(.places), let spot = Places.mentioned(in: said) else { return }
+        if let directions = spot.directions { run.map = directions.absoluteString }
+        if let call = spot.call { run.call = call.absoluteString }
     }
 
     private struct Reply {

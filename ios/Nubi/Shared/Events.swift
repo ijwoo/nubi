@@ -71,10 +71,38 @@ enum Events {
     /// 상황을 보고 "지금 나가야 합니다" 를 띄우는 기능인데, 좌표가 붙은
     /// 일정에만 붙습니다. 그래서 가게를 찾아준 다음 일정을 넣을 때는 그때
     /// 받아둔 좌표를 같이 넘깁니다 — 우리가 이동 시간을 계산할 이유가 없습니다.
+    /// 되풀이. "매주 화목 8시 반 하체운동" 을 한 건으로 넣습니다.
+    struct Repeat {
+        enum Every: String { case daily, weekly, monthly, yearly }
+        let every: Every
+        /// 1 이 일요일, 7 이 토요일. 주 단위일 때만 씁니다.
+        var days: [Int] = []
+        /// 몇 번 하고 끝낼까. 0 이면 끝이 없습니다.
+        var times: Int = 0
+
+        var rule: EKRecurrenceRule {
+            let frequency: EKRecurrenceFrequency = switch every {
+            case .daily: .daily
+            case .weekly: .weekly
+            case .monthly: .monthly
+            case .yearly: .yearly
+            }
+            let weekdays = days.compactMap { EKWeekday(rawValue: $0) }
+                .map { EKRecurrenceDayOfWeek($0) }
+            return EKRecurrenceRule(
+                recurrenceWith: frequency, interval: 1,
+                daysOfTheWeek: weekdays.isEmpty ? nil : weekdays,
+                daysOfTheMonth: nil, monthsOfTheYear: nil, weeksOfTheYear: nil,
+                daysOfTheYear: nil, setPositions: nil,
+                end: times > 0 ? EKRecurrenceEnd(occurrenceCount: times) : nil)
+        }
+    }
+
     @discardableResult
     static func addEvent(title: String, start: Date, allDay: Bool,
                          minutes: Int = 60, place: String = "",
-                         at spot: CLLocationCoordinate2D? = nil) throws -> String {
+                         at spot: CLLocationCoordinate2D? = nil,
+                         repeats: Repeat? = nil) throws -> String {
         guard canReadEvents else { throw Failure.needsPermission("일정") }
         let store = EKEventStore()
         let event = EKEvent(eventStore: store)
@@ -92,7 +120,9 @@ enum Events {
                                                            longitude: spot.longitude) }
             event.structuredLocation = located
         }
+        if let repeats { event.recurrenceRules = [repeats.rule] }
         try store.save(event, span: .thisEvent, commit: true)
+        noteAdded(title, start)
         return title
     }
 
@@ -184,6 +214,74 @@ enum Events {
                 [.year, .month, .day, .hour, .minute], from: due)
             reminder.addAlarm(EKAlarm(absoluteDate: due))
         }
+        try store.save(reminder, commit: true)
+        return title
+    }
+
+    // MARK: 방금 넣은 것
+
+    /// 마지막으로 넣은 일정. 두 번 넣는 것을 막는 데만 씁니다.
+    private static let lastAddKey = "event.lastAdd"
+    private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
+
+    struct JustAdded {
+        let title: String
+        let start: Date
+        let at: Date
+    }
+
+    static var justAdded: JustAdded? {
+        guard let row = store?.dictionary(forKey: lastAddKey),
+              let title = row["title"] as? String,
+              let start = row["start"] as? Double,
+              let at = row["at"] as? Double else { return nil }
+        return JustAdded(title: title, start: Date(timeIntervalSince1970: start),
+                         at: Date(timeIntervalSince1970: at))
+    }
+
+    private static func noteAdded(_ title: String, _ start: Date) {
+        store?.set(["title": title, "start": start.timeIntervalSince1970,
+                    "at": Date().timeIntervalSince1970], forKey: lastAddKey)
+    }
+
+    /// 두 제목이 같은 것을 가리키는가.
+    ///
+    /// **글자 두 개씩 겹치는 비율로 봅니다.** "여자친구와 저녁 - 샤브향
+    /// 수원매탄점" 과 "여자친구 저녁 샤브샤브" 는 낱말로는 '저녁' 하나만
+    /// 겹치는데 사람이 보기엔 같은 약속입니다.
+    static func similar(_ a: String, _ b: String) -> Double {
+        func grams(_ text: String) -> Set<String> {
+            let letters = Array(text.filter { $0.isLetter || $0.isNumber })
+            guard letters.count > 1 else { return Set(letters.map(String.init)) }
+            return Set((0..<(letters.count - 1)).map { String(letters[$0...$0 + 1]) })
+        }
+        let x = grams(a), y = grams(b)
+        guard !x.isEmpty, !y.isEmpty else { return 0 }
+        return 2 * Double(x.intersection(y).count) / Double(x.count + y.count)
+    }
+
+    /// 자리에 닿으면 울리는 미리알림.
+    ///
+    /// **우리가 지켜보지 않습니다.** 미리알림 앱에서 손으로 만드는 것과 같은
+    /// 물건이고, 울타리는 시스템이 봅니다. 그래서 앱이 꺼져 있어도 오고,
+    /// 위치 권한을 "항상" 으로 올릴 이유도 없습니다.
+    @discardableResult
+    static func addPlaceReminder(_ title: String, place: String,
+                                 at spot: CLLocationCoordinate2D,
+                                 onArrival: Bool = true) throws -> String {
+        guard canWriteReminders else { throw Failure.needsPermission("미리알림") }
+        let store = EKEventStore()
+        let reminder = EKReminder(eventStore: store)
+        reminder.title = title
+        reminder.calendar = store.defaultCalendarForNewReminders()
+        let located = EKStructuredLocation(title: place)
+        located.geoLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
+        // 100m. 더 좁히면 도심에서 안 울리고, 더 넓히면 지나가다 울립니다.
+        located.radius = 100
+        let alarm = EKAlarm()
+        alarm.structuredLocation = located
+        alarm.proximity = onArrival ? .enter : .leave
+        reminder.addAlarm(alarm)
         try store.save(reminder, commit: true)
         return title
     }

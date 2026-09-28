@@ -47,7 +47,8 @@ enum Kakao {
             else { return nil }
             let away = Double(doc["distance"] as? String ?? "") ?? 0
             return Places.Spot(name: name, distance: away,
-                               coordinate: CLLocationCoordinate2D(latitude: y, longitude: x))
+                               coordinate: CLLocationCoordinate2D(latitude: y, longitude: x),
+                               phone: doc["phone"] as? String ?? "")
         }
     }
 }

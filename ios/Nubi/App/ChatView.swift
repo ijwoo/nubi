@@ -173,10 +173,20 @@ struct TurnRows: View {
                         .buttonBorderShape(.capsule)
                         .controlSize(.small)
                     }
-                    if let url = URL(string: turn.map), !turn.map.isEmpty {
-                        Button("길찾기", systemImage: "location.fill") {
-                            Haptic.tap()
-                            UIApplication.shared.open(url)
+                    if !turn.map.isEmpty || !turn.call.isEmpty {
+                        HStack(spacing: 14) {
+                            if let url = URL(string: turn.map), !turn.map.isEmpty {
+                                Button("길찾기", systemImage: "location.fill") {
+                                    Haptic.tap()
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                            if let url = URL(string: turn.call), !turn.call.isEmpty {
+                                Button("전화", systemImage: "phone.fill") {
+                                    Haptic.tap()
+                                    UIApplication.shared.open(url)
+                                }
+                            }
                         }
                         .font(.caption.weight(.semibold))
                         .buttonStyle(.borderless)
