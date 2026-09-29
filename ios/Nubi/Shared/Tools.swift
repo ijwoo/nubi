@@ -28,6 +28,8 @@ struct ToolRun {
         if used.contains(.weather) { return .weather }
         if used.contains(.events) { return .events }
         if used.contains(.reminders) { return .reminders }
+        if used.contains(.timer) { return .timer }
+        if used.contains(.memory) { return .memory }
         if used.contains(.search) { return .search }
         return .model
     }
@@ -110,7 +112,9 @@ enum Tools {
             ], ["about"]),
 
             tool("remind_at_place",
-                 "그 자리에 닿으면 알린다. 시각이 아니라 장소로 울리는 미리알림이다.", [
+                 "그 자리에 닿으면 알린다. 시각이 아니라 장소로 울리는 미리알림이다. "
+                 + "**날짜는 가릴 수 없다** — 그 자리에 닿으면 오늘이든 다음 주든 울린다. "
+                 + "‘내일 도착하면’ 처럼 날짜를 약속하지 마라.", [
                 "title": ["type": "string"],
                 "place": ["type": "string",
                           "description": "방금 find_places 로 찾은 가게 이름. 지금 서 있는 자리면 '여기'"],
@@ -299,6 +303,7 @@ enum Tools {
             }
 
         case "remember":
+            run.used.insert(.memory)
             guard let text = input["text"] as? String else { return "무엇을 기억할지 모르겠습니다." }
             let kind = Memory.Kind(rawValue: input["kind"] as? String ?? "") ?? .fact
             // 장소는 좌표가 있어야 값을 합니다. 없으면 이름만 남는 글자입니다.
@@ -319,6 +324,7 @@ enum Tools {
             }
 
         case "forget":
+            run.used.insert(.memory)
             guard let about = input["about"] as? String else { return "무엇을 지울지 모르겠습니다." }
             let gone = Memory.forget(about: about)
             guard !gone.isEmpty else { return "그런 기억이 없습니다." }

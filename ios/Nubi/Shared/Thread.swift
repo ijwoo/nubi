@@ -2,7 +2,7 @@ import Foundation
 
 /// 답이 어디서 나왔는가. 네트워크를 탔는지 아닌지가 여기서 보입니다.
 enum Source: String, Codable {
-    case events, reminders, model, places, search, weather, timer, none
+    case events, reminders, model, places, search, weather, timer, memory, none
 
     var label: String? {
         switch self {
@@ -13,6 +13,7 @@ enum Source: String, Codable {
         case .search: "검색"
         case .weather: "날씨"
         case .timer: "알림"
+        case .memory: "기억"
         case .none: nil
         }
     }
