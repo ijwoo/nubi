@@ -87,6 +87,7 @@ enum Model {
     "예약 잡았어" 처럼 하지 않은 일을 했다고 말하지 마라. 대신 일정에 넣어주고,
     전화는 직접 해야 한다고 한 줄 붙여라.
     **도구를 부르지 않았으면 아무 일도 일어나지 않은 것이다.**
+    끄고 지우고 취소하는 것도 도구가 해야 한다. 말로 끝내지 마라.
     **앱은 사용자의 위치를 안다.** 가까운 곳을 물으면 지역을 되묻지 말고
     find_places 를 바로 불러라. 검색어에 지역명을 넣지 마라.
     지우거나 옮기는 것은 propose_event_change 로 제안만 한다 — 사용자가 눌러야 실행된다.
@@ -137,14 +138,31 @@ enum Model {
 
         var run = ToolRun()
         var text = ""
+        var nudged = false
 
-        for _ in 0..<4 {
+        for _ in 0..<5 {
             let reply = try await send(key: key, system: system(now: now, sky: sky), messages: messages)
             text = Self.text(in: reply.content)
             if Self.searched(in: reply.content) { run.used.insert(.search) }
 
             let calls = reply.content.filter { $0["type"] as? String == "tool_use" }
-            guard !calls.isEmpty else { break }
+            guard !calls.isEmpty else {
+                // **했다고 말했는데 아무것도 안 했으면 한 번 더 시킵니다.**
+                //
+                // "타이머 껐어" 라고 답하고 도구를 안 불러서 3분 뒤에 그대로
+                // 울린 적이 있습니다. 한 줄 붙여 바로잡기만 하면 사람이 다시
+                // 말해야 합니다 — 여기서 끝내는 편이 낫습니다.
+                if !nudged, !run.wrote, claims(text) {
+                    nudged = true
+                    NubiLog.write("[정직] 도구를 안 불러서 한 번 더 시킴")
+                    messages.append(["role": "assistant", "content": reply.content])
+                    messages.append(["role": "user", "content":
+                        "너는 방금 했다고 말했는데 도구를 부르지 않았다. 아무 일도 일어나지 않았다. "
+                        + "정말 할 거면 지금 도구를 불러라. 도구가 없는 일이면 못 한다고 말해라."])
+                    continue
+                }
+                break
+            }
 
             messages.append(["role": "assistant", "content": reply.content])
             var results: [[String: Any]] = []
@@ -239,10 +257,19 @@ enum Model {
     private static let claimWords = [
         "했어", "했습니다", "했음", "잡았어", "잡았습니다", "넣었어", "넣었습니다",
         "추가했", "등록했", "예약했", "옮겼", "지웠", "보냈", "완료했",
+        // "타이머 껐어" 를 도구 없이 말한 적이 있습니다. 껐다는 말은 검사
+        // 낱말에 없었고 그래서 그냥 지나갔습니다. 도구가 늘면 할 수 있다고
+        // 말할 거리도 같이 늘어납니다.
+        "껐어", "껐습니다", "취소했", "삭제했", "저장했", "기억했", "걸었어",
+        "걸어놨", "해놨", "맞춰놨", "설정했",
     ]
 
+    private static func claims(_ text: String) -> Bool {
+        claimWords.contains(where: { text.contains($0) })
+    }
+
     private static func honest(_ text: String, wrote: Bool) -> String {
-        guard !wrote, claimWords.contains(where: { text.contains($0) }) else { return text }
+        guard !wrote, claims(text) else { return text }
         NubiLog.write("[정직] 한 일이 없는데 했다고 말해서 바로잡음")
         return text + "\n(실제로는 아직 아무것도 하지 않았습니다.)"
     }
