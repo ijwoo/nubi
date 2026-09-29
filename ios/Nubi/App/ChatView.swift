@@ -44,6 +44,12 @@ struct ChatView: View {
             .onAppear { scroll.scrollTo(bottom, anchor: .bottom) }
             .onChange(of: store.turns.count) { _, _ in jump(scroll) }
             .onChange(of: store.busy) { _, _ in jump(scroll) }
+            // 글자가 흐르는 동안 바닥에 붙어 있게 합니다. 애니메이션 없이 —
+            // 매 글자마다 부드럽게 움직이면 멀미가 납니다.
+            .onChange(of: Airing.shared.draft.count) { _, _ in
+                scroll.scrollTo(bottom, anchor: .bottom)
+            }
+            .onChange(of: Airing.shared.steps.count) { _, _ in jump(scroll) }
             .onChange(of: typing) { _, now in if now { jump(scroll) } }
         }
     }
@@ -236,22 +242,64 @@ private struct Meta: View {
     }
 }
 
+/// 답이 오는 동안.
+///
+/// **빈 화면을 5초 보여주지 않습니다.** 무엇을 하고 있는지 먼저 뜨고, 답은
+/// 첫 글자부터 흘러나옵니다. 걸리는 시간은 그대로인데 기다리는 느낌이 거의
+/// 없어집니다.
 struct ThinkingRow: View {
+    private let airing = Airing.shared
     @State private var pulse = false
 
     var body: some View {
-        HStack(spacing: 8) {
-            ProgressView().controlSize(.mini)
-            Text("생각하는 중…").font(.callout).foregroundStyle(.secondary)
-            Spacer()
+        HStack(alignment: .top, spacing: 8) {
+            Malpoongi(size: 26, mood: airing.draft.isEmpty ? .thinking : .listening, alive: true)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 7) {
+                if !airing.steps.isEmpty {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(airing.steps) { step in StepLine(step: step) }
+                    }
+                }
+                if airing.draft.isEmpty {
+                    Text(airing.steps.isEmpty ? "생각하는 중…" : "정리하는 중…")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .opacity(pulse ? 0.5 : 1)
+                } else {
+                    // 흘러나오는 중. 커서가 아직 쓰는 중이라고 말합니다.
+                    (Text(airing.draft) + Text(" ▍").foregroundColor(Ink.accent))
+                        .font(.callout)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Ink.surface, in: Bubble(mine: false))
+            Spacer(minLength: 40)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Ink.surface, in: Bubble(mine: false))
-        .opacity(pulse ? 0.55 : 1)
+        .animation(.easeOut(duration: 0.18), value: airing.steps)
         .onAppear {
             withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) { pulse = true }
         }
         .padding(.bottom, 16)
+    }
+}
+
+/// 실제로 부른 도구 한 줄.
+private struct StepLine: View {
+    let step: Airing.Step
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: step.done ? "checkmark.circle.fill" : "circle.dotted")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(step.done ? Ink.done : Ink.accent)
+            Text(step.label)
+                .font(.caption)
+                .foregroundStyle(step.done ? .secondary : .primary)
+        }
+        .transition(.opacity.combined(with: .move(edge: .leading)))
     }
 }
