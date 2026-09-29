@@ -468,6 +468,33 @@ enum Navigation {
     }
 }
 
+/// 잠금화면에서 타이머를 끄는 버튼.
+///
+/// **크게 띄워놓고 끌 길이 없으면 안 됩니다.** 앱을 열어서 말로 꺼야 한다면
+/// 큰 숫자는 구경거리일 뿐입니다.
+struct StopTimerIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "타이머 끄기"
+    static let openAppWhenRun = false
+
+    @Parameter(title: "턴")
+    var stamp: Int
+
+    init() { stamp = 0 }
+    init(stamp: Int) { self.stamp = stamp }
+
+    func perform() async throws -> some IntentResult {
+        let killed = await Timers.cancel()
+        NubiLog.write("[알림] 잠금화면에서 껐습니다: \(killed.joined(separator: ", "))")
+        // 껐으니 대화창을 다시 그립니다. 큰 숫자가 그대로 남으면 안 꺼진 줄 압니다.
+        if let last = Thread.last {
+            await LiveAnswer.show(last)
+        } else {
+            await LiveAnswer.welcome()
+        }
+        return .result()
+    }
+}
+
 /// 앱을 엽니다. 대화창에서 전문을 보러 가는 길입니다.
 struct OpenNubiIntent: AppIntent {
     static let title: LocalizedStringResource = "누비 열기"

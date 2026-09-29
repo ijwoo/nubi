@@ -120,15 +120,70 @@ private struct Card: View {
     let state: NubiAttributes.ContentState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            if !state.asked.isEmpty { Mine(text: state.asked) }
-            Theirs(state: state)
-            if let ends = state.timerEnds {
-                Ticking(ends: ends, label: state.timerLabel)
-                    // 말풍이 너비만큼 들여서 말풍선과 왼쪽을 맞춥니다.
-                    .padding(.leading, 34)
+        // **타이머가 돌면 카드가 타이머가 됩니다.** 흐르는 숫자를 곁다리로
+        // 붙여놓으면 잠금화면에서 읽히지 않습니다 — 볼 것이 그거일 때는
+        // 그것만 크게 있어야 합니다.
+        if let ends = state.timerEnds {
+            TimerCard(state: state, ends: ends)
+        } else {
+            VStack(alignment: .leading, spacing: 7) {
+                if !state.asked.isEmpty { Mine(text: state.asked) }
+                Theirs(state: state)
+                if state.hasAction { Actions(state: state).padding(.top, 3) }
             }
-            if state.hasAction { Actions(state: state).padding(.top, 3) }
+        }
+    }
+}
+
+/// 타이머가 도는 동안의 카드.
+///
+/// 타이머를 건 그 턴이면 **숫자만** 있습니다. 그 뒤에 다른 것을 물었으면 답
+/// 한 줄이 위에 붙습니다 — 답을 통째로 가리면 잠금화면에서 못 봅니다.
+private struct TimerCard: View {
+    let state: NubiAttributes.ContentState
+    let ends: Date
+
+    /// 타이머를 건 턴이면 답은 "3분 타이머 걸었어" 이고, 큰 숫자가 그 말을
+    /// 이미 합니다. 두 번 말할 이유가 없습니다.
+    private var aside: String {
+        state.meta.hasPrefix("알림") ? "" : state.headline
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !aside.isEmpty {
+                Text(aside)
+                    .font(.caption)
+                    .foregroundStyle(Skin.faint)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(alignment: .center, spacing: 12) {
+                Malpoongi(size: 34, mood: .listening)
+                VStack(alignment: .leading, spacing: 0) {
+                    if !state.timerLabel.isEmpty, state.timerLabel != "타이머" {
+                        Text(state.timerLabel)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Skin.faint)
+                            .lineLimit(1)
+                    }
+                    TickingText(ends: ends)
+                        .font(.system(size: 46, weight: .semibold, design: .rounded)
+                            .monospacedDigit())
+                        .foregroundStyle(Skin.text)
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Button(intent: StopTimerIntent(stamp: state.stamp)) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 15, weight: .bold))
+                        .frame(width: 42, height: 42)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Skin.text)
+                .background(Circle().fill(Skin.mine))
+            }
         }
     }
 }
