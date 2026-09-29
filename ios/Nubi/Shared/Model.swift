@@ -51,8 +51,17 @@ enum Model {
         var errorDescription: String? {
             switch self {
             case .noKey: "모델 키가 없습니다. 설정에서 넣어주세요."
-            case let .http(code, body): "모델이 답하지 않았습니다 (HTTP \(code)) \(body.prefix(120))"
+            case let .http(code, body): "모델이 답하지 않았습니다 (\(code)) \(Failure.gist(body))"
             }
+        }
+
+        /// 날 것의 JSON 을 화면에 쏟지 않습니다. 사람이 읽을 한 줄만 꺼냅니다.
+        private static func gist(_ body: String) -> String {
+            guard let data = body.data(using: .utf8),
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let message = (root["error"] as? [String: Any])?["message"] as? String
+            else { return String(body.prefix(100)) }
+            return String(message.prefix(140))
         }
     }
 
@@ -139,9 +148,6 @@ enum Model {
         var run = ToolRun()
         var text = ""
         var nudged = false
-
-        await Airing.shared.begin()
-        defer { Task { @MainActor in Airing.shared.end() } }
 
         for _ in 0..<5 {
             await Airing.shared.rewind()
@@ -274,6 +280,16 @@ enum Model {
                     await Airing.shared.append(piece)
                 } else if let piece = delta["partial_json"] as? String {
                     partials[index, default: ""] += piece
+                } else if let piece = delta["thinking"] as? String {
+                    // **속으로 하는 말은 화면에 흘리지 않습니다.** 다만 되돌려
+                    // 보낼 때는 있어야 합니다.
+                    let grown = ((blocks[index]?["thinking"] as? String) ?? "") + piece
+                    blocks[index]?["thinking"] = grown
+                } else if let sign = delta["signature"] as? String {
+                    // **도장이 빠지면 다음 왕복이 통째로 거절당합니다.**
+                    // `each thinking block must have a signature` — 흘려받기로
+                    // 바꾸면서 조각을 다시 조립할 때 이것만 빠뜨렸습니다.
+                    blocks[index]?["signature"] = sign
                 }
             case "content_block_stop":
                 // 도구 입력은 글자 조각으로 옵니다. 다 모인 뒤에 한 번 읽습니다.

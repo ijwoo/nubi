@@ -11,6 +11,9 @@ enum Nubi {
     static func turn(_ utterance: String, viaIntent: Bool) async -> Turn {
         // 정해진 몇 마디만 빠른 길로 갑니다. 나머지는 모델이 갈래를 고릅니다.
         let route = FastPath.match(utterance)
+        // 물은 말을 먼저 띄웁니다. 답을 기다리는 동안 내가 뭘 물었는지가
+        // 화면에 없으면 보낸 건지도 알 수 없습니다.
+        await Airing.shared.begin(asking: utterance)
         await LiveAnswer.thinking(about: utterance, steps: steps(for: route))
         let started = Date()
         // 앞의 말을 같이 보냅니다. 없으면 "액션으로" 같은 말이 통하지 않습니다.
@@ -26,6 +29,7 @@ enum Nubi {
                         confirm: answer.confirm,
                         needsSetup: answer.needsSetup)
         Thread.append(turn)
+        await Airing.shared.end()
         await LiveAnswer.show(turn)
         let took = Date().timeIntervalSince(started)
         await Briefing.echo(turn, took: took)
