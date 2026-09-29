@@ -111,6 +111,22 @@ enum Tools {
                 "about": ["type": "string", "description": "무엇에 대한 기억인지"],
             ], ["about"]),
 
+            tool("set_alarm",
+                 "정해진 시각에 알람을 건다. **무음과 집중 모드를 뚫고 끌 때까지 울린다.** "
+                 + "아침에 깨우기처럼 못 들으면 안 되는 것만 알람이다. "
+                 + "라면 3분 같은 짧은 것은 set_timer 를 쓴다.", [
+                "at": ["type": "string", "description": "ISO8601. 되풀이면 시·분만 쓴다"],
+                "label": ["type": "string", "description": "무엇을 위한 알람인지. 예 '기상'"],
+                "repeat_days": ["type": "array", "items": ["type": "string"],
+                                "description": "되풀이할 요일. 일 월 화 수 목 금 토 중에서. 한 번뿐이면 비운다"],
+            ], ["at"]),
+
+            tool("get_alarms", "걸어둔 알람을 본다.", [:], []),
+
+            tool("cancel_alarm", "알람을 끈다.", [
+                "label": ["type": "string", "description": "무엇을 끌지. 비우면 전부"],
+            ], []),
+
             tool("remind_at_place",
                  "그 자리에 닿으면 알린다. 시각이 아니라 장소로 울리는 미리알림이다. "
                  + "**날짜는 가릴 수 없다** — 그 자리에 닿으면 오늘이든 다음 주든 울린다. "
@@ -137,6 +153,8 @@ enum Tools {
         case "complete_reminder": "할일 끝내는 중"
         case "find_places": "가게 찾는 중"
         case "get_weather": "날씨 보는 중"
+        case "set_alarm", "cancel_alarm": "알람 맞추는 중"
+        case "get_alarms": "알람 보는 중"
         case "set_timer", "cancel_timer": "알림 맞추는 중"
         case "get_timers": "알림 보는 중"
         case "remind_at_place": "장소 알림 넣는 중"
@@ -277,6 +295,36 @@ enum Tools {
                 run.used.remove(.weather)
                 return "\(error.localizedDescription) 대신 웹에서 지금 날씨를 찾아보고 답해라."
             }
+
+        case "set_alarm":
+            run.used.insert(.timer)
+            guard let when = date(input["at"]) else { return "몇 시인지 모르겠습니다." }
+            let names = ["일": 1, "월": 2, "화": 3, "수": 4, "목": 5, "금": 6, "토": 7]
+            let days = (input["repeat_days"] as? [String] ?? [])
+                .compactMap { names[String($0.prefix(1))] }
+            do {
+                let alarm = try await Alarms.set(at: when, label: input["label"] as? String ?? "",
+                                                 weekly: days)
+                run.wrote = true
+                return "걸었습니다: \(Format.short(alarm.at)) \(alarm.label)"
+                    + (alarm.repeats ? " (매주)" : "")
+            } catch {
+                return error.localizedDescription
+            }
+
+        case "get_alarms":
+            run.used.insert(.timer)
+            let all = Alarms.all()
+            guard !all.isEmpty else { return "걸어둔 알람이 없습니다." }
+            return all.map { "\(Format.short($0.at)) \($0.label)\($0.repeats ? " (매주)" : "")" }
+                .joined(separator: "\n")
+
+        case "cancel_alarm":
+            run.used.insert(.timer)
+            let killed = Alarms.cancel(label: input["label"] as? String ?? "")
+            guard !killed.isEmpty else { return "끌 알람이 없습니다." }
+            run.wrote = true
+            return "껐습니다: " + killed.map(\.label).joined(separator: ", ")
 
         case "set_timer":
             run.used.insert(.timer)

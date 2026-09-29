@@ -21,7 +21,7 @@ enum OpenMeteo {
             .init(name: "longitude", value: String(spot.longitude)),
             .init(name: "current", value: "temperature_2m,weather_code"),
             .init(name: "hourly", value: "precipitation_probability"),
-            .init(name: "daily", value: "temperature_2m_max,temperature_2m_min"),
+            .init(name: "daily", value: "weather_code,temperature_2m_max,temperature_2m_min"),
             // 시각을 초로 받습니다. 지역 시간 문자열을 파싱하다 어긋날 자리를 없앱니다.
             .init(name: "timeformat", value: "unixtime"),
             .init(name: "timezone", value: "auto"),
@@ -42,15 +42,19 @@ enum OpenMeteo {
         }
 
         let daily = root["daily"] as? [String: Any]
-        let highs = daily?["temperature_2m_max"] as? [Double]
-        let lows = daily?["temperature_2m_min"] as? [Double]
+        let highs = daily?["temperature_2m_max"] as? [Double] ?? []
+        let lows = daily?["temperature_2m_min"] as? [Double] ?? []
+        let codes = daily?["weather_code"] as? [Int] ?? []
 
         return Weather.Snapshot(
             celsius: Int(celsius.rounded()),
             condition: describe(current["weather_code"] as? Int ?? 0),
             wetFrom: wetFrom(root["hourly"] as? [String: Any]),
-            highest: highs?.first.map { Int($0.rounded()) },
-            lowest: lows?.first.map { Int($0.rounded()) })
+            highest: highs.first.map { Int($0.rounded()) },
+            lowest: lows.first.map { Int($0.rounded()) },
+            nextSky: codes[safe: 1].map(describe),
+            nextHigh: highs[safe: 1].map { Int($0.rounded()) },
+            nextLow: lows[safe: 1].map { Int($0.rounded()) })
     }
 
     /// 앞으로 12시간 안에 비가 올 것 같은 가장 이른 시각.

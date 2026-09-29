@@ -21,6 +21,17 @@ enum Weather {
         var wetFrom: Date?
         var highest: Int?
         var lowest: Int?
+        /// 내일. 아침 브리핑은 전날 밤에 미리 쓰므로 하루 앞을 알아야 합니다.
+        var nextSky: String?
+        var nextHigh: Int?
+        var nextLow: Int?
+
+        /// 내일 한 줄. 모르면 빈 문자열입니다.
+        var nextLine: String {
+            guard let nextSky else { return "" }
+            guard let nextHigh, let nextLow else { return nextSky }
+            return "\(nextSky) \(nextLow)°/\(nextHigh)°"
+        }
 
         /// 한 줄. "22° 흐림 · 19시부터 비"
         var line: String {
@@ -118,14 +129,19 @@ enum Weather {
         let soon = weather.hourlyForecast.forecast
             .filter { $0.date > Date() && $0.date < Date().addingTimeInterval(12 * 3600) }
         let wet = soon.first { $0.precipitationChance >= 0.5 }?.date
-        let today = weather.dailyForecast.forecast.first
+        let days = weather.dailyForecast.forecast
+        let today = days.first
+        let next = days.dropFirst().first
 
         let snapshot = Snapshot(
             celsius: Int(current.temperature.converted(to: .celsius).value.rounded()),
             condition: current.condition.description,
             wetFrom: wet,
             highest: today.map { Int($0.highTemperature.converted(to: .celsius).value.rounded()) },
-            lowest: today.map { Int($0.lowTemperature.converted(to: .celsius).value.rounded()) })
+            lowest: today.map { Int($0.lowTemperature.converted(to: .celsius).value.rounded()) },
+            nextSky: next?.condition.description,
+            nextHigh: next.map { Int($0.highTemperature.converted(to: .celsius).value.rounded()) },
+            nextLow: next.map { Int($0.lowTemperature.converted(to: .celsius).value.rounded()) })
         remember(snapshot)
         return snapshot
     }

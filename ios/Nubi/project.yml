@@ -33,6 +33,7 @@ targets:
         NSCalendarsFullAccessUsageDescription: 일정을 읽어 물어본 것에 답합니다.
         NSRemindersFullAccessUsageDescription: 말한 것을 미리알림으로 추가합니다.
         NSLocationWhenInUseUsageDescription: 가까운 곳을 찾을 때만 씁니다. 배경에서는 보지 않습니다.
+        NSAlarmKitUsageDescription: 말한 시각에 알람을 겁니다. 무음이어도 울려야 하는 것만 알람으로 갑니다.
         LSApplicationQueriesSchemes:
           - kakaomap
           - nmap
