@@ -123,6 +123,30 @@ enum Tools {
         ]
     }
 
+    /// 도구 하나를 사람 말로. **화면에 그대로 나갑니다.**
+    ///
+    /// "생각하는 중" 하나만 보여주던 자리입니다. 우리는 이미 무엇을 하는지
+    /// 아는데 안 보여주고 있었습니다.
+    static func label(for tool: String) -> String {
+        switch tool {
+        case "get_events": "일정 보는 중"
+        case "add_event": "일정에 넣는 중"
+        case "propose_event_change": "일정 찾는 중"
+        case "get_reminders": "할일 보는 중"
+        case "add_reminder": "할일 넣는 중"
+        case "complete_reminder": "할일 끝내는 중"
+        case "find_places": "가게 찾는 중"
+        case "get_weather": "날씨 보는 중"
+        case "set_timer", "cancel_timer": "알림 맞추는 중"
+        case "get_timers": "알림 보는 중"
+        case "remind_at_place": "장소 알림 넣는 중"
+        case "remember": "기억하는 중"
+        case "forget": "기억 지우는 중"
+        case "web_search": "웹에서 찾는 중"
+        default: "확인하는 중"
+        }
+    }
+
     private static func tool(_ name: String, _ about: String,
                              _ props: [String: Any], _ required: [String]) -> [String: Any] {
         ["name": name, "description": about,

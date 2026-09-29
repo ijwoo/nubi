@@ -22,7 +22,8 @@ struct HomeView: View {
         NavigationStack(path: $path) {
             VStack(spacing: 0) {
                 ScrollView {
-                    VStack(spacing: 10) {
+                    VStack(spacing: 12) {
+                        greeting
                         if !Setup.isDone {
                             SetupCard(onChange: reload)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -30,14 +31,16 @@ struct HomeView: View {
                         drawers
                     }
                     .padding(.horizontal, 16)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
                     .padding(.bottom, 16)
                 }
+                .scrollDismissesKeyboard(.interactively)
                 Composer(draft: $draft, busy: store.busy, typing: $typing,
                          suggestions: Suggestion.all, send: send)
             }
-            .navigationTitle("누비")
-            .navigationBarTitleDisplayMode(.large)
+            .background(Ink.ground)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showSettings = true } label: { Image(systemName: "gearshape") }
@@ -74,22 +77,55 @@ struct HomeView: View {
         }
     }
 
+    /// 첫 화면에서 제일 먼저 보이는 것.
+    ///
+    /// **서랍 넷이 먼저 오던 자리입니다.** 실제로 제일 많이 하는 일은 묻는
+    /// 것인데, 서랍이 위를 다 먹고 입력줄은 바닥에 얇게 깔려 있었습니다.
+    /// 이제 말풍이와 오늘 한 줄이 먼저 오고 서랍은 아래로 내려갑니다.
+    private var greeting: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Malpoongi(size: 46, mood: store.busy ? .thinking : .listening, alive: true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("뭐 도와줄까")
+                    .font(.title2.weight(.bold))
+                Text(oneLine)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 6)
+    }
+
+    /// 오늘을 한 줄로. 없는 것은 말하지 않습니다.
+    private var oneLine: String {
+        var parts: [String] = []
+        if let next = today.first(where: { !$0.allDay && $0.start > Date() }) ?? today.first {
+            parts.append(next.allDay ? next.title : "\(Format.time(next.start)) \(next.title)")
+        }
+        if !open.isEmpty { parts.append("할일 \(open.count)개") }
+        return parts.isEmpty ? "오늘은 잡힌 게 없어" : parts.joined(separator: " · ")
+    }
+
     private var drawers: some View {
-        VStack(spacing: 10) {
-            DrawerRow(icon: "calendar", tint: Ink.accent, title: "일정",
-                      note: eventsNote) { go(.events) }
-            DrawerRow(icon: "checklist", tint: Ink.done, title: "미리알림",
-                      note: open.isEmpty ? "안 끝난 것이 없습니다" : "안 끝난 것 \(open.count)개") { go(.reminders) }
-            DrawerRow(icon: "bubble.left.and.text.bubble.right", tint: Ink.accent.opacity(0.75), title: "대화",
-                      note: store.turns.last?.headline ?? "아직 없습니다") { go(.chat) }
-            DrawerRow(icon: "lock.display", tint: store.liveIsOn ? Ink.accent : .secondary,
-                      title: "잠금화면",
-                      note: store.liveIsOn ? "대화창이 떠 있습니다" : "대화창이 꺼져 있습니다") { go(.lock) }
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10),
+                            GridItem(.flexible(), spacing: 10)], spacing: 10) {
+            DrawerTile(icon: "calendar", tint: Ink.accent, title: "일정",
+                       note: eventsNote) { go(.events) }
+            DrawerTile(icon: "checklist", tint: Ink.done, title: "미리알림",
+                       note: open.isEmpty ? "다 끝냈어" : "안 끝난 것 \(open.count)개") { go(.reminders) }
+            DrawerTile(icon: "bubble.left.and.text.bubble.right", tint: Ink.accent.opacity(0.75),
+                       title: "대화",
+                       note: store.turns.last?.headline ?? "아직 없어") { go(.chat) }
+            DrawerTile(icon: "lock.display", tint: store.liveIsOn ? Ink.accent : .secondary,
+                       title: "잠금화면",
+                       note: store.liveIsOn ? "대화창이 떠 있어" : "대화창이 꺼져 있어") { go(.lock) }
         }
     }
 
     private var eventsNote: String {
-        guard !today.isEmpty else { return "오늘 일정이 없습니다" }
+        guard !today.isEmpty else { return "오늘은 없어" }
         let next = today.first { !$0.allDay && $0.start > Date() } ?? today[0]
         return next.allDay ? "오늘 \(today.count)건 · \(next.title)"
                            : "오늘 \(today.count)건 · \(Format.time(next.start)) \(next.title)"
@@ -135,8 +171,11 @@ enum Suggestion {
     static let all = ["오늘 일정", "오늘 할일", "근처 카페", "내일 3시 회의 일정 추가"]
 }
 
-/// 서랍 한 칸.
-struct DrawerRow: View {
+/// 서랍 한 칸. **넷이 두 줄로 들어갑니다.**
+///
+/// 한 줄에 하나씩 놓던 것을 반으로 접었습니다. 서랍은 들어가는 문일 뿐인데
+/// 화면 위쪽을 다 먹고 있었습니다.
+struct DrawerTile: View {
     let icon: String
     let tint: Color
     let title: String
@@ -145,23 +184,23 @@ struct DrawerRow: View {
 
     var body: some View {
         Button(action: open) {
-            HStack(spacing: 13) {
+            VStack(alignment: .leading, spacing: 9) {
                 Image(systemName: icon)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
-                    .frame(width: 38, height: 38)
-                    .background(tint.gradient, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    .frame(width: 30, height: 30)
+                    .background(tint.gradient, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.body.weight(.semibold)).foregroundStyle(.primary)
-                    Text(note).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                    Text(note).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
+                        .frame(height: 28, alignment: .top)
                 }
-                Spacer(minLength: 6)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(13)
             .background(Ink.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Ink.edge, lineWidth: 1))
         }
         .buttonStyle(Press())
     }
@@ -189,7 +228,7 @@ struct Composer: View {
                             }
                             .buttonStyle(.bordered)
                             .buttonBorderShape(.capsule)
-                            .tint(.primary)
+                            .tint(.secondary)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -197,36 +236,40 @@ struct Composer: View {
                 }
                 .transition(.opacity)
             }
-            Divider()
             HStack(alignment: .bottom, spacing: 10) {
-                TextField("무엇이든 물어보세요", text: $draft, axis: .vertical)
+                TextField("무엇이든 물어봐", text: $draft, axis: .vertical)
                     .lineLimit(1...4)
+                    .font(.callout)
                     .focused($typing)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .background(Ink.surface, in: Capsule())
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .background(Ink.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    // **묻는 곳이 주인공입니다.** 손이 가 있는 자리에 빛이 돕니다.
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(typing ? Ink.accent.opacity(0.7) : Ink.edge, lineWidth: 1))
+                    .animation(.easeOut(duration: 0.2), value: typing)
                     .onSubmit(send)
                 Button(action: send) {
                     Group {
                         if busy {
                             ProgressView().controlSize(.small).tint(.white)
                         } else {
-                            Image(systemName: "arrow.up").font(.callout.weight(.bold))
+                            Image(systemName: "arrow.up").font(.body.weight(.bold))
                         }
                     }
                     .foregroundStyle(.white)
-                    .frame(width: 34, height: 34)
-                    .background(Ink.accent.opacity(ready ? 1 : 0.3), in: Circle())
-                    .scaleEffect(ready ? 1 : 0.94)
+                    .frame(width: 42, height: 42)
+                    .background(Ink.accent.opacity(ready ? 1 : 0.28), in: Circle())
+                    .scaleEffect(ready ? 1 : 0.92)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: ready)
                 }
                 .disabled(!ready)
             }
             .padding(.horizontal, 16)
-            .padding(.top, 10)
+            .padding(.top, 8)
             .padding(.bottom, 8)
         }
-        .background(.bar)
+        .background(Ink.ground)
     }
 
     private var ready: Bool {

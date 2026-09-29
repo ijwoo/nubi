@@ -140,8 +140,13 @@ enum Model {
         var text = ""
         var nudged = false
 
+        await Airing.shared.begin()
+        defer { Task { @MainActor in Airing.shared.end() } }
+
         for _ in 0..<5 {
-            let reply = try await send(key: key, system: system(now: now, sky: sky), messages: messages)
+            await Airing.shared.rewind()
+            let reply = try await send(key: key, system: system(now: now, sky: sky),
+                                       messages: messages)
             text = Self.text(in: reply.content)
             if Self.searched(in: reply.content) { run.used.insert(.search) }
 
@@ -169,7 +174,10 @@ enum Model {
             for call in calls {
                 guard let name = call["name"] as? String, let id = call["id"] as? String else { continue }
                 let input = call["input"] as? [String: Any] ?? [:]
+                let label = Tools.label(for: name)
+                await Airing.shared.starting(label)
                 let out = await Tools.run(name, input, into: &run)
+                await Airing.shared.finished(label)
                 NubiLog.write("[도구] \(name) → \(out.prefix(60))")
                 results.append(["type": "tool_result", "tool_use_id": id, "content": out])
             }
@@ -204,6 +212,14 @@ enum Model {
         var stopped: String
     }
 
+    /// 한 번의 왕복. **글자가 오는 대로 흘려보냅니다.**
+    ///
+    /// 통째로 받아서 한 번에 보여주면 5~10초 동안 빈 화면입니다. 흐르게 하면
+    /// 걸리는 시간은 그대로인데 기다리는 느낌이 거의 없어집니다.
+    ///
+    /// 도구를 부르려면 **받은 덩이를 그대로 되돌려 보내야** 하므로, 흘려보내는
+    /// 동시에 조각을 다시 조립합니다. 서버 도구(웹 검색)의 덩이처럼 통째로
+    /// 오는 것은 온 그대로 둡니다.
     private static func send(key: String, system: String,
                              messages: [[String: Any]]) async throws -> Reply {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
@@ -223,19 +239,63 @@ enum Model {
             "system": system,
             "messages": messages,
             "tools": tools,
+            "stream": true,
         ])
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? -1
         guard code == 200 else {
-            throw Failure.http(code, String(data: data, encoding: .utf8) ?? "")
+            var body = ""
+            for try await line in bytes.lines where body.count < 500 { body += line }
+            throw Failure.http(code, body)
         }
-        let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let stopped = root?["stop_reason"] as? String ?? ""
+
+        var blocks: [Int: [String: Any]] = [:]
+        var partials: [Int: String] = [:]
+        var stopped = ""
+
+        for try await line in bytes.lines {
+            guard line.hasPrefix("data:") else { continue }
+            let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+            guard let data = payload.data(using: .utf8),
+                  let event = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let kind = event["type"] as? String else { continue }
+            let index = event["index"] as? Int ?? 0
+
+            switch kind {
+            case "content_block_start":
+                blocks[index] = event["content_block"] as? [String: Any] ?? [:]
+                partials[index] = ""
+            case "content_block_delta":
+                guard let delta = event["delta"] as? [String: Any] else { break }
+                if let piece = delta["text"] as? String {
+                    let grown = ((blocks[index]?["text"] as? String) ?? "") + piece
+                    blocks[index]?["text"] = grown
+                    await Airing.shared.append(piece)
+                } else if let piece = delta["partial_json"] as? String {
+                    partials[index, default: ""] += piece
+                }
+            case "content_block_stop":
+                // 도구 입력은 글자 조각으로 옵니다. 다 모인 뒤에 한 번 읽습니다.
+                if blocks[index]?["type"] as? String == "tool_use",
+                   let raw = partials[index], let data = raw.data(using: .utf8),
+                   let input = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    blocks[index]?["input"] = input
+                }
+            case "message_delta":
+                stopped = (event["delta"] as? [String: Any])?["stop_reason"] as? String ?? stopped
+            case "error":
+                let message = (event["error"] as? [String: Any])?["message"] as? String ?? ""
+                throw Failure.http(code, message)
+            default:
+                break
+            }
+        }
+
         // **말이 잘리면 도구 호출도 같이 잘립니다.** 그러면 아무 일도 안 하고
         // 했다고 말하는 것처럼 보입니다 — 어느 쪽인지 알아야 고칠 수 있습니다.
         if stopped == "max_tokens" { NubiLog.write("[모델] 길이 제한에 걸려 잘림") }
-        return Reply(content: (root?["content"] as? [[String: Any]]) ?? [], stopped: stopped)
+        return Reply(content: blocks.keys.sorted().compactMap { blocks[$0] }, stopped: stopped)
     }
 
     private static func searched(in content: [[String: Any]]) -> Bool {

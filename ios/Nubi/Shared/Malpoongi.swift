@@ -36,6 +36,15 @@ struct Malpoongi: View {
 
     var size: CGFloat
     var mood: Mood
+    /// 숨쉬고 깜빡일까.
+    ///
+    /// **잠금화면에서는 안 움직입니다.** 위젯은 계속 도는 애니메이션을 돌릴 수
+    /// 없고, 돌 수 있다 해도 배터리를 그런 데 쓸 이유가 없습니다. 앱에서만
+    /// 살아 있습니다.
+    var alive: Bool = false
+
+    @State private var breathing = false
+    @State private var winking = false
 
     private var ink: Color { Color(red: 0.16, green: 0.16, blue: 0.24) }
     /// 작을 때는 형태만 남깁니다. 볼터치와 눈빛은 뭉개지기만 합니다.
@@ -46,9 +55,14 @@ struct Malpoongi: View {
             ZStack {
                 BubbleShape().fill(mood.fill)
                 BubbleShape().stroke(ink, lineWidth: size * 0.055)
-                Face(mood: mood, ink: ink, detailed: detailed)
+                Face(mood: mood, ink: ink, detailed: detailed, winking: winking)
             }
             .frame(width: size, height: size)
+            // 숨. 아주 조금입니다 — 과하면 캐릭터가 아니라 장난감이 됩니다.
+            .scaleEffect(breathing ? 1.03 : 1)
+            .offset(y: breathing ? -size * 0.012 : 0)
+            // 답이 온 순간 살짝 튑니다. 표정이 바뀌는 것을 눈이 따라가게 합니다.
+            .animation(.spring(response: 0.34, dampingFraction: 0.55), value: mood)
 
             if detailed, let badge = mood.badge {
                 Image(systemName: badge.symbol)
@@ -61,6 +75,24 @@ struct Malpoongi: View {
             }
         }
         .frame(width: size, height: size)
+        .task(id: alive) { await liven() }
+    }
+
+    /// 숨쉬기는 계속, 깜빡임은 이따금.
+    ///
+    /// 규칙적으로 깜빡이면 기계로 보입니다. 3~6초 사이에서 흩뜨립니다.
+    private func liven() async {
+        guard alive else { return }
+        withAnimation(.easeInOut(duration: 1.9).repeatForever(autoreverses: true)) {
+            breathing = true
+        }
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(Int.random(in: 3000...6000)))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.07)) { winking = true }
+            try? await Task.sleep(for: .milliseconds(90))
+            withAnimation(.easeIn(duration: 0.09)) { winking = false }
+        }
     }
 }
 
@@ -97,6 +129,7 @@ private struct Face: View {
     let mood: Malpoongi.Mood
     let ink: Color
     let detailed: Bool
+    var winking: Bool = false
 
     var body: some View {
         GeometryReader { geo in
@@ -159,6 +192,8 @@ private struct Face: View {
                     .offset(x: -w * 0.025, y: -w * 0.04)
             }
         }
+        // 눈꺼풀은 그리지 않습니다. 눈을 납작하게 누르면 그렇게 보입니다.
+        .scaleEffect(x: 1, y: winking ? 0.1 : 1)
         .position(point)
     }
 
