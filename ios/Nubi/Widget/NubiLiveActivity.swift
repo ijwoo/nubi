@@ -35,14 +35,26 @@ struct NubiLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Actions(state: context.state)
+                    VStack(alignment: .leading, spacing: 7) {
+                        if let ends = context.state.timerEnds {
+                            Ticking(ends: ends, label: context.state.timerLabel)
+                        }
+                        Actions(state: context.state)
+                    }
                 }
             } compactLeading: {
                 Malpoongi(size: 18, mood: .of(context.state))
             } compactTrailing: {
-                Text(badge(context.state))
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Tone.of(context.state).color)
+                if let ends = context.state.timerEnds {
+                    TickingText(ends: ends)
+                        .font(.caption2.weight(.bold).monospacedDigit())
+                        .frame(width: 42)
+                        .foregroundStyle(Tone.working.color)
+                } else {
+                    Text(badge(context.state))
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(Tone.of(context.state).color)
+                }
             } minimal: {
                 Malpoongi(size: 18, mood: .of(context.state))
             }
@@ -111,6 +123,11 @@ private struct Card: View {
         VStack(alignment: .leading, spacing: 7) {
             if !state.asked.isEmpty { Mine(text: state.asked) }
             Theirs(state: state)
+            if let ends = state.timerEnds {
+                Ticking(ends: ends, label: state.timerLabel)
+                    // 말풍이 너비만큼 들여서 말풍선과 왼쪽을 맞춥니다.
+                    .padding(.leading, 34)
+            }
             if state.hasAction { Actions(state: state).padding(.top, 3) }
         }
     }
@@ -174,6 +191,60 @@ private struct Theirs: View {
     /// 한 덩이로 붙입니다. 제목과 설명을 나누면 답이 두 개처럼 보입니다.
     private var said: String {
         state.detail.isEmpty ? state.headline : "\(state.headline)\n\(state.detail)"
+    }
+}
+
+/// 흐르는 초.
+///
+/// **앱도 확장도 돌지 않는 동안 스스로 셉니다.** `Text(timerInterval:)` 은
+/// 위젯이 직접 갱신하므로 우리가 1초마다 밀어 올릴 필요가 없습니다 — 그렇게
+/// 했다면 갱신 한도에 금방 걸렸을 겁니다.
+///
+/// 다 흐르면 0:00 에 멈춰 있습니다. 그 순간 알림이 같이 오므로 못 보고
+/// 지나가지는 않고, 다음에 무엇이든 물으면 사라집니다.
+private struct Ticking: View {
+    let ends: Date
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "timer")
+                .font(.system(size: 11, weight: .bold))
+            TickingText(ends: ends)
+                .font(.caption.weight(.semibold).monospacedDigit())
+                .frame(width: 46, alignment: .leading)
+            if !label.isEmpty, label != "타이머" {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(Skin.faint)
+                    .lineLimit(1)
+            }
+        }
+        .foregroundStyle(Tone.working.color)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Capsule().fill(Skin.theirs))
+    }
+}
+
+/// 남은 시간 글자 하나.
+///
+/// **지난 시각으로 범위를 만들면 죽습니다.** `Date.now...ends` 는 끝이 앞서면
+/// 안 되는 범위이고, 위젯은 타이머가 끝난 뒤에도 다시 그려질 수 있습니다.
+private struct TickingText: View {
+    let ends: Date
+
+    private var left: ClosedRange<Date>? {
+        let now = Date.now
+        return ends > now ? now...ends : nil
+    }
+
+    var body: some View {
+        if let left {
+            Text(timerInterval: left, countsDown: true)
+        } else {
+            Text("0:00")
+        }
     }
 }
 

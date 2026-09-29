@@ -33,6 +33,9 @@ struct NubiAttributes: ActivityAttributes {
         var map: String = ""
         /// 걸 번호. 있으면 전화 버튼이 하나 더 붙습니다.
         var call: String = ""
+        /// 걸어둔 알림이 울릴 시각. 있으면 **잠금화면에서 초가 흐릅니다.**
+        var timerEnds: Date?
+        var timerLabel: String = ""
         /// 승인을 기다리는 일의 버튼 이름. 있으면 얼굴이 긴장합니다.
         var confirm: String = ""
 
@@ -57,6 +60,13 @@ enum LiveAnswer {
     /// 갱신만 됩니다 — 배경에서 만들려 하면 "Target is not foreground" 입니다.
     @discardableResult
     static func push(_ state: NubiAttributes.ContentState) async -> Bool {
+        var state = state
+        // **어느 턴에서 밀어 올리든 타이머는 붙습니다.** 타이머를 건 그 턴에만
+        // 보이면, 다음 질문을 하는 순간 초가 사라집니다.
+        if let next = await Timers.running().first {
+            state.timerEnds = next.fires
+            state.timerLabel = next.label
+        }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             NubiLog.write("[활동] 꺼져 있음 — 설정 › 누비 › 실시간 활동")
             return false
