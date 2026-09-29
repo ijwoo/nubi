@@ -9,6 +9,7 @@ struct SettingsView: View {
 
     @State private var key = ""
     @State private var savedKey = Secrets.masked
+    @State private var alarmAuth = Alarms.isAllowed
     @State private var eventAuth = auth(.event)
     @State private var reminderAuth = auth(.reminder)
     @State private var log = ""
@@ -100,6 +101,18 @@ struct SettingsView: View {
                     }
                 }
             }
+            // **알람은 알림과 다른 권한입니다.** 무음을 뚫는 물건이라 따로 묻습니다.
+            if Alarms.supported {
+                LabeledContent("알람", value: alarmAuth ? "허용" : "꺼짐")
+                if !alarmAuth {
+                    Button("알람 허용") {
+                        Task {
+                            await Alarms.authorize()
+                            alarmAuth = Alarms.isAllowed
+                        }
+                    }
+                }
+            }
             if Events.canReadEvents && Events.canWriteReminders {
                 Text("일정과 미리알림 권한이 다 있습니다").font(.caption).foregroundStyle(.secondary)
             } else if isDenied {
@@ -118,7 +131,7 @@ struct SettingsView: View {
         } header: {
             Text("권한")
         } footer: {
-            Text("잠금화면 버튼은 여기서 허용한 뒤에야 일정을 읽습니다. 확장은 권한을 물을 수 없습니다.")
+            Text("잠금화면 버튼은 여기서 허용한 뒤에야 일정을 읽습니다. 확장은 권한을 물을 수 없습니다. 알람은 무음과 집중 모드를 뚫습니다.")
         }
     }
 
@@ -258,6 +271,7 @@ struct SettingsView: View {
     private func refresh() {
         eventAuth = Self.auth(.event)
         reminderAuth = Self.auth(.reminder)
+        alarmAuth = Alarms.isAllowed
         savedKey = Secrets.masked
         onChange()
     }

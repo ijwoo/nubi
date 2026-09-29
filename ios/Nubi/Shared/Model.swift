@@ -108,6 +108,8 @@ enum Model {
     가게를 권할 때는 **이름을 답에 그대로 써라.** 길찾기·전화 버튼이 그 이름을 보고 붙는다.
     예약해 달라고 하면 일정에 넣고, 전화는 눌러서 직접 걸어야 한다고 한 줄 붙여라.
     짧은 것은 set_timer, 날짜가 있는 일은 add_reminder, 장소로 울릴 것은 remind_at_place.
+    **못 들으면 안 되는 것은 set_alarm** — 무음과 집중 모드를 뚫고 끌 때까지 운다.
+    아침에 깨우는 것이 알람이고, 라면 3분은 알림이다. 잘못 고르면 못 일어나거나 시끄럽다.
     **다음에도 쓸 것만 remember 로 기억하고, 기억했다고 답에 밝혀라.**
     한 번뿐인 일, 남에 대한 판단, 번호 같은 것은 기억하지 마라.
     도구가 필요 없는 질문에는 그냥 답한다. 의견을 물으면 네 생각을 말한다.
@@ -117,14 +119,21 @@ enum Model {
     더 듣고 싶으면 사용자가 다시 묻는다.
     """
 
-    private static func system(now: Date, sky: Weather.Snapshot?) -> String {
+    /// 시스템 글을 **두 조각으로** 나눕니다.
+    ///
+    /// 앞 조각은 늘 같고 뒤 조각은 매번 다릅니다. 캐시는 앞에서부터 같은
+    /// 만큼만 듣는데, 시각을 앞에 두면 **한 글자 때문에 전부 다시 보냅니다.**
+    private static func system(now: Date, sky: Weather.Snapshot?) -> [[String: Any]] {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "yyyy년 M월 d일 EEEE a h시 m분"
-        var text = base + "\n\n지금은 \(f.string(from: now))이고 시간대는 \(TimeZone.current.identifier)다."
-        if let sky { text += "\n지금 날씨: \(sky.line)" }
-        text += Memory.brief()
-        return text
+        var tail = "지금은 \(f.string(from: now))이고 시간대는 \(TimeZone.current.identifier)다."
+        if let sky { tail += "\n지금 날씨: \(sky.line)" }
+        tail += Memory.brief()
+        return [
+            ["type": "text", "text": base, "cache_control": ["type": "ephemeral"]],
+            ["type": "text", "text": tail],
+        ]
     }
 
     /// 한 번의 물음. 도구를 쓰면 쓰고, 안 쓰면 바로 답합니다.
@@ -213,6 +222,32 @@ enum Model {
         if let call = spot.call { run.call = call.absoluteString }
     }
 
+    /// 짧은 글 하나. **도구도 흘려받기도 없습니다.**
+    ///
+    /// 아침 브리핑을 쓰는 데 씁니다. 대화가 아니라 한 덩이 글이라 왕복이
+    /// 한 번이면 끝이고, 화면에 흘릴 이유도 없습니다.
+    static func line(_ instruction: String, about facts: String) async throws -> String {
+        guard let key = Secrets.apiKey else { throw Failure.noKey }
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 20
+        request.setValue(key, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "model": id,
+            "max_tokens": 300,
+            "system": instruction,
+            "messages": [["role": "user", "content": facts]],
+        ])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard code == 200 else { throw Failure.http(code, String(data: data, encoding: .utf8) ?? "") }
+        let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        return text(in: (root?["content"] as? [[String: Any]]) ?? [])
+    }
+
     private struct Reply {
         var content: [[String: Any]]
         var stopped: String
@@ -226,7 +261,7 @@ enum Model {
     /// 도구를 부르려면 **받은 덩이를 그대로 되돌려 보내야** 하므로, 흘려보내는
     /// 동시에 조각을 다시 조립합니다. 서버 도구(웹 검색)의 덩이처럼 통째로
     /// 오는 것은 온 그대로 둡니다.
-    private static func send(key: String, system: String,
+    private static func send(key: String, system: [[String: Any]],
                              messages: [[String: Any]]) async throws -> Reply {
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
         request.httpMethod = "POST"
@@ -238,6 +273,11 @@ enum Model {
         var tools: [[String: Any]] = Tools.schema
         if searches {
             tools.append(["type": grade.searchTool, "name": "web_search", "max_uses": 3])
+        }
+        // **도구 설명은 매번 똑같습니다.** 열일곱 개를 왕복마다 다시 보내고
+        // 있었습니다. 마지막 하나에 표시를 붙이면 그 앞까지 통째로 캐시됩니다.
+        if !tools.isEmpty {
+            tools[tools.count - 1]["cache_control"] = ["type": "ephemeral"]
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "model": id,

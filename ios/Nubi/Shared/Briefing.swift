@@ -91,6 +91,95 @@ enum Briefing {
         return parts.isEmpty ? "오늘은 잡힌 게 없습니다" : parts.joined(separator: " · ")
     }
 
+    /// 누비가 직접 쓰는 아침 인사.
+    ///
+    /// **지금까지는 조각을 이어붙인 줄이었습니다** — "일정 2건 · 오후 8:30
+    /// 하체운동 · 할일 3개 · 20° 맑음". 사실은 다 맞는데 아무도 안 읽습니다.
+    /// 부품은 다 있었고 조립만 안 하고 있었습니다.
+    ///
+    /// **울릴 때는 모델을 부를 수 없습니다.** 알림은 일주일치를 미리 예약하고,
+    /// 배경에서 깨어나는 시각을 iOS 가 약속하지 않습니다. 그래서 앱이 앞에 올
+    /// 때 다음 아침 것을 미리 씁니다 — 저녁에 한 번이라도 열면 좋아지고,
+    /// 안 열면 조각을 이어붙인 줄이 그대로 나갑니다.
+    private static let writtenKey = "briefing.written"
+
+    private static let voice = """
+    너는 아침에 한 번 말을 거는 비서다. 한국어 반말로 쓴다.
+    받은 사실만 가지고 **두 줄 이내**로 쓴다. 없는 것을 지어내지 마라.
+    사실을 나열하지 말고 **그래서 뭘 하면 좋은지**를 말한다 —
+    비가 오면 우산, 일정이 붙어 있으면 빠듯하다고, 할일이 몰렸으면 그렇다고.
+    "~다" 로 끝내지 마라. 인사말과 맺음말을 쓰지 마라. 마크다운을 쓰지 마라.
+    """
+
+    /// 그날 아침에 할 말. 모델이 쓰고, 안 되면 조각을 이어붙인 줄입니다.
+    static func written(for day: Date) async -> String {
+        let plain = await line(for: day)
+        let facts = await facts(for: day)
+        guard !facts.isEmpty, Secrets.apiKey != nil else { return plain }
+
+        // 사실이 그대로면 다시 쓰지 않습니다. 앱을 열 때마다 모델을 부를
+        // 이유가 없습니다.
+        let stamp = "\(writtenKey).\(dayKey(day))"
+        let fingerprint = "\(writtenKey).mark.\(dayKey(day))"
+        if store?.string(forKey: fingerprint) == facts,
+           let kept = store?.string(forKey: stamp), !kept.isEmpty { return kept }
+
+        guard let written = try? await Model.line(voice, about: facts),
+              !written.isEmpty else { return plain }
+        let tidy = written.replacingOccurrences(of: "\n\n", with: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        store?.set(tidy, forKey: stamp)
+        store?.set(facts, forKey: fingerprint)
+        NubiLog.write("[브리핑] 다음 아침 것을 새로 씀")
+        return tidy
+    }
+
+    /// 모델에게 넘길 사실들. **없는 것은 적지 않습니다.**
+    private static func facts(for day: Date) async -> String {
+        var lines: [String] = []
+        let calendar = Calendar.current
+        let when = calendar.isDateInToday(day) ? "오늘" : "내일"
+        lines.append("\(when) 날짜: \(dayKey(day))")
+
+        let events = (try? Events.upcoming(days: 1, from: day)) ?? []
+        if events.isEmpty {
+            lines.append("일정: 없음")
+        } else {
+            lines.append("일정:")
+            for item in events.prefix(6) {
+                lines.append(item.allDay
+                    ? "- \(item.title) (종일)"
+                    : "- \(Format.time(item.start))~\(Format.time(item.end)) \(item.title)"
+                        + (item.place.isEmpty ? "" : " @\(item.place)"))
+            }
+        }
+
+        let end = calendar.date(byAdding: .day, value: 1,
+                                to: calendar.startOfDay(for: day)) ?? day
+        let due = ((try? await Events.openReminders()) ?? [])
+            .filter { ($0.due ?? .distantFuture) < end }
+        if !due.isEmpty {
+            lines.append("오늘까지 할일: " + due.prefix(6).map(\.title).joined(separator: ", "))
+        }
+
+        if let sky = await Weather.quiet() {
+            let forecast = calendar.isDateInToday(day) ? sky.line : sky.nextLine
+            if !forecast.isEmpty { lines.append("날씨: \(forecast)") }
+        }
+
+        let known = Memory.all().filter { !$0.stale }
+        if !known.isEmpty {
+            lines.append("아는 것: " + known.prefix(8).map(\.text).joined(separator: ", "))
+        }
+        return lines.count > 1 ? lines.joined(separator: "\n") : ""
+    }
+
+    private static func dayKey(_ day: Date) -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: day)
+    }
+
     /// 예약을 다시 깝니다. 앱이 앞에 올 때마다 부릅니다.
     static func reschedule() async {
         let center = UNUserNotificationCenter.current()
@@ -100,6 +189,7 @@ enum Briefing {
         guard isOn else { return }
 
         let calendar = Calendar.current
+        var nextUp = true
         for offset in 0..<days {
             guard let day = calendar.date(byAdding: .day, value: offset, to: Date()) else { continue }
             var when = calendar.dateComponents([.year, .month, .day], from: day)
@@ -109,7 +199,10 @@ enum Briefing {
 
             let content = UNMutableNotificationContent()
             content.title = "오늘"
-            content.body = await line(for: day)
+            // **다음에 울릴 하나만** 누비가 씁니다. 먼 날은 그때 가서 다시
+            // 깔리고, 미리 써봐야 그 사이에 일정이 바뀝니다.
+            content.body = nextUp ? await written(for: day) : await line(for: day)
+            nextUp = false
             content.sound = .default
 
             let request = UNNotificationRequest(
