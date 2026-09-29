@@ -34,7 +34,21 @@ struct ChatView: View {
                         TurnRows(turn: turn, retry: { retry(turn) }, delete: { delete(turn) },
                                  confirm: approve, cancel: drop)
                     }
-                    if store.busy { ThinkingRow() }
+                    if store.busy {
+                        if !Airing.shared.asked.isEmpty {
+                            HStack {
+                                Spacer(minLength: 40)
+                                Text(Airing.shared.asked)
+                                    .font(.callout)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .background(Ink.mine, in: Bubble(mine: true))
+                            }
+                            .padding(.bottom, 8)
+                            .transition(.opacity)
+                        }
+                        ThinkingRow()
+                    }
                     Color.clear.frame(height: 1).id(bottom)
                 }
                 .padding(.horizontal, 16)
@@ -202,10 +216,11 @@ struct TurnRows: View {
                 .padding(.vertical, 10)
                 .background(Ink.surface, in: Bubble(mine: false))
                 .overlay(alignment: .leading) {
-                    if turn.failed {
-                        Ink.warn.frame(width: 3).clipShape(Capsule()).padding(.vertical, 6)
-                    }
+                    // **곡선을 따라가야 합니다.** 곧은 막대를 그냥 얹으면
+                    // 위아래 둥근 모서리 밖으로 삐져나옵니다.
+                    if turn.failed { Ink.warn.frame(width: 3) }
                 }
+                .clipShape(Bubble(mine: false))
                 Spacer(minLength: 40)
             }
             .contextMenu {

@@ -14,6 +14,11 @@ import Foundation
 final class Airing {
     static let shared = Airing()
 
+    /// 방금 물은 말.
+    ///
+    /// **답이 끝나야 대화에 쌓입니다.** 그래서 기다리는 동안 내가 뭘 물었는지가
+    /// 화면에 없었습니다 — 답이 온 뒤에야 물음과 답이 함께 나타났습니다.
+    private(set) var asked = ""
     /// 지금까지 흘러나온 답.
     private(set) var draft = ""
     /// 실제로 부른 도구들. **하는 일만 적습니다** — 안 하는 일을 그리면 안 됩니다.
@@ -28,7 +33,8 @@ final class Airing {
 
     private init() {}
 
-    func begin() {
+    func begin(asking question: String) {
+        asked = question
         draft = ""
         steps = []
         live = true
@@ -54,6 +60,7 @@ final class Airing {
 
     func end() {
         live = false
+        asked = ""
         draft = ""
         steps = []
     }
