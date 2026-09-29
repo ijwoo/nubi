@@ -44,7 +44,7 @@ enum Weather {
             case .noLocation:
                 "지금 어디인지 몰라 날씨를 못 봅니다. 누비를 한 번 열면 자리를 기억해 둡니다."
             case .notReady:
-                "날씨 서비스가 아직 안 열렸습니다. 권한을 켠 지 얼마 안 됐다면 30분쯤 뒤에 됩니다."
+                "날씨를 못 받았습니다. 잠시 뒤에 다시 물어봐 주세요."
             }
         }
     }
@@ -53,7 +53,34 @@ enum Weather {
     private static let stampKey = "weather.at"
     /// 실패한 시각. **실패해도 매번 다시 두드리면 답이 느려지기만 합니다.**
     private static let failedKey = "weather.failed"
+    /// 애플 날씨가 마지막으로 거절한 시각과 연달아 거절한 횟수.
+    private static let appleFailedKey = "weather.apple.failed"
+    private static let appleMissesKey = "weather.apple.misses"
+    /// 몇 번 연달아 거절당하면 물러날까.
+    private static let patience = 3
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
+
+    /// 애플에 물어볼 만한가.
+    ///
+    /// **한 번 튕겼다고 물러나지 않습니다.** 애플 날씨가 멀쩡한데 일시적으로
+    /// 한 번 거절당하면, 더 정확한 쪽을 하루 동안 안 쓰게 됩니다.
+    ///
+    /// 세 번 연달아 거절당하면 그때는 성질이 다릅니다 — `error 2` 는 계약이나
+    /// 서비스 등록 문제라 몇 분 뒤에 풀리지 않습니다. 그때 하루 물러납니다.
+    /// 하루 뒤에는 다시 봅니다. 계약이 풀렸을 수도 있습니다.
+    private static var askApple: Bool {
+        guard (store?.integer(forKey: appleMissesKey) ?? 0) >= patience,
+              let failed = store?.object(forKey: appleFailedKey) as? Date
+        else { return true }
+        return Date().timeIntervalSince(failed) > 24 * 3600
+    }
+
+    private static func appleMissed() {
+        let misses = (store?.integer(forKey: appleMissesKey) ?? 0) + 1
+        store?.set(misses, forKey: appleMissesKey)
+        store?.set(Date(), forKey: appleFailedKey)
+        if misses == patience { NubiLog.write("[날씨] 애플을 하루 쉽니다") }
+    }
 
     /// 지금 날씨.
     ///
@@ -66,14 +93,26 @@ enum Weather {
 
         let weather: SwiftWeather
         do {
+            guard askApple else { throw Failure.notReady }
             weather = try await WeatherService.shared.weather(for: location)
         } catch {
-            // 날 것의 오류를 그대로 보여주면 읽을 수 없습니다. 흔한 것은
-            // 권한을 켠 직후의 전파 지연이고, 30분쯤 뒤에 됩니다.
-            NubiLog.write("[날씨] 실패 \(error.localizedDescription)")
-            store?.set(Date(), forKey: failedKey)
-            throw Failure.notReady
+            if askApple {
+                NubiLog.write("[날씨] 애플 실패 \(error.localizedDescription)")
+                appleMissed()
+            }
+            // **막다른 길로 두지 않습니다.** 키 없이 되는 곳이 있습니다.
+            do {
+                let snapshot = try await OpenMeteo.now(at: here)
+                remember(snapshot)
+                return snapshot
+            } catch {
+                store?.set(Date(), forKey: failedKey)
+                throw Failure.notReady
+            }
         }
+
+        // 애플이 답했으면 셈을 지웁니다. 연달아 거절당한 것만 셉니다.
+        store?.removeObject(forKey: appleMissesKey)
 
         let current = weather.currentWeather
         let soon = weather.hourlyForecast.forecast
