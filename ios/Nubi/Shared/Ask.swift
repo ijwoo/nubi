@@ -30,9 +30,9 @@ enum Nubi {
                         needsSetup: answer.needsSetup)
         Thread.append(turn)
         await Airing.shared.end()
-        await LiveAnswer.show(turn)
+        let shown = await LiveAnswer.show(turn)
         let took = Date().timeIntervalSince(started)
-        await Briefing.echo(turn, took: took)
+        await Briefing.echo(turn, took: took, shown: shown)
         NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(took * 1000))ms)")
         return turn
     }
@@ -114,6 +114,7 @@ enum Nubi {
             case .move:
                 guard let to = pending.to else { return nil }
                 try Events.move(eventId: pending.eventId, to: to)
+                Undo.note(.moved, id: pending.eventId, label: pending.title, from: pending.at)
                 answer = NubiAnswer(headline: "‘\(pending.title)’ 을 옮겼습니다",
                                     detail: "\(Format.short(pending.at)) → \(Format.short(to))",
                                     source: .events)

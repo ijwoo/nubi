@@ -52,8 +52,15 @@ enum Briefing {
 
     /// 밖에서 물어 답이 늦게 온 것만 알립니다. 앱에서 보고 있는 것과 즉시
     /// 끝난 일정 조회까지 울리면 시끄럽기만 합니다.
-    static func echo(_ turn: Turn, took: TimeInterval) async {
+    ///
+    /// **대화창에 떴으면 대개 건너뜁니다.** 같은 말이 잠금화면에 두 번
+    /// 보였습니다 — 대화창에 한 번, 그 아래 알림으로 또 한 번.
+    ///
+    /// 다만 오래 걸린 답은 그 사이에 화면이 꺼져 있습니다. 대화창은 조용히
+    /// 갱신될 뿐이라 **화면을 켜주는 것은 알림뿐**입니다. 그때는 둘 다 보냅니다.
+    static func echo(_ turn: Turn, took: TimeInterval, shown: Bool = false) async {
         guard echoesAnswers, turn.viaIntent, took > 0.8 else { return }
+        guard !shown || took > 8 else { return }
         let content = UNMutableNotificationContent()
         content.title = turn.asked.isEmpty ? "누비" : turn.asked
         content.body = turn.headline

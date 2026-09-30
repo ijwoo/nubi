@@ -98,7 +98,8 @@ enum LiveAnswer {
                          steps: steps, thinking: true, failed: false, stamp: now(), at: Date()))
     }
 
-    static func show(_ turn: Turn) async {
+    @discardableResult
+    static func show(_ turn: Turn) async -> Bool {
         await push(.init(asked: turn.asked, headline: turn.headline, detail: turn.detail,
                          meta: turn.meta, steps: [], thinking: false, failed: turn.failed,
                          stamp: now(), at: turn.at, map: turn.map, call: turn.call,

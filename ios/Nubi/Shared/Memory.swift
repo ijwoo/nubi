@@ -158,6 +158,11 @@ enum Memory {
         save(all().filter { $0.id != fact.id })
     }
 
+    static func remove(id: String) {
+        guard let uuid = UUID(uuidString: id) else { return }
+        save(all().filter { $0.id != uuid })
+    }
+
     static func clear() {
         store?.removeObject(forKey: key)
         NubiLog.write("[기억] 전부 지움")

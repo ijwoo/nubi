@@ -86,6 +86,10 @@ enum Tools {
 
             tool("get_weather", "지금 자리의 날씨를 본다.", [:], []),
 
+            tool("undo_last",
+                 "방금 넣거나 건 것을 되돌린다. '방금 그거 취소', '아니 아까 거 빼줘' 같은 말에 쓴다.",
+                 [:], []),
+
             tool("set_timer",
                  "몇 분 뒤에 알린다. 라면·빨래처럼 목록에 남길 필요 없는 짧은 것에 쓴다. 날짜가 있는 일이면 add_reminder 를 쓴다.", [
                 "minutes": ["type": "integer"],
@@ -160,6 +164,7 @@ enum Tools {
         case "remind_at_place": "장소 알림 넣는 중"
         case "remember": "기억하는 중"
         case "forget": "기억 지우는 중"
+        case "undo_last": "되돌리는 중"
         case "web_search": "웹에서 찾는 중"
         default: "확인하는 중"
         }
@@ -208,11 +213,12 @@ enum Tools {
             }
             let repeats = repeating(input)
             do {
-                try Events.addEvent(title: title, start: start, allDay: allDay,
-                                    minutes: minutes, place: place,
-                                    at: place.isEmpty ? nil : locate(place),
-                                    repeats: repeats)
+                let made = try Events.addEvent(title: title, start: start, allDay: allDay,
+                                               minutes: minutes, place: place,
+                                               at: place.isEmpty ? nil : locate(place),
+                                               repeats: repeats)
                 run.wrote = true
+                Undo.note(.event, id: made, label: title)
                 var said = "넣었습니다: \(Format.short(start)) \(title)"
                 if !place.isEmpty { said += " (\(place))" }
                 if repeats != nil { said += " · 되풀이" }
@@ -247,8 +253,9 @@ enum Tools {
             guard let title = input["title"] as? String else { return "무엇을 넣을지 모르겠습니다." }
             let due = date(input["due"])
             do {
-                try Events.addReminder(title, due: due)
+                let made = try Events.addReminder(title, due: due)
                 run.wrote = true
+                Undo.note(.reminder, id: made, label: title)
                 return due.map { "넣었습니다: \(Format.short($0)) \(title)" } ?? "넣었습니다: \(title) (마감 없음)"
             } catch {
                 return "넣지 못했습니다: \(error.localizedDescription)"
@@ -265,6 +272,7 @@ enum Tools {
             }
             try? Events.complete(only)
             run.wrote = true
+            Undo.note(.completed, id: only.id, label: only.title)
             return "끝냈습니다: \(only.title)"
 
         case "find_places":
@@ -306,6 +314,7 @@ enum Tools {
                 let alarm = try await Alarms.set(at: when, label: input["label"] as? String ?? "",
                                                  weekly: days)
                 run.wrote = true
+                Undo.note(.alarm, id: alarm.id.uuidString, label: alarm.label)
                 return "걸었습니다: \(Format.short(alarm.at)) \(alarm.label)"
                     + (alarm.repeats ? " (매주)" : "")
             } catch {
@@ -333,6 +342,7 @@ enum Tools {
             do {
                 let said = try await Timers.set(minutes: minutes, label: label)
                 run.wrote = true
+                Undo.note(.timer, id: Timers.lastId, label: label.isEmpty ? "타이머" : label)
                 return said
             } catch {
                 return "알림 권한이 없습니다. 사용자가 앱에서 허용해야 합니다."
@@ -366,9 +376,10 @@ enum Tools {
             }
             let leaving = input["on_leaving"] as? Bool ?? false
             do {
-                try Events.addPlaceReminder(title, place: here ? "여기" : place,
-                                            at: spot, onArrival: !leaving)
+                let made = try Events.addPlaceReminder(title, place: here ? "여기" : place,
+                                                       at: spot, onArrival: !leaving)
                 run.wrote = true
+                Undo.note(.reminder, id: made, label: title)
                 return "넣었습니다: \(place)\(leaving ? "를 떠나면" : "에 닿으면") \(title)"
             } catch {
                 return "넣지 못했습니다: \(error.localizedDescription)"
@@ -384,8 +395,9 @@ enum Tools {
                 spot = (input["here"] as? Bool ?? false) ? Places.here() : locate(text)
             }
             do {
-                try Memory.remember(text, kind: kind, at: spot)
+                let kept = try Memory.remember(text, kind: kind, at: spot)
                 run.wrote = true
+                Undo.note(.memory, id: kept.id.uuidString, label: kept.text)
                 if kind == .place, spot == nil {
                     return "기억했습니다: \(text). 다만 자리가 어딘지는 모릅니다 — "
                         + "거기 서서 다시 말해주면 좌표까지 기억합니다."
@@ -402,6 +414,13 @@ enum Tools {
             guard !gone.isEmpty else { return "그런 기억이 없습니다." }
             run.wrote = true
             return "지웠습니다: " + gone.map(\.text).joined(separator: ", ")
+
+        case "undo_last":
+            guard let said = await Undo.undo() else {
+                return "되돌릴 게 없습니다. 방금 한 일이 없거나 한참 지났습니다."
+            }
+            run.wrote = true
+            return said
 
         default:
             return "모르는 도구입니다."

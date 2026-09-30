@@ -19,6 +19,9 @@ enum Timers {
     }
 
     /// 걸어둡니다. 돌려주는 글자는 사람이 읽을 말입니다.
+    /// 걸어둔 알림의 식별자. 되돌리려면 필요합니다.
+    nonisolated(unsafe) static var lastId = ""
+
     static func set(minutes: Int, label: String) async throws -> String {
         let span = max(1, min(minutes, 60 * 12))
         let content = UNMutableNotificationContent()
@@ -33,6 +36,7 @@ enum Timers {
             trigger: UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(span * 60),
                                                        repeats: false))
         try await UNUserNotificationCenter.current().add(request)
+        lastId = request.identifier
         return "\(Format.time(fires))에 알립니다 (\(span)분)"
     }
 
@@ -55,6 +59,10 @@ enum Timers {
     }
 
     /// 이름이 비면 전부 지웁니다. **하나만 걸려 있으면 이름을 물을 이유가 없습니다.**
+    static func cancel(id: String) async {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
+    }
+
     static func cancel(label: String = "") async -> [String] {
         let all = await running()
         let hits = label.isEmpty ? all : all.filter { $0.label.contains(label) }
