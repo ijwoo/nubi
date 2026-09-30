@@ -12,6 +12,7 @@
 		03A181F4E2619EBFAB7ACC19 /* Malpoongi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A686DB057CB597AA2F2BBC11 /* Malpoongi.swift */; };
 		05E4D5AAB6195D76F53896F6 /* NubiLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8022C1BA164C96691288B821 /* NubiLog.swift */; };
 		067DAFEC52953E42CE39CD84 /* NubiControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF16C77452B7A625FB1CAC5 /* NubiControl.swift */; };
+		10A03EFFC1067A4B75C5DBF4 /* AlarmsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD53608722B40BE901657803 /* AlarmsView.swift */; };
 		1246C1EA352C0429D569220F /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA679F4C5115AE0DA4E735CC /* Tools.swift */; };
 		12D9EB201AD4DB02E24B6AA5 /* Briefing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D185434B2F19A1C29EDC0C2 /* Briefing.swift */; };
 		179946DE55B1BCB7C8996A94 /* Alarms.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F00FD90F451A032A6D35301 /* Alarms.swift */; };
@@ -133,6 +134,7 @@
 		B50BA91773407DEF9C6C4D4A /* TodayWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
 		B5D1A217A4E3AF9EAD28A787 /* Setup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Setup.swift; sourceTree = "<group>"; };
 		BA683881492FFE4EF4FDD2D7 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
+		CD53608722B40BE901657803 /* AlarmsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmsView.swift; sourceTree = "<group>"; };
 		D1B9F03A6425F50B4D2ED25B /* NubiWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = NubiWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D2664AF5C4C38CF8EB670E96 /* Nubi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Nubi.entitlements; sourceTree = "<group>"; };
 		D6D78B6F5B43980761726563 /* FastPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FastPath.swift; sourceTree = "<group>"; };
@@ -163,6 +165,7 @@
 		29ACB87087D7914D7A6E4CB7 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				CD53608722B40BE901657803 /* AlarmsView.swift */,
 				E9EC3550F8F202BF5ABE70FD /* Assets.xcassets */,
 				A6B34F5F5B4A10E59AE49137 /* ChatView.swift */,
 				A9B7FC438A30E95882F284FA /* EventsView.swift */,
@@ -324,6 +327,7 @@
 			files = (
 				2AD3E6A35B7B5026DC85E57F /* Airing.swift in Sources */,
 				179946DE55B1BCB7C8996A94 /* Alarms.swift in Sources */,
+				10A03EFFC1067A4B75C5DBF4 /* AlarmsView.swift in Sources */,
 				87ED10537F88A2F16C7A2DA4 /* Answer.swift in Sources */,
 				D07BF1C08B5F8FD16F9B29B1 /* Ask.swift in Sources */,
 				77B971B7DB19E26939D090B9 /* Briefing.swift in Sources */,
@@ -411,7 +415,7 @@
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 63;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -434,7 +438,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = 4DDDC2F0F263958BAFA023AD67C52DCD8F7C25D3;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 63;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -517,7 +521,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Widget/NubiWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 63;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -595,7 +599,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Nubi.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 63;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = 7R5DW7P6PP;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
