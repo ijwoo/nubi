@@ -191,6 +191,8 @@ struct HomeView: View {
     }
 
     private func reload() {
+        // 아침에 울린 브리핑을 대화에 남깁니다. 새로 읽기 전에 합니다.
+        Briefing.recordFired()
         withAnimation(.easeOut(duration: 0.2)) { store.refresh() }
         today = Events.onDay(offset: 0)
         Task {

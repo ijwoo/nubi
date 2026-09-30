@@ -32,7 +32,10 @@ struct ChatView: View {
                     ForEach(Array(store.turns.enumerated()), id: \.element.id) { index, turn in
                         if let mark = separator(before: index) { DayMark(text: mark) }
                         TurnRows(turn: turn, retry: { retry(turn) }, delete: { delete(turn) },
-                                 confirm: approve, cancel: drop)
+                                 confirm: approve, cancel: drop,
+                                 // 마지막 턴에만 붙입니다. 옛날 답의 "응" 을
+                                 // 지금 누르면 무슨 말인지 알 수 없습니다.
+                                 ask: index == store.turns.count - 1 ? pick : nil)
                     }
                     if store.busy {
                         if !Airing.shared.asked.isEmpty {
@@ -85,6 +88,11 @@ struct ChatView: View {
         draft = ""
         Haptic.tap()
         Task { await store.ask(text) }
+    }
+
+    /// 후속 버튼을 누르면 그 말을 그대로 보냅니다.
+    private func pick(_ choice: String) {
+        Task { await store.ask(choice) }
     }
 
     private func retry(_ turn: Turn) {
@@ -141,6 +149,8 @@ struct TurnRows: View {
     let delete: () -> Void
     let confirm: () -> Void
     let cancel: () -> Void
+    /// 후속 버튼을 눌렀을 때. 마지막 턴에만 들어옵니다.
+    var ask: ((String) -> Void)?
     @State private var shown = false
 
     var body: some View {
@@ -192,6 +202,24 @@ struct TurnRows: View {
                         .font(.caption.weight(.bold))
                         .buttonBorderShape(.capsule)
                         .controlSize(.small)
+                    }
+                    // **답을 받고 나면 다시 타이핑해야 했습니다.** "옮길까?" 에
+                    // "응" 하려고 문장을 만드는 건 답답합니다.
+                    if let ask, !turn.choices.isEmpty, turn.confirm.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(turn.choices, id: \.self) { choice in
+                                Button(choice) {
+                                    Haptic.tap()
+                                    ask(choice)
+                                }
+                                .font(.caption.weight(.semibold))
+                                .buttonStyle(.bordered)
+                                .buttonBorderShape(.capsule)
+                                .controlSize(.small)
+                                .tint(Ink.accent)
+                            }
+                        }
+                        .padding(.top, 2)
                     }
                     if !turn.map.isEmpty || !turn.call.isEmpty {
                         HStack(spacing: 14) {

@@ -187,6 +187,28 @@ enum Briefing {
         return f.string(from: day)
     }
 
+    /// 울린 브리핑을 대화에 남깁니다.
+    ///
+    /// **놓치면 사라졌습니다.** 하루 중 유일하게 묻지 않고 오는 것인데 알림을
+    /// 못 보면 끝이었습니다. 알림이 울릴 때 우리 코드는 돌지 않으므로, 앱이
+    /// 앞에 올 때 지난 것이 있으면 그때 쌓습니다.
+    private static let dueKey = "briefing.due.at"
+    private static let dueBodyKey = "briefing.due.body"
+
+    static func recordFired() {
+        guard let due = store?.object(forKey: dueKey) as? Date, due < Date(),
+              let body = store?.string(forKey: dueBodyKey), !body.isEmpty else { return }
+        store?.removeObject(forKey: dueKey)
+        store?.removeObject(forKey: dueBodyKey)
+        var lines = body.split(separator: "\n", omittingEmptySubsequences: true).map(String.init)
+        let headline = lines.first ?? body
+        if !lines.isEmpty { lines.removeFirst() }
+        Thread.append(Turn(asked: "아침", headline: headline,
+                           detail: lines.joined(separator: "\n"),
+                           source: .none, failed: false, at: due, viaIntent: true))
+        NubiLog.write("[브리핑] 지난 것을 대화에 남김")
+    }
+
     /// 예약을 다시 깝니다. 앱이 앞에 올 때마다 부릅니다.
     static func reschedule() async {
         let center = UNUserNotificationCenter.current()
@@ -209,6 +231,11 @@ enum Briefing {
             // **다음에 울릴 하나만** 누비가 씁니다. 먼 날은 그때 가서 다시
             // 깔리고, 미리 써봐야 그 사이에 일정이 바뀝니다.
             content.body = nextUp ? await written(for: day) : await line(for: day)
+            if nextUp {
+                // 이게 울리고 나면 대화에 남길 것입니다.
+                store?.set(fireDate, forKey: dueKey)
+                store?.set(content.body, forKey: dueBodyKey)
+            }
             nextUp = false
             content.sound = .default
 

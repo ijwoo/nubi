@@ -26,7 +26,7 @@ enum Nubi {
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
                         viaIntent: viaIntent, map: answer.map, call: answer.call,
-                        confirm: answer.confirm,
+                        confirm: answer.confirm, choices: answer.choices,
                         needsSetup: answer.needsSetup)
         Thread.append(turn)
         await Airing.shared.end()
@@ -350,7 +350,9 @@ struct QuickAskIntent: LiveActivityIntent {
     @Parameter(title: "턴")
     var stamp: Int
 
-    init() { utterance = "오늘 일정"; stamp = 0 }
+    /// 시리로 부를 때는 값이 없습니다. 그때는 할일을 봅니다 — 일정은 이미
+    /// 다른 단축어가 맡고 있습니다.
+    init() { utterance = "할일"; stamp = 0 }
     init(_ label: String, stamp: Int) {
         utterance = "\(label) 일정"
         self.stamp = stamp
@@ -509,17 +511,35 @@ struct OpenNubiIntent: AppIntent {
 }
 
 /// 음성으로 부를 이름. 앱을 설치하면 바로 잡힙니다.
+///
+/// **맨 이름만으로는 안 부릅니다.** "누비" 는 실제 낱말(퀼트)이라 시리가 앱
+/// 대신 사전을 찾습니다. 문구마다 동사가 붙어 있어야 앱으로 옵니다.
+///
+/// 자유롭게 묻는 쪽은 값을 하나 받아야 해서 시리가 되물어야 합니다. 그 길이
+/// 막히는 자리가 있어서(잠금화면 버튼에서 그랬습니다) **값이 없는 것부터**
+/// 확실합니다 — 오늘 일정과 할일은 부르자마자 끝납니다.
 struct NubiShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AskNubiIntent(),
-            phrases: ["\(.applicationName)에게 묻기", "\(.applicationName)한테 물어봐", "\(.applicationName)"],
+            phrases: ["\(.applicationName)에게 묻기",
+                      "\(.applicationName)한테 물어봐",
+                      "\(.applicationName)한테 질문",
+                      "\(.applicationName)에게 물어볼게"],
             shortTitle: "묻기",
             systemImageName: "bubble.left.and.text.bubble.right")
         AppShortcut(
             intent: TodayEventsIntent(),
-            phrases: ["\(.applicationName) 오늘 일정", "\(.applicationName)로 오늘 일정 보기"],
+            phrases: ["\(.applicationName) 오늘 일정",
+                      "\(.applicationName)로 오늘 일정 보기",
+                      "\(.applicationName) 오늘 뭐 있어"],
             shortTitle: "오늘 일정",
             systemImageName: "calendar")
+        AppShortcut(
+            intent: QuickAskIntent(),
+            phrases: ["\(.applicationName) 오늘 할일",
+                      "\(.applicationName) 할일 보여줘"],
+            shortTitle: "오늘 할일",
+            systemImageName: "checklist")
     }
 }
