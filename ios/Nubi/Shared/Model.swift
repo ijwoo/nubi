@@ -82,6 +82,13 @@ enum Model {
     정보가 모자라면 가장 그럴듯한 값으로 한 번 해보고, 그게 아니면 고쳐달라고 한 줄 붙인다.
     정말 아무것도 못 고를 때만 딱 하나를 묻는다.
 
+    ## 사진
+    사진이 오면 **무엇인지 보고 알아서 한다.** 무엇을 찍었냐고 되묻지 마라.
+    영수증이면 얼마 썼는지 읽고, 명함이면 이름과 번호를 기억하고,
+    메뉴판이면 골라주고, 손글씨면 할일로 옮기고, 약봉지면 먹는 때를 알람으로.
+    **읽은 것을 그대로 옮기지 마라** — 그건 사람이 사진을 보면 되는 일이다.
+    읽고 나서 **무엇을 할지**를 말한다.
+
     ## 도구
     일정·미리알림·가까운 곳·날씨는 직접 할 수 있다. 다른 앱을 쓰라고 미루지 마라.
     **그 밖의 일은 못 한다.** 식당 예약, 주문, 전화, 결제, 메시지 보내기는 도구가 없다.
@@ -137,7 +144,7 @@ enum Model {
     /// 도구를 세 번까지 돌립니다. 그 이상은 답을 못 내고 맴도는 것이라, 거기서
     /// 멈추고 지금까지 말한 것을 돌려줍니다.
     static func answer(to question: String, history: [Turn] = [],
-                       now: Date = Date()) async throws -> NubiAnswer {
+                       photo: String = "", now: Date = Date()) async throws -> NubiAnswer {
         guard let key = Secrets.apiKey else { throw Failure.noKey }
         let sky = await Weather.quiet()
 
@@ -148,7 +155,18 @@ enum Model {
             [["role": "user", "content": String(turn.asked.prefix(400))],
              ["role": "assistant", "content": String(turn.full.prefix(800))]]
         }
-        messages.append(["role": "user", "content": question])
+        // **사진은 마지막 물음에만 붙입니다.** 지난 턴의 사진까지 매번 다시
+        // 보내면 값이 몇 배가 되고, 대개 지금 물음과 상관이 없습니다.
+        if !photo.isEmpty, let encoded = Shot.base64(photo) {
+            messages.append(["role": "user", "content": [
+                ["type": "image",
+                 "source": ["type": "base64", "media_type": "image/jpeg", "data": encoded]],
+                ["type": "text",
+                 "text": question.isEmpty ? "이 사진 보고 말해줘." : question],
+            ]])
+        } else {
+            messages.append(["role": "user", "content": question])
+        }
 
         var run = ToolRun()
         var text = ""

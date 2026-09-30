@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 import UIKit
 
@@ -12,6 +13,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var phase
     @State private var path: [Drawer] = []
     @State private var draft = ""
+    @State private var photo = ""
     @State private var showSettings = false
     @State private var today: [Events.Item] = []
     @State private var open: [Events.ReminderItem] = []
@@ -37,7 +39,7 @@ struct HomeView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 Composer(draft: $draft, busy: store.busy, typing: $typing,
-                         suggestions: hints, send: send)
+                         suggestions: hints, photo: $photo, send: send)
             }
             .background(Ink.ground)
             .navigationTitle("")
@@ -203,11 +205,13 @@ struct HomeView: View {
 
     private func send() {
         let text = draft
+        let shot = photo
         draft = ""
+        photo = ""
         typing = false
         Haptic.tap()
         path = [.chat]
-        Task { await store.ask(text) }
+        Task { await store.ask(text, photo: shot) }
     }
 }
 
@@ -248,12 +252,21 @@ struct DrawerTile: View {
 }
 
 /// 아래 고정 입력줄.
+///
+/// **타이핑이 유일한 길이 아니게 합니다.** 걸으면서, 손이 젖었을 때, 화면을
+/// 안 보고도 묻는 길이 있어야 합니다 — 왼쪽은 사진, 오른쪽은 목소리입니다.
 struct Composer: View {
     @Binding var draft: String
     let busy: Bool
     @FocusState.Binding var typing: Bool
     var suggestions: [String] = []
+    /// 같이 보낼 사진의 파일 이름. 쓰는 쪽에서 들고 있습니다.
+    @Binding var photo: String
     let send: () -> Void
+
+    @State private var voice = Dictation()
+    @State private var picking: PhotosPickerItem?
+    @State private var shooting = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -277,7 +290,20 @@ struct Composer: View {
                 }
                 .transition(.opacity)
             }
-            HStack(alignment: .bottom, spacing: 10) {
+            if !photo.isEmpty { preview }
+            HStack(alignment: .bottom, spacing: 8) {
+                Menu {
+                    Button("사진 찍기", systemImage: "camera") { shooting = true }
+                    // 보관함은 권한이 필요 없습니다. 고른 것만 넘어옵니다.
+                    PhotosPicker(selection: $picking, matching: .images) {
+                        Label("사진 고르기", systemImage: "photo")
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 34, height: 42)
+                }
                 TextField("무엇이든 물어봐", text: $draft, axis: .vertical)
                     .lineLimit(1...4)
                     .font(.callout)
@@ -290,30 +316,123 @@ struct Composer: View {
                         .stroke(typing ? Ink.accent.opacity(0.7) : Ink.edge, lineWidth: 1))
                     .animation(.easeOut(duration: 0.2), value: typing)
                     .onSubmit(send)
-                Button(action: send) {
+                // **빈 줄에는 마이크, 쓴 줄에는 보내기.** 버튼 둘을 늘 두면
+                // 손이 어디로 갈지 매번 고르게 됩니다.
+                Button {
+                    if voice.listening { voice.stop() }
+                    else if ready { send() }
+                    else { Task { await voice.start() } }
+                } label: {
                     Group {
                         if busy {
                             ProgressView().controlSize(.small).tint(.white)
                         } else {
-                            Image(systemName: "arrow.up").font(.body.weight(.bold))
+                            Image(systemName: icon).font(.body.weight(.bold))
+                                .contentTransition(.symbolEffect(.replace))
                         }
                     }
                     .foregroundStyle(.white)
                     .frame(width: 42, height: 42)
-                    .background(Ink.accent.opacity(ready ? 1 : 0.28), in: Circle())
-                    .scaleEffect(ready ? 1 : 0.92)
+                    .background(tint, in: Circle())
+                    .scaleEffect(voice.listening ? 1.06 : 1)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: ready)
+                    .animation(.easeOut(duration: 0.2), value: voice.listening)
                 }
-                .disabled(!ready)
+                .disabled(busy)
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .padding(.bottom, 8)
+            if !voice.refused.isEmpty {
+                Text(voice.refused)
+                    .font(.caption2).foregroundStyle(Ink.warn)
+                    .padding(.horizontal, 16).padding(.bottom, 6)
+            }
         }
         .background(Ink.ground)
+        // 들리는 대로 입력줄에 적습니다. 멈추면 그 자리에 남아 고칠 수 있습니다.
+        .onChange(of: voice.heard) { _, now in if voice.listening { draft = now } }
+        .onChange(of: picking) { _, item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    photo = Shot.keep(data) ?? ""
+                }
+                picking = nil
+            }
+        }
+        .sheet(isPresented: $shooting) {
+            Camera { data in
+                if let data { photo = Shot.keep(data) ?? "" }
+                shooting = false
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    /// 보내기 전에 무엇을 붙였는지 보여줍니다.
+    private var preview: some View {
+        HStack(spacing: 8) {
+            if let data = Shot.load(photo), let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable().scaledToFill()
+                    .frame(width: 44, height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            }
+            Text("사진 한 장").font(.caption).foregroundStyle(.secondary)
+            Spacer()
+            Button("빼기", systemImage: "xmark.circle.fill") { photo = "" }
+                .labelStyle(.iconOnly)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+
+    private var icon: String {
+        if voice.listening { return "stop.fill" }
+        return ready ? "arrow.up" : "mic.fill"
+    }
+
+    private var tint: Color {
+        if voice.listening { return Ink.warn }
+        return Ink.accent.opacity(ready || !busy ? 1 : 0.28)
     }
 
     private var ready: Bool {
-        !busy && !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !busy && (!draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !photo.isEmpty)
+    }
+}
+
+/// 카메라. SwiftUI 에는 아직 없어서 감쌉니다.
+struct Camera: UIViewControllerRepresentable {
+    let done: (Data?) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera)
+            ? .camera : .photoLibrary
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ controller: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(done: done) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate,
+                             UINavigationControllerDelegate {
+        let done: (Data?) -> Void
+        init(done: @escaping (Data?) -> Void) { self.done = done }
+
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info:
+                                   [UIImagePickerController.InfoKey: Any]) {
+            let image = info[.originalImage] as? UIImage
+            done(image?.jpegData(compressionQuality: 0.9))
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { done(nil) }
     }
 }

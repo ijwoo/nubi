@@ -8,7 +8,7 @@ import Foundation
 enum Nubi {
     /// 표시를 먼저 바꾸고 답을 만들고 대화에 쌓습니다.
     @discardableResult
-    static func turn(_ utterance: String, viaIntent: Bool) async -> Turn {
+    static func turn(_ utterance: String, viaIntent: Bool, photo: String = "") async -> Turn {
         // 정해진 몇 마디만 빠른 길로 갑니다. 나머지는 모델이 갈래를 고릅니다.
         let route = FastPath.match(utterance)
         // 물은 말을 먼저 띄웁니다. 답을 기다리는 동안 내가 뭘 물었는지가
@@ -20,14 +20,18 @@ enum Nubi {
         let history = Array(Thread.load().suffix(6))
         // **답이 없는 것도 답으로 만듭니다.** 어딘가에서 멈추면 대화창이 "생각 중"
         // 인 채로 남고, 사람은 고장난 줄 압니다.
-        let answer = await within(seconds: 40) { await respond(route, history: history, asked: utterance) }
+        // 사진이 있으면 빠른 길로 못 갑니다. 보고 판단할 것이 있으니까요.
+        let answer = await within(seconds: 40) {
+            await respond(photo.isEmpty ? route : nil, history: history,
+                          asked: utterance, photo: photo)
+        }
             ?? NubiAnswer(headline: "시간이 너무 걸립니다",
                           detail: "다시 시도해 주세요.", failed: true)
         let turn = Turn(asked: utterance, headline: answer.headline, detail: answer.detail,
                         source: answer.source, failed: answer.failed, at: Date(),
                         viaIntent: viaIntent, map: answer.map, call: answer.call,
                         confirm: answer.confirm, choices: answer.choices,
-                        open: answer.open, openLabel: answer.openLabel,
+                        open: answer.open, openLabel: answer.openLabel, photo: photo,
                         needsSetup: answer.needsSetup)
         Thread.append(turn)
         await Airing.shared.end()
@@ -158,10 +162,10 @@ enum Nubi {
     }
 
     static func respond(_ route: NubiIntent?, history: [Turn] = [],
-                        asked: String) async -> NubiAnswer {
+                        asked: String, photo: String = "") async -> NubiAnswer {
         guard let route else {
             do {
-                return try await Model.answer(to: asked, history: history)
+                return try await Model.answer(to: asked, history: history, photo: photo)
             } catch {
                 // 키가 없으면 모델을 못 씁니다. 그때는 낱말 규칙이라도 써서
                 // 일정과 미리알림은 답합니다 — **없는 것보다 낫습니다.**

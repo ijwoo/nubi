@@ -43,6 +43,8 @@ struct Turn: Codable, Identifiable, Hashable {
     /// 열어줄 앱.
     var open: String = ""
     var openLabel: String = ""
+    /// 같이 보낸 사진의 파일 이름.
+    var photo: String = ""
     /// 설정을 고쳐야 풀리는 실패인가.
     var needsSetup: Bool = false
 
