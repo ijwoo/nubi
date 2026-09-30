@@ -33,11 +33,11 @@ final class Store {
     }
 
     @MainActor
-    func ask(_ text: String) async {
+    func ask(_ text: String, photo: String = "") async {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !busy else { return }
+        guard !trimmed.isEmpty || !photo.isEmpty, !busy else { return }
         busy = true
-        await Nubi.turn(trimmed, viaIntent: false)
+        await Nubi.turn(trimmed, viaIntent: false, photo: photo)
         refresh()
         busy = false
     }

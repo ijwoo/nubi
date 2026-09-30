@@ -6,6 +6,7 @@ struct ChatView: View {
     @Environment(Store.self) private var store
     @Environment(\.scenePhase) private var phase
     @State private var draft = ""
+    @State private var photo = ""
     @FocusState private var typing: Bool
 
     private let bottom = "bottom"
@@ -13,7 +14,8 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             transcript
-            Composer(draft: $draft, busy: store.busy, typing: $typing, send: send)
+            Composer(draft: $draft, busy: store.busy, typing: $typing,
+                     photo: $photo, send: send)
         }
         .navigationTitle("대화")
         .navigationBarTitleDisplayMode(.inline)
@@ -85,9 +87,11 @@ struct ChatView: View {
 
     private func send() {
         let text = draft
+        let shot = photo
         draft = ""
+        photo = ""
         Haptic.tap()
-        Task { await store.ask(text) }
+        Task { await store.ask(text, photo: shot) }
     }
 
     /// 후속 버튼을 누르면 그 말을 그대로 보냅니다.
@@ -143,6 +147,20 @@ struct DayMark: View {
 }
 
 /// 한 턴은 두 줄입니다 — 물은 말과 답.
+/// 내가 붙인 사진. 말풍선 위에 붙습니다.
+struct Snap: View {
+    let name: String
+
+    var body: some View {
+        if let data = Shot.load(name), let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable().scaledToFill()
+                .frame(maxWidth: 190, maxHeight: 190)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+}
+
 struct TurnRows: View {
     let turn: Turn
     let retry: () -> Void
@@ -155,6 +173,12 @@ struct TurnRows: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if !turn.photo.isEmpty {
+                HStack {
+                    Spacer(minLength: 56)
+                    Snap(name: turn.photo)
+                }
+            }
             HStack {
                 Spacer(minLength: 56)
                 Text(turn.asked)
