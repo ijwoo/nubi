@@ -19,7 +19,6 @@ struct SettingsView: View {
     @State private var keySaved = false
     @State private var briefingOn = Briefing.isOn
     @State private var echoOn = Briefing.echoesAnswers
-    @State private var grade = Model.grade
     @State private var searchOn = Model.searches
     @State private var kakaoKey = ""
     @State private var kakaoSaved = false
@@ -153,12 +152,6 @@ struct SettingsView: View {
                 }
             }
             .disabled(key.isEmpty)
-            Picker("답하는 방식", selection: $grade) {
-                ForEach(Model.Grade.allCases) { item in
-                    Text("\(item.label) · \(item.note)").tag(item)
-                }
-            }
-            .onChange(of: grade) { _, now in Model.grade = now }
             Toggle("웹 찾아보기", isOn: $searchOn)
                 .onChange(of: searchOn) { _, now in Model.searches = now }
             LabeledContent("모델", value: Model.id)

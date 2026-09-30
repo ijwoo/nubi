@@ -11,32 +11,21 @@ import Foundation
 /// 정합니다. 대신 왕복이 붙습니다 — 그래서 자주 쓰는 몇 마디는
 /// [빠른 길](FastPath.swift)로 남겨 뒀습니다.
 enum Model {
-    enum Grade: String, CaseIterable, Identifiable {
-        case fast, careful
+    /// **하이쿠 하나로 못 박았습니다.**
+    ///
+    /// 고르게 두고 정확한 쪽을 기본으로 뒀었는데, 값이 너무 나갑니다. 하루에
+    /// 수십 번 묻는 물건이라 왕복마다 붙는 차이가 금방 쌓입니다.
+    ///
+    /// **별칭이 아니라 날짜가 붙은 이름을 씁니다.** `claude-haiku-4-5` 로
+    /// 바꿨는데 바뀌지 않던 일이 있었습니다 — 별칭이 안 먹으면 조용히 예전
+    /// 것으로 돌아갑니다. 조용히 다른 일이 일어나는 것이 제일 나쁩니다.
+    static let id = "claude-haiku-4-5-20251001"
 
-        var id: String { rawValue }
-        var label: String { self == .fast ? "빠르게" : "정확하게" }
-        var note: String { self == .fast ? "1~2초" : "3~5초, 더 정확" }
-        var model: String { self == .fast ? "claude-haiku-4-5" : "claude-sonnet-5" }
-        /// 모델마다 쓸 수 있는 검색 도구가 다릅니다.
-        var searchTool: String {
-            self == .careful ? "web_search_20260209" : "web_search_20250305"
-        }
-    }
+    /// 이 모델이 쓸 수 있는 검색 도구. 모델마다 다릅니다.
+    static let searchTool = "web_search_20250305"
 
-    private static let gradeKey = "model.grade"
     private static let searchKey = "model.search"
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
-
-    static var grade: Grade {
-        // **정확한 쪽이 기본입니다.** 빠른 쪽은 길이와 형식 지시를 자주 어깁니다 —
-        // 네 줄로 답하라고 해도 세 문단을 쓰고, 하나만 권하라고 해도 셋을 늘어놨습니다.
-        // 1~2초를 아끼려다 답을 못 쓰게 되는 것보다 낫습니다.
-        get { Grade(rawValue: store?.string(forKey: gradeKey) ?? "") ?? .careful }
-        set { store?.set(newValue.rawValue, forKey: gradeKey) }
-    }
-
-    static var id: String { grade.model }
 
     /// 웹을 찾아보게 할까.
     static var searches: Bool {
@@ -86,6 +75,9 @@ enum Model {
     인사, 서론, "도와드릴까요" 같은 맺음말을 쓰지 않는다.
 
     ## 되묻지 않기
+    **사과하지 마라.** "미안", "지적 고마워", "이번엔 진짜로" 같은 말을 쓰지 마라.
+    앞의 답이 틀렸어도 그냥 맞는 답을 하면 된다.
+    **아는 것을 되묻지 마라.** 위치를 알면 근처를 바로 찾고, 일정을 읽을 수 있으면 먼저 읽어라.
     **할 수 있으면 먼저 하고 결과를 보여준다.** "찾아드릴까요?" 라고 묻지 마라.
     정보가 모자라면 가장 그럴듯한 값으로 한 번 해보고, 그게 아니면 고쳐달라고 한 줄 붙인다.
     정말 아무것도 못 고를 때만 딱 하나를 묻는다.
@@ -274,7 +266,7 @@ enum Model {
 
         var tools: [[String: Any]] = Tools.schema
         if searches {
-            tools.append(["type": grade.searchTool, "name": "web_search", "max_uses": 3])
+            tools.append(["type": searchTool, "name": "web_search", "max_uses": 3])
         }
         // **도구 설명은 매번 똑같습니다.** 열일곱 개를 왕복마다 다시 보내고
         // 있었습니다. 마지막 하나에 표시를 붙이면 그 앞까지 통째로 캐시됩니다.
@@ -301,6 +293,7 @@ enum Model {
         var blocks: [Int: [String: Any]] = [:]
         var partials: [Int: String] = [:]
         var stopped = ""
+        var fresh = 0, cached = 0, wrote = 0
 
         for try await line in bytes.lines {
             guard line.hasPrefix("data:") else { continue }
@@ -311,6 +304,12 @@ enum Model {
             let index = event["index"] as? Int ?? 0
 
             switch kind {
+            case "message_start":
+                // **값이 얼마나 나가는지 보여야 줄일 수 있습니다.** 캐시가
+                // 실제로 듣는지도 여기서만 알 수 있습니다.
+                let usage = (event["message"] as? [String: Any])?["usage"] as? [String: Any]
+                fresh = usage?["input_tokens"] as? Int ?? 0
+                cached = usage?["cache_read_input_tokens"] as? Int ?? 0
             case "content_block_start":
                 blocks[index] = event["content_block"] as? [String: Any] ?? [:]
                 partials[index] = ""
@@ -342,6 +341,7 @@ enum Model {
                 }
             case "message_delta":
                 stopped = (event["delta"] as? [String: Any])?["stop_reason"] as? String ?? stopped
+                wrote = (event["usage"] as? [String: Any])?["output_tokens"] as? Int ?? wrote
             case "error":
                 let message = (event["error"] as? [String: Any])?["message"] as? String ?? ""
                 throw Failure.http(code, message)
@@ -353,6 +353,7 @@ enum Model {
         // **말이 잘리면 도구 호출도 같이 잘립니다.** 그러면 아무 일도 안 하고
         // 했다고 말하는 것처럼 보입니다 — 어느 쪽인지 알아야 고칠 수 있습니다.
         if stopped == "max_tokens" { NubiLog.write("[모델] 길이 제한에 걸려 잘림") }
+        NubiLog.write("[토큰] 입력 \(fresh)\(cached > 0 ? " · 캐시 \(cached)" : "") 출력 \(wrote)")
         return Reply(content: blocks.keys.sorted().compactMap { blocks[$0] }, stopped: stopped)
     }
 
