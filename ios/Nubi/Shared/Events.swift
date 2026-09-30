@@ -98,6 +98,7 @@ enum Events {
         }
     }
 
+    /// 넣은 일정의 식별자를 돌려줍니다. **되돌리려면 무엇을 넣었는지 알아야 합니다.**
     @discardableResult
     static func addEvent(title: String, start: Date, allDay: Bool,
                          minutes: Int = 60, place: String = "",
@@ -123,7 +124,7 @@ enum Events {
         if let repeats { event.recurrenceRules = [repeats.rule] }
         try store.save(event, span: .thisEvent, commit: true)
         noteAdded(title, start)
-        return title
+        return event.eventIdentifier ?? ""
     }
 
     /// 이 시간대에 이미 있는 일정.
@@ -215,7 +216,21 @@ enum Events {
             reminder.addAlarm(EKAlarm(absoluteDate: due))
         }
         try store.save(reminder, commit: true)
-        return title
+        return reminder.calendarItemIdentifier
+    }
+
+    static func removeReminder(id: String) throws {
+        let store = EKEventStore()
+        guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else { return }
+        try store.remove(reminder, commit: true)
+    }
+
+    /// 끝냈다고 표시한 것을 물립니다.
+    static func uncomplete(id: String) throws {
+        let store = EKEventStore()
+        guard let reminder = store.calendarItem(withIdentifier: id) as? EKReminder else { return }
+        reminder.isCompleted = false
+        try store.save(reminder, commit: true)
     }
 
     // MARK: 방금 넣은 것
@@ -283,7 +298,7 @@ enum Events {
         alarm.proximity = onArrival ? .enter : .leave
         reminder.addAlarm(alarm)
         try store.save(reminder, commit: true)
-        return title
+        return reminder.calendarItemIdentifier
     }
 
     /// 모델에게 넘길 오늘 요약. 없으면 빈 문자열입니다.

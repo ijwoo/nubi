@@ -15,6 +15,7 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var today: [Events.Item] = []
     @State private var open: [Events.ReminderItem] = []
+    @State private var runningTimer = false
     @FocusState private var typing: Bool
 
     var body: some View {
@@ -36,7 +37,7 @@ struct HomeView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 Composer(draft: $draft, busy: store.busy, typing: $typing,
-                         suggestions: Suggestion.all, send: send)
+                         suggestions: hints, send: send)
             }
             .background(Ink.ground)
             .navigationTitle("")
@@ -132,6 +133,30 @@ struct HomeView: View {
         }
     }
 
+    /// 지금 눌릴 만한 것.
+    ///
+    /// **고정 넷이었습니다** — `오늘 일정 · 오늘 할일 · 근처 카페 · 내일 3시
+    /// 회의 일정 추가`. 앱 열 때마다 보이는 자리인데 늘 같으니 아무도 안
+    /// 누릅니다. 지금 걸려 있는 것과 시간대를 보고 고릅니다.
+    private var hints: [String] {
+        var list: [String] = []
+        // 방금 뭔가를 했으면 물릴 길이 제일 먼저입니다.
+        if Undo.pending != nil { list.append("방금 그거 취소") }
+        if runningTimer { list.append("타이머 얼마 남았어") }
+        if today.contains(where: { $0.start > Date() }) { list.append("오늘 일정") }
+        if !open.isEmpty { list.append("오늘 할일") }
+
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 6...9: list.append("오늘 날씨")
+        case 11...13: list.append("점심 뭐 먹지")
+        case 17...20: list.append("저녁 뭐 먹지")
+        case 22...23, 0...2: if Alarms.all().isEmpty { list.append("내일 아침 7시에 깨워줘") }
+        default: break
+        }
+        if list.count < 3 { list.append("근처 카페") }
+        return Array(list.prefix(4))
+    }
+
     private var alarmNote: String {
         let set = Alarms.all()
         guard let next = set.first else { return "걸어둔 게 없어" }
@@ -168,7 +193,10 @@ struct HomeView: View {
     private func reload() {
         withAnimation(.easeOut(duration: 0.2)) { store.refresh() }
         today = Events.onDay(offset: 0)
-        Task { open = (try? await Events.openReminders()) ?? [] }
+        Task {
+            open = (try? await Events.openReminders()) ?? []
+            runningTimer = await !Timers.running().isEmpty
+        }
     }
 
     private func send() {
@@ -181,9 +209,6 @@ struct HomeView: View {
     }
 }
 
-enum Suggestion {
-    static let all = ["오늘 일정", "오늘 할일", "근처 카페", "내일 3시 회의 일정 추가"]
-}
 
 /// 서랍 한 칸. **넷이 두 줄로 들어갑니다.**
 ///

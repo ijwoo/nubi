@@ -10,6 +10,8 @@ enum Setup {
     private static var store: UserDefaults? { UserDefaults(suiteName: NubiLog.group) }
 
     static var hasPermission: Bool { Events.canReadEvents && Events.canWriteReminders }
+    /// 알람은 **없어도 앱이 돕니다.** 끝내는 조건에는 넣지 않고, 시작할 때
+    /// 같이 물어 대화 중에 창이 뜨지 않게만 합니다.
     /// 위치는 **없어도 앱이 돕니다.** 가까운 곳 찾기에만 씁니다. 그래서 시작하기를
     /// 끝내는 조건에 넣지 않고, 안 켠 동안만 한 줄 더 보여줍니다.
     static var hasPlace: Bool { Places.isAllowed }
@@ -33,14 +35,19 @@ struct SetupCard: View {
             Text("시작하기")
                 .font(.subheadline.weight(.bold))
 
-            Step(done: Setup.hasPermission, title: "일정·미리알림·알림 권한",
-                 note: "일정을 읽고, 답이 왔을 때 화면을 켜는 데 씁니다.",
+            Step(done: Setup.hasPermission, title: "일정·미리알림·알림·알람 권한",
+                 note: "일정을 읽고, 답이 왔을 때 화면을 켜고, 무음이어도 깨우는 데 씁니다.",
                  action: "허용") {
                 Task {
                     _ = await Events.requestAll()
                     // 알림은 여기서 같이 받습니다. **따로 물으면 잊힙니다** —
                     // 켜져 있지 않으면 잠금화면 답이 조용히 사라집니다.
                     _ = await Briefing.requestPermission()
+                    // 알람도 여기서 받습니다. 대화 중에 물으면 **사람이 허용을
+                    // 누를 때까지 기다린 시간이 답 시간에 들어갑니다** — 그래서
+                    // 알람은 걸렸는데 답은 39초 만에 시간 초과로 죽은 적이
+                    // 있습니다.
+                    await Alarms.authorize()
                     onChange()
                 }
             }

@@ -124,6 +124,14 @@ enum Alarms {
         return row
     }
 
+    @discardableResult
+    static func cancel(id: String) -> Bool {
+        guard #available(iOS 26.0, *), let uuid = UUID(uuidString: id) else { return false }
+        try? AlarmManager.shared.cancel(id: uuid)
+        remember(saved().filter { $0.id != uuid })
+        return true
+    }
+
     /// 이름이 비면 전부 끕니다.
     @discardableResult
     static func cancel(label: String = "") -> [Set] {
