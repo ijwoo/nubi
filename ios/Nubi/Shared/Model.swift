@@ -200,7 +200,7 @@ enum Model {
         if !lines.isEmpty { lines.removeFirst() }
         return NubiAnswer(headline: headline, detail: lines.joined(separator: "\n"),
                           source: run.source, map: run.map, call: run.call,
-                          confirm: run.confirm)
+                          confirm: run.confirm, choices: choices(run, said: said))
     }
 
     /// 버튼을 **모델이 고른 곳**에 맞춥니다.
@@ -240,6 +240,28 @@ enum Model {
         guard code == 200 else { throw Failure.http(code, String(data: data, encoding: .utf8) ?? "") }
         let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         return text(in: (root?["content"] as? [[String: Any]]) ?? [])
+    }
+
+    /// 다음에 할 만한 말.
+    ///
+    /// **답을 받고 나면 다시 타이핑해야 했습니다.** "운동 옮길까?" 에 "응" 하려고
+    /// 문장을 만드는 건 답답합니다.
+    ///
+    /// **모델에게 만들라고 하지 않습니다.** 형식을 하나 더 지키게 하면 그걸
+    /// 어기는 날이 옵니다. 그 턴에 실제로 무슨 일이 있었는지는 코드가 압니다.
+    private static func choices(_ run: ToolRun, said: String) -> [String] {
+        var list: [String] = []
+        // 물어놓고 답을 기다리는 말. 승인 버튼이 이미 있으면 그쪽이 맡습니다.
+        if run.confirm.isEmpty, said.hasSuffix("?") || said.contains("?\n") {
+            list += ["응", "아니"]
+        }
+        if run.used.contains(.places) {
+            list.append("다른 데 더")
+            if let spot = Places.mentioned(in: said) {
+                list.append("\(spot.name) 일정 잡아줘")
+            }
+        }
+        return Array(list.prefix(3))
     }
 
     private struct Reply {

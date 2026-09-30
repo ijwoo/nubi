@@ -14,12 +14,14 @@ struct NubiAnswer: Equatable {
     let call: String
     /// 승인을 기다리는 일의 버튼 이름. 비어 있으면 기다리는 게 없습니다.
     let confirm: String
+    /// 다음에 할 만한 말. 눌러서 보냅니다.
+    let choices: [String]
     /// 설정을 고쳐야 풀리는 실패인가. **말만 하고 길을 안 열어주면 막다른 길입니다.**
     let needsSetup: Bool
 
     init(headline: String, detail: String = "", source: Source = .none,
          failed: Bool = false, map: String = "", call: String = "", confirm: String = "",
-         needsSetup: Bool = false) {
+         choices: [String] = [], needsSetup: Bool = false) {
         self.headline = headline
         self.detail = detail
         self.source = source
@@ -27,6 +29,7 @@ struct NubiAnswer: Equatable {
         self.map = map
         self.call = call
         self.confirm = confirm
+        self.choices = choices
         self.needsSetup = needsSetup
     }
 }
