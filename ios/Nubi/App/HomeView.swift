@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-enum Drawer: Hashable { case events, reminders, chat, lock }
+enum Drawer: Hashable { case events, reminders, alarms, chat, lock }
 
 /// 홈. **서랍 넷과 입력줄 하나.**
 ///
@@ -51,6 +51,7 @@ struct HomeView: View {
                 switch drawer {
                 case .events: EventsView()
                 case .reminders: RemindersView()
+                case .alarms: AlarmsView()
                 case .chat: ChatView()
                 case .lock: LockScreenView(onChange: reload)
                 }
@@ -63,6 +64,11 @@ struct HomeView: View {
             Places.foreground = now == .active
             if now == .active {
                 reload()
+                // **여는 순간에는 아직 앞이 아닙니다.** `.task` 에서 만들려고
+                // 하면 "Target is not foreground" 로 거절당하고, 그러면
+                // 잠금화면 버튼이 갱신할 창이 없습니다 — 가끔 아무 반응이
+                // 없던 자리입니다. 앞에 온 뒤에 다시 세웁니다.
+                Task { await store.revive() }
                 // 앱이 앞에 올 때마다 자리를 갱신합니다. **잠금 상태에서는 새로
                 // 못 잡습니다** — 잠금화면 버튼이 쓰는 것은 이때 잡아둔 값입니다.
                 openPendingRoute()
@@ -115,13 +121,21 @@ struct HomeView: View {
                        note: eventsNote) { go(.events) }
             DrawerTile(icon: "checklist", tint: Ink.done, title: "미리알림",
                        note: open.isEmpty ? "다 끝냈어" : "안 끝난 것 \(open.count)개") { go(.reminders) }
+            // **걸어놓고 볼 데가 없었습니다.** 누비가 건 알람은 시계 앱에
+            // 안 뜹니다. 잠금화면 설명은 처음 한 번 보는 것이라 설정으로
+            // 내리고, 매일 찾을 자리를 여기 둡니다.
+            DrawerTile(icon: "alarm", tint: Ink.warn, title: "알람",
+                       note: alarmNote) { go(.alarms) }
             DrawerTile(icon: "bubble.left.and.text.bubble.right", tint: Ink.accent.opacity(0.75),
                        title: "대화",
                        note: store.turns.last?.headline ?? "아직 없어") { go(.chat) }
-            DrawerTile(icon: "lock.display", tint: store.liveIsOn ? Ink.accent : .secondary,
-                       title: "잠금화면",
-                       note: store.liveIsOn ? "대화창이 떠 있어" : "대화창이 꺼져 있어") { go(.lock) }
         }
+    }
+
+    private var alarmNote: String {
+        let set = Alarms.all()
+        guard let next = set.first else { return "걸어둔 게 없어" }
+        return "\(Format.time(next.at)) \(next.label)"
     }
 
     private var eventsNote: String {

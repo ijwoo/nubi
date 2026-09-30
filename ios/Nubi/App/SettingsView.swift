@@ -31,6 +31,7 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 briefing
+                lock
                 permissions
                 model
                 memory
@@ -196,6 +197,18 @@ struct SettingsView: View {
     }
 
     /// **무엇을 아는지 못 보면 왜 이상한 답이 나오는지도 알 수 없습니다.**
+    /// 잠금화면 설명은 **처음 한 번 보는 것**입니다. 홈에서 매일 보이던
+    /// 자리를 알람에 내주고 여기로 왔습니다.
+    private var lock: some View {
+        Section {
+            NavigationLink {
+                LockScreenView(onChange: onChange)
+            } label: {
+                LabeledContent("잠금화면", value: LiveAnswer.isRunning ? "떠 있음" : "꺼짐")
+            }
+        }
+    }
+
     private var memory: some View {
         Section {
             NavigationLink {
