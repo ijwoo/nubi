@@ -40,6 +40,9 @@ struct Turn: Codable, Identifiable, Hashable {
     var confirm: String = ""
     /// 다음에 할 만한 말.
     var choices: [String] = []
+    /// 열어줄 앱.
+    var open: String = ""
+    var openLabel: String = ""
     /// 설정을 고쳐야 풀리는 실패인가.
     var needsSetup: Bool = false
 

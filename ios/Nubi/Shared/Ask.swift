@@ -27,10 +27,11 @@ enum Nubi {
                         source: answer.source, failed: answer.failed, at: Date(),
                         viaIntent: viaIntent, map: answer.map, call: answer.call,
                         confirm: answer.confirm, choices: answer.choices,
+                        open: answer.open, openLabel: answer.openLabel,
                         needsSetup: answer.needsSetup)
         Thread.append(turn)
         await Airing.shared.end()
-        let shown = await LiveAnswer.show(turn)
+        let shown = await LiveAnswer.show(turn, alerting: viaIntent)
         let took = Date().timeIntervalSince(started)
         await Briefing.echo(turn, took: took, shown: shown)
         NubiLog.write("[요청] \(utterance) → \(answer.headline) (\(Int(took * 1000))ms)")
@@ -452,8 +453,17 @@ struct DirectionsIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         Navigation.pending = url
-        NubiLog.write("[\(url.hasPrefix("tel:") ? "전화" : "길찾기")] 앱을 열어 넘깁니다")
+        NubiLog.write("[\(Self.kind(of: url))] 앱을 열어 넘깁니다")
         return .result()
+    }
+}
+
+extension DirectionsIntent {
+    /// 무엇을 넘기는지. 기록에 남는 말입니다.
+    static func kind(of url: String) -> String {
+        if url.hasPrefix("tel:") { return "전화" }
+        if url.contains("map") || url.hasPrefix("nmap") { return "길찾기" }
+        return "앱 열기"
     }
 }
 

@@ -56,11 +56,11 @@ enum Briefing {
     /// **대화창에 떴으면 대개 건너뜁니다.** 같은 말이 잠금화면에 두 번
     /// 보였습니다 — 대화창에 한 번, 그 아래 알림으로 또 한 번.
     ///
-    /// 다만 오래 걸린 답은 그 사이에 화면이 꺼져 있습니다. 대화창은 조용히
-    /// 갱신될 뿐이라 **화면을 켜주는 것은 알림뿐**입니다. 그때는 둘 다 보냅니다.
+    /// **대화창이 뜨면 이제 그쪽이 소리도 냅니다.** 밖에서 물은 답은 알림을
+    /// 띄우는 갱신으로 올라가서 화면을 켜고 아일랜드를 펴줍니다. 그래서 여기는
+    /// **대화창을 못 띄웠을 때만** 나섭니다.
     static func echo(_ turn: Turn, took: TimeInterval, shown: Bool = false) async {
-        guard echoesAnswers, turn.viaIntent, took > 0.8 else { return }
-        guard !shown || took > 8 else { return }
+        guard echoesAnswers, turn.viaIntent, took > 0.8, !shown else { return }
         let content = UNMutableNotificationContent()
         content.title = turn.asked.isEmpty ? "누비" : turn.asked
         content.body = turn.headline

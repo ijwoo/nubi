@@ -33,6 +33,9 @@ struct NubiAttributes: ActivityAttributes {
         var map: String = ""
         /// 걸 번호. 있으면 전화 버튼이 하나 더 붙습니다.
         var call: String = ""
+        /// 열어줄 앱.
+        var open: String = ""
+        var openLabel: String = ""
         /// 걸어둔 알림이 울릴 시각. 있으면 **잠금화면에서 초가 흐릅니다.**
         var timerEnds: Date?
         var timerLabel: String = ""
@@ -40,7 +43,9 @@ struct NubiAttributes: ActivityAttributes {
         var confirm: String = ""
 
         /// 누를 것이 있는가. 없으면 말풍선 둘만 남습니다.
-        var hasAction: Bool { !confirm.isEmpty || !map.isEmpty || !call.isEmpty }
+        var hasAction: Bool {
+            !confirm.isEmpty || !map.isEmpty || !call.isEmpty || !open.isEmpty
+        }
 
         var progress: Double {
             guard !steps.isEmpty else { return thinking ? 0.35 : 1 }
@@ -59,7 +64,8 @@ enum LiveAnswer {
     /// **새로 만들 수 있는 것은 앞에 떠 있는 앱뿐입니다.** 확장도 배경의 앱도
     /// 갱신만 됩니다 — 배경에서 만들려 하면 "Target is not foreground" 입니다.
     @discardableResult
-    static func push(_ state: NubiAttributes.ContentState) async -> Bool {
+    static func push(_ state: NubiAttributes.ContentState,
+                     alerting: AlertConfiguration? = nil) async -> Bool {
         var state = state
         // **어느 턴에서 밀어 올리든 타이머는 붙습니다.** 타이머를 건 그 턴에만
         // 보이면, 다음 질문을 하는 순간 초가 사라집니다.
@@ -72,7 +78,11 @@ enum LiveAnswer {
             return false
         }
         if let running = Activity<NubiAttributes>.activities.first {
-            await running.update(ActivityContent(state: state, staleDate: nil))
+            // **알림을 띄우는 갱신은 아일랜드를 펴줍니다.** 조용히 갱신하면
+            // 접힌 채로 말풍이만 보여서 아무 일도 안 일어난 것처럼 보입니다 —
+            // 시리로 물었을 때 무반응처럼 보이던 자리입니다.
+            await running.update(ActivityContent(state: state, staleDate: nil),
+                                 alertConfiguration: alerting)
             return true
         }
         do {
@@ -98,12 +108,21 @@ enum LiveAnswer {
                          steps: steps, thinking: true, failed: false, stamp: now(), at: Date()))
     }
 
+    /// 밖에서 물은 답은 **눈에 띄게** 올립니다. 앱에서 보고 있을 때는
+    /// 조용히 — 화면을 보고 있는 사람에게 소리를 낼 이유가 없습니다.
     @discardableResult
-    static func show(_ turn: Turn) async -> Bool {
-        await push(.init(asked: turn.asked, headline: turn.headline, detail: turn.detail,
-                         meta: turn.meta, steps: [], thinking: false, failed: turn.failed,
-                         stamp: now(), at: turn.at, map: turn.map, call: turn.call,
-                         confirm: turn.confirm))
+    static func show(_ turn: Turn, alerting: Bool = false) async -> Bool {
+        let alert = alerting
+            ? AlertConfiguration(title: "누비",
+                                 body: LocalizedStringResource(stringLiteral: turn.headline),
+                                 sound: .default)
+            : nil
+        return await push(.init(asked: turn.asked, headline: turn.headline, detail: turn.detail,
+                                meta: turn.meta, steps: [], thinking: false, failed: turn.failed,
+                                stamp: now(), at: turn.at, map: turn.map, call: turn.call,
+                                open: turn.open, openLabel: turn.openLabel,
+                                confirm: turn.confirm),
+                          alerting: alert)
     }
 
     static func dismissAll() {
