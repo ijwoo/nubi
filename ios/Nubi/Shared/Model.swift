@@ -151,9 +151,15 @@ enum Model {
         // **실패한 턴은 보내지 않습니다.** "위치를 모릅니다" 같은 답이 앞에 쌓이면
         // 모델이 그걸 보고 "저는 못 합니다" 를 배웁니다. 실패는 그때의 사정이지
         // 지금의 사정이 아닙니다.
+        // **빈 내용은 거절당합니다.** 사진만 보내면 물음이 비는데, 그 턴을
+        // 그대로 기록에 실어 보냈다가 다음 요청이 통째로 400 이 됐습니다.
         var messages = history.filter { !$0.failed }.suffix(6).flatMap { turn -> [[String: Any]] in
-            [["role": "user", "content": String(turn.asked.prefix(400))],
-             ["role": "assistant", "content": String(turn.full.prefix(800))]]
+            let asked = turn.asked.isEmpty
+                ? (turn.photo.isEmpty ? "(빈 물음)" : "(사진을 보냈다)")
+                : String(turn.asked.prefix(400))
+            let said = turn.full.isEmpty ? "(빈 답)" : String(turn.full.prefix(800))
+            return [["role": "user", "content": asked],
+                    ["role": "assistant", "content": said]]
         }
         // **사진은 마지막 물음에만 붙입니다.** 지난 턴의 사진까지 매번 다시
         // 보내면 값이 몇 배가 되고, 대개 지금 물음과 상관이 없습니다.

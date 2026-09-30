@@ -179,13 +179,16 @@ struct TurnRows: View {
                     Snap(name: turn.photo)
                 }
             }
-            HStack {
-                Spacer(minLength: 56)
-                Text(turn.asked)
-                    .font(.callout)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 9)
-                    .background(Ink.mine, in: Bubble(mine: true))
+            // 사진만 보내면 물음이 빕니다. 빈 말풍선을 그리면 안 됩니다.
+            if !turn.asked.isEmpty {
+                HStack {
+                    Spacer(minLength: 56)
+                    Text(turn.asked)
+                        .font(.callout)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background(Ink.mine, in: Bubble(mine: true))
+                }
             }
             HStack(alignment: .bottom, spacing: 7) {
                 VStack(alignment: .leading, spacing: 6) {
