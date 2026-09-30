@@ -16,12 +16,16 @@ struct NubiAnswer: Equatable {
     let confirm: String
     /// 다음에 할 만한 말. 눌러서 보냅니다.
     let choices: [String]
+    /// 열어줄 앱의 주소와 버튼에 쓸 이름.
+    let open: String
+    let openLabel: String
     /// 설정을 고쳐야 풀리는 실패인가. **말만 하고 길을 안 열어주면 막다른 길입니다.**
     let needsSetup: Bool
 
     init(headline: String, detail: String = "", source: Source = .none,
          failed: Bool = false, map: String = "", call: String = "", confirm: String = "",
-         choices: [String] = [], needsSetup: Bool = false) {
+         choices: [String] = [], open: String = "", openLabel: String = "",
+         needsSetup: Bool = false) {
         self.headline = headline
         self.detail = detail
         self.source = source
@@ -30,6 +34,8 @@ struct NubiAnswer: Equatable {
         self.call = call
         self.confirm = confirm
         self.choices = choices
+        self.open = open
+        self.openLabel = openLabel
         self.needsSetup = needsSetup
     }
 }

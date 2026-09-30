@@ -50,9 +50,16 @@ struct NubiLiveActivity: Widget {
                         .font(.caption2.weight(.bold).monospacedDigit())
                         .frame(width: 42)
                         .foregroundStyle(Tone.working.color)
-                } else {
+                } else if context.state.thinking {
                     Text(badge(context.state))
                         .font(.caption2.weight(.bold))
+                        .foregroundStyle(Tone.working.color)
+                } else {
+                    // **접혔을 때 아무것도 없으면 아무 일도 안 일어난 것처럼
+                    // 보입니다.** 답이 와 있다는 것만이라도 말해줍니다.
+                    Image(systemName: context.state.failed
+                        ? "exclamationmark" : "checkmark")
+                        .font(.caption2.weight(.black))
                         .foregroundStyle(Tone.of(context.state).color)
                 }
             } minimal: {
@@ -87,7 +94,7 @@ enum Skin {
 
 /// 상태마다 쓰는 색. **하나의 상태에 하나의 색입니다.**
 enum Tone {
-    case working, done, warning
+    case working, done, warning, away
 
     static func of(_ state: NubiAttributes.ContentState) -> Tone {
         if state.failed || !state.confirm.isEmpty { return .warning }
@@ -100,6 +107,8 @@ enum Tone {
         case .working: Color(red: 0.36, green: 0.35, blue: 0.85)
         case .done: Color(red: 0.06, green: 0.71, blue: 0.51)
         case .warning: Color(red: 0.96, green: 0.62, blue: 0.07)
+        // 밖으로 나가는 버튼. 우리 안에서 끝나는 일과 색이 달라야 합니다.
+        case .away: Color(red: 0.72, green: 0.40, blue: 0.93)
         }
     }
 
@@ -340,6 +349,18 @@ private struct Actions: View {
                 .buttonStyle(.borderedProminent)
                 .tint(Tone.warning.color)
             } else {
+                // **밖으로 나가는 버튼은 혼자 옵니다.** 앱을 열어달라는 턴에는
+                // 길찾기도 전화도 없어서, 한 줄을 다 써도 좁지 않습니다.
+                if !state.open.isEmpty {
+                    Button(intent: DirectionsIntent(state.open)) {
+                        Label(state.openLabel.isEmpty ? "열기" : "\(state.openLabel) 열기",
+                              systemImage: "arrow.up.forward.app.fill")
+                            .font(.caption2.weight(.bold))
+                            .frame(maxWidth: .infinity, minHeight: 16)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Tone.away.color)
+                }
                 if !state.map.isEmpty {
                     Button(intent: DirectionsIntent(state.map)) {
                         Label("길찾기", systemImage: "location.fill")

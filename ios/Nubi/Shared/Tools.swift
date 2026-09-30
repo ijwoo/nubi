@@ -13,6 +13,9 @@ struct ToolRun {
     var map = ""
     /// 걸 번호. **예약 도구는 없지만 전화는 넘길 수 있습니다.**
     var call = ""
+    /// 열어줄 앱.
+    var open = ""
+    var openLabel = ""
     var confirm = ""
     var used: Set<Source> = []
     /// 실제로 무언가를 **쓴** 적이 있는가.
@@ -85,6 +88,14 @@ enum Tools {
             ], ["query"]),
 
             tool("get_weather", "지금 자리의 날씨를 본다.", [:], []),
+
+            tool("open_app",
+                 "다른 앱을 연다. **여는 것까지만 된다** — 유튜브뮤직에서 곡을 틀어달라고 하면 "
+                 + "앱을 열고 검색 결과까지 데려다주지만 재생 버튼은 사용자가 눌러야 한다. "
+                 + "재생했다고 말하지 마라. 아는 앱: " + Apps.names, [
+                "name": ["type": "string", "description": "앱 이름"],
+                "query": ["type": "string", "description": "그 앱에서 찾을 말. 없으면 비운다"],
+            ], ["name"]),
 
             tool("undo_last",
                  "방금 넣거나 건 것을 되돌린다. '방금 그거 취소', '아니 아까 거 빼줘' 같은 말에 쓴다.",
@@ -166,6 +177,7 @@ enum Tools {
         case "remind_at_place": "장소 알림 넣는 중"
         case "remember": "기억하는 중"
         case "forget": "기억 지우는 중"
+        case "open_app": "앱 여는 중"
         case "undo_last": "되돌리는 중"
         case "web_search": "웹에서 찾는 중"
         default: "확인하는 중"
@@ -416,6 +428,23 @@ enum Tools {
             guard !gone.isEmpty else { return "그런 기억이 없습니다." }
             run.wrote = true
             return "지웠습니다: " + gone.map(\.text).joined(separator: ", ")
+
+        case "open_app":
+            guard let name = input["name"] as? String else { return "어느 앱인지 모르겠습니다." }
+            guard let app = Apps.find(name) else {
+                return "‘\(name)’ 은 열 줄 모릅니다. 아는 앱: " + Apps.names
+            }
+            let query = input["query"] as? String ?? ""
+            guard let url = Apps.url(app, query: query) else { return "주소를 못 만들었습니다." }
+            run.open = url.absoluteString
+            run.openLabel = app.name
+            if !query.isEmpty, app.search == nil {
+                return "\(app.name) 을 엽니다. 다만 이 앱은 검색어를 받지 못해 첫 화면까지만 갑니다."
+            }
+            return query.isEmpty
+                ? "\(app.name) 열 준비를 했습니다. 사용자가 버튼을 눌러야 열립니다."
+                : "\(app.name) 에서 ‘\(query)’ 를 찾는 화면을 열 준비를 했습니다. "
+                    + "사용자가 버튼을 눌러야 열리고, 재생이나 주문은 거기서 직접 해야 합니다."
 
         case "undo_last":
             guard let said = await Undo.undo() else {

@@ -101,6 +101,8 @@ enum Model {
     가게를 권할 때는 **이름을 답에 그대로 써라.** 길찾기·전화 버튼이 그 이름을 보고 붙는다.
     예약해 달라고 하면 일정에 넣고, 전화는 눌러서 직접 걸어야 한다고 한 줄 붙여라.
     짧은 것은 set_timer, 날짜가 있는 일은 add_reminder, 장소로 울릴 것은 remind_at_place.
+    **다른 앱은 열어만 준다.** open_app 은 앱을 열고 검색 화면까지 데려다줄 뿐이다 —
+    재생·주문·결제는 거기서 사람이 한다. "틀었어" 라고 말하지 마라.
     **못 들으면 안 되는 것은 set_alarm** — 무음과 집중 모드를 뚫고 끌 때까지 운다.
     **"깨워줘", "기상", "일어나야 해" 는 언제나 알람이다.** 미리알림으로 넣지 마라 —
     자는 사람은 미리알림 소리로 안 깬다. 라면 3분 같은 짧은 것만 set_timer 다.
@@ -200,7 +202,8 @@ enum Model {
         if !lines.isEmpty { lines.removeFirst() }
         return NubiAnswer(headline: headline, detail: lines.joined(separator: "\n"),
                           source: run.source, map: run.map, call: run.call,
-                          confirm: run.confirm, choices: choices(run, said: said))
+                          confirm: run.confirm, choices: choices(run, said: said),
+                          open: run.open, openLabel: run.openLabel)
     }
 
     /// 버튼을 **모델이 고른 곳**에 맞춥니다.

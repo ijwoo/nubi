@@ -221,8 +221,16 @@ struct TurnRows: View {
                         }
                         .padding(.top, 2)
                     }
-                    if !turn.map.isEmpty || !turn.call.isEmpty {
+                    if !turn.map.isEmpty || !turn.call.isEmpty || !turn.open.isEmpty {
                         HStack(spacing: 14) {
+                            if let url = URL(string: turn.open), !turn.open.isEmpty {
+                                Button(turn.openLabel.isEmpty ? "열기" : "\(turn.openLabel) 열기",
+                                       systemImage: "arrow.up.forward.app.fill") {
+                                    Haptic.tap()
+                                    UIApplication.shared.open(url)
+                                }
+                                .tint(Color(red: 0.72, green: 0.40, blue: 0.93))
+                            }
                             if let url = URL(string: turn.map), !turn.map.isEmpty {
                                 Button("길찾기", systemImage: "location.fill") {
                                     Haptic.tap()
