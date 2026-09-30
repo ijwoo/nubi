@@ -266,6 +266,7 @@ struct Composer: View {
 
     @State private var voice = Dictation()
     @State private var picking: PhotosPickerItem?
+    @State private var choosing = false
     @State private var shooting = false
 
     var body: some View {
@@ -294,10 +295,10 @@ struct Composer: View {
             HStack(alignment: .bottom, spacing: 8) {
                 Menu {
                     Button("사진 찍기", systemImage: "camera") { shooting = true }
-                    // 보관함은 권한이 필요 없습니다. 고른 것만 넘어옵니다.
-                    PhotosPicker(selection: $picking, matching: .images) {
-                        Label("사진 고르기", systemImage: "photo")
-                    }
+                    // **메뉴 안에서는 피커가 안 뜹니다.** 메뉴 항목은 버튼이어야
+                    // 하고, 피커는 따로 띄워야 합니다. 메뉴에 넣었더니 눌러도
+                    // 아무 일도 안 일어났습니다.
+                    Button("사진 고르기", systemImage: "photo") { choosing = true }
                 } label: {
                     Image(systemName: "plus")
                         .font(.body.weight(.semibold))
@@ -352,6 +353,8 @@ struct Composer: View {
         .background(Ink.ground)
         // 들리는 대로 입력줄에 적습니다. 멈추면 그 자리에 남아 고칠 수 있습니다.
         .onChange(of: voice.heard) { _, now in if voice.listening { draft = now } }
+        // 보관함은 권한이 필요 없습니다. 고른 것만 넘어옵니다.
+        .photosPicker(isPresented: $choosing, selection: $picking, matching: .images)
         .onChange(of: picking) { _, item in
             guard let item else { return }
             Task {
