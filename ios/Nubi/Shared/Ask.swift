@@ -176,7 +176,7 @@ enum Nubi {
                 }
                 return NubiAnswer(headline: "답하지 못했습니다",
                                   detail: error.localizedDescription, source: .model, failed: true,
-                                  needsSetup: (error as? Model.Failure) == .noKey)
+                                  needsSetup: (error as? Model.Failure)?.needsSetup ?? false)
             }
         }
         switch route {
@@ -297,7 +297,7 @@ enum Nubi {
             } catch {
                 return NubiAnswer(headline: "답하지 못했습니다",
                                   detail: error.localizedDescription, source: .model, failed: true,
-                                  needsSetup: (error as? Model.Failure) == .noKey)
+                                  needsSetup: (error as? Model.Failure)?.needsSetup ?? false)
             }
         }
     }

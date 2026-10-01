@@ -40,7 +40,25 @@ enum Model {
         var errorDescription: String? {
             switch self {
             case .noKey: "모델 키가 없습니다. 설정에서 넣어주세요."
-            case let .http(code, body): "모델이 답하지 않았습니다 (\(code)) \(Failure.gist(body))"
+            // **영어 오류를 그대로 보여주면 사람은 뭘 해야 할지 모릅니다.**
+            // 흔한 것들은 할 일을 말해줍니다.
+            case let .http(code, body):
+                switch code {
+                case 401: "모델 키가 맞지 않습니다. 설정에서 다시 넣어주세요."
+                case 403: "이 키로는 쓸 수 없습니다. 설정에서 다른 키를 넣어주세요."
+                case 429: "잠깐 너무 많이 물었습니다. 조금 뒤에 다시 물어봐 주세요."
+                case 500...599: "모델 쪽이 바쁩니다. 조금 뒤에 다시 물어봐 주세요."
+                default: "모델이 답하지 않았습니다 (\(code)) \(Failure.gist(body))"
+                }
+            }
+        }
+
+        /// 설정을 고쳐야 풀리는 실패인가. **말만 하고 길을 안 열어주면
+        /// 막다른 길입니다.**
+        var needsSetup: Bool {
+            switch self {
+            case .noKey: true
+            case let .http(code, _): code == 401 || code == 403
             }
         }
 
